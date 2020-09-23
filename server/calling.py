@@ -19,7 +19,6 @@ def get_projects(clientID, ClientPass):
 
 
     # Print each field
-    #
     for field_name, field_data in project.items():
 
         projects +=1
