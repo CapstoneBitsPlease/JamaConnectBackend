@@ -14,9 +14,12 @@ def get_projects(clientID, ClientPass):
     
     for project in project_list:
         project_name = project['fields']['name']
-        print('\n---------------' + project_name + '-----------------')
+        print('\n---------------' + project_name + '------------------')
+
+
 
     # Print each field
+    #
     for field_name, field_data in project.items():
 
         projects +=1
