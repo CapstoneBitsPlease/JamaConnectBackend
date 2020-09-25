@@ -13,12 +13,21 @@ def index():
 #send the credentials to the server in base64 encoding of the string "username:password"
 #putting something in the <> like <foo> creates a variable that can be passed into the 
 #function call. 
-@server.route('/all/<credentials>')
+@server.route('/projects/basic/<credentials>')
 def all(credentials):
     credentials = base64.b64decode(credentials)
     print (credentials)
     credentials = credentials.decode().split(':')
     username = credentials[0]
     password = credentials[1]
-    projects = get_projects(username, password)
+    projects = get_projects(username, password, False)
+    return "Number of Projects:" + str(projects)
+
+#Oauth using clientID:clientSecret as credentials (not good)
+@server.route('/projects/oath/<credentials>')
+def all_projects(credentials):
+    credentials = credentials.split(':')
+    username = credentials[0]
+    password = credentials[1]
+    projects = get_projects(username, password, True)
     return "Number of Projects:" + str(projects)
