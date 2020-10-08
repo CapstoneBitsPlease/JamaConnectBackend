@@ -7,4 +7,4 @@ install PyJama: https://github.com/jamasoftware-ps/py-jama-rest-client
 
 install flask:'pip install flask'
 
-make sure that yore using the correct python environment otherwise pyjama and flask wont work
+make sure that you're using the correct python environment otherwise pyjama and flask wont work
