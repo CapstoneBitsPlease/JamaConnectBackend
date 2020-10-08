@@ -1,5 +1,6 @@
 import json
 from py_jama_rest_client.client import JamaClient
+from .database import *
 
 def get_projects(clientID, ClientPass, oauthFlag):
 
@@ -15,7 +16,6 @@ def get_projects(clientID, ClientPass, oauthFlag):
     for project in project_list:
         project_name = project['fields']['name']
         print('\n---------------' + project_name + '------------------')
-
 
 
     # Print each field
@@ -37,3 +37,7 @@ def get_projects(clientID, ClientPass, oauthFlag):
             print(field_name + ': ' + str(field_data))
 
     return projects
+
+def login(Username, Password, oauth):
+    cursor = get_db().cursor()
+    
