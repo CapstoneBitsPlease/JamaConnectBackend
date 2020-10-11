@@ -3,6 +3,7 @@ import sqlite3
 from sqlite3 import Error
 from datetime import datetime
 import os
+import logging
 
 # Utility class. Contains methods to connect to database, create table, rename column, add entry
 # to table, update an existing entry, retrieve an existing entry, and delete an existing entry.
@@ -172,8 +173,8 @@ class FieldsTableOps:
         self.field_id_col = "FieldID" # TYPE: PRIMARY KEY INT
         self.item_id_col = "ItemID" # TYPE: INT
         self.last_updated_col = "LastUpdated" # TYPE: DATETIME, ms precision.
-        self.jira_name_col = "JiraName" # TYPE: STRING
         self.jama_name_col = "JamaName" # TYPE: STRING
+        self.jira_name_col = "JiraName" # TYPE: STRING
         self.table_name = "Fields"
         self.db_ops = DatabaseOperations(path)
 
@@ -214,8 +215,8 @@ class FieldsTableOps:
     # # # INSERT METHODS FOR FIELDS TABLE # # #
 
     # Inserts one item into the Fields table.
-    def insert_into_fields_table(self, sync_id, start_time, end_time, completed_successfully):
-        self.db_ops.insert_into_db(self.table_name, sync_id, start_time, end_time, completed_successfully)
+    def insert_into_fields_table(self, field_id, item_id, last_updated, jama_name, jira_name):
+        self.db_ops.insert_into_db(self.table_name, field_id, item_id, last_updated, jama_name, jira_name)
 
     # # # DELETE METHODS FOR FIELDS TABLE # # #
     def delete_fields_in_item(self, item_id):
@@ -267,7 +268,7 @@ class SyncInformationTableOps:
 
     # # # INSERT METHODS # # #
 
-    def insert_into_fields_table(self, sync_id, start_time, end_time, completed_successfully):
+    def insert_into_sync_table(self, sync_id, start_time, end_time, completed_successfully):
         self.db_ops.insert_into_db(self.table_name, sync_id, start_time, end_time, completed_successfully)
 
     # # # DELETE METHODS # # #
@@ -277,19 +278,24 @@ class SyncInformationTableOps:
         self.db_ops.delete_entry(self.table_name, self.sync_id_col, sync_id)
 
 
+
+
+
 # Main method to demo functionality. Uncomment blocks to observe how they function.
 if __name__ == '__main__':
     fields_table = "Fields"
     items_table = "Items"
     fields_column = "FieldID"
     items_column = "ID"
-    item_id = 3
-    field_id = 4
+    item_id = 100000
+    field_id = 20023
+    sync_id = 1
     # Gets absolute path to root folder and appends database file. Should work on any machine.
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
     db_ops = DatabaseOperations(db_path)
     items_table_ops = ItemsTableOps(db_path)
     fields_table_ops = FieldsTableOps(db_path)
+    sync_table_ops = SyncInformationTableOps(db_path)
 
     # Demo create table. Define list of types and columns to pass in to method.
     '''columns = ["SyncID", "StartTime", "EndTime", "CompletedSuccessfully"]
@@ -300,9 +306,9 @@ if __name__ == '__main__':
     '''db_ops.rename_column(fields_table, "Item", "ItemID")'''
 
     # Demo INSERT query. NOTE: field id and item id must be unique in order to be added.
-    '''time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
     items_table_ops.insert_into_items_table(item_id, 'ticketx', 'ticket', 'Jama', 'NULL')
-    fields_table_ops.insert_into_fields_table(field_id, "1", time, 'Issue', 'Ticket')'''
+    fields_table_ops.insert_into_fields_table(field_id, "1", time, 'Issue', 'Ticket')
 
     # Demo SELECT query.
     item_row = items_table_ops.retrieve_by_item_id(item_id)
@@ -327,3 +333,13 @@ if __name__ == '__main__':
 
     items_table_ops.delete_item(item_id)
     print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(item_id))
+
+    sync_start_time = time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "1")
+
+    print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
+
+    sync_table_ops.update_completion_status(sync_id, "0")
+
+    sync_table_ops.delete_sync_record(sync_id)
+    print("Retrieved deleted sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
