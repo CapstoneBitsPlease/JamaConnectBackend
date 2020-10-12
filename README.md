@@ -8,8 +8,11 @@ install flask:`pip3 install flask`
 
 ## To run
 
-set the environment variable `"FLASK_APP":"server.py`
+set the environment variable `"FLASK_APP":"server.py"`
 
+start the flask server `flask run`
+
+alternativley flask can be run quite nicely from through VS Code `shft+cmd+D`
 
 see link for more information about running flask in VS Code
 
