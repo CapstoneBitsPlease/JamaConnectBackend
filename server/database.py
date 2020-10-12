@@ -66,6 +66,7 @@ class DatabaseOperations:
             print("Failed to connect")
         return row
 
+    # Deletes an entry in a given table that matches the ID in the specified column.
     def delete_entry(self, table_name, column, id):
         conn = self.connect_to_db()
         if conn:
@@ -109,6 +110,8 @@ class DatabaseOperations:
                 close_connection(conn)
 
 
+# Operations for the Items table. When columns are added or updated, make sure to update them in
+# the __init__ method.
 class ItemsTableOps:
 
     def __init__(self, path):
@@ -123,50 +126,52 @@ class ItemsTableOps:
     # # # RETRIEVE METHODS FOR ITEMS TABLE # # #
 
     def retrieve_by_item_id(self, item_id):
-        return db_ops.retrieve_by_column_value(self.table_name, self.item_id_col, item_id)
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.item_id_col, item_id)
 
     def retrieve_by_title(self, name):
-        return db_ops.retrieve_by_column_value(self.table_name, self.title_col, name)
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.title_col, name)
 
     def retrieve_by_linked_id(self, linked_id):
-        return db_ops.retrieve_by_column_value(self.table_name, self.linked_id_col, linked_id)
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.linked_id_col, linked_id)
 
     def retrieve_by_service(self, service):
-        return db_ops.retrieve_by_service(self.table_name, self.service_col, service)
+        return self.db_ops.retrieve_by_service(self.table_name, self.service_col, service)
     
     def retrieve_by_type(self, type_):
-        return db_ops.retrieve_by_service(self.table_name, self.type_col, type_)
+        return self.db_ops.retrieve_by_service(self.table_name, self.type_col, type_)
 
      # # # UPDATE METHODS FOR ITEMS TABLE # # #
 
      # Updates item title based on unique integer id.
     def update_item_title(self, unique_id, new_title):
-        db_ops.update_existing_entry(self.table_name, self.item_id_col, self.title_col, unique_id, new_title)
+        self.db_ops.update_existing_entry(self.table_name, self.item_id_col, self.title_col, unique_id, new_title)
 
     # Takes unique integer ID and updates corresponding entry's linked id value.
     def update_linked_id(self, unique_id, new_linked_id):
-        db_ops.update_existing_entry(self.table_name, self.item_id_col, self.linked_id_col, unique_id, new_linked_id)
+        self.db_ops.update_existing_entry(self.table_name, self.item_id_col, self.linked_id_col, unique_id, new_linked_id)
 
     def update_type(self, unique_id, new_type):
-        db_ops.update_existing_entry(self.table_name, self.item_id_col, self.type_col, unique_id, new_type)
+        self.db_ops.update_existing_entry(self.table_name, self.item_id_col, self.type_col, unique_id, new_type)
 
     def update_service(self, unique_id, new_service):
-        db_ops.update_existing_entry(self.table_name, self.item_id_col, self.service_col, unique_id, new_service)
+        self.db_ops.update_existing_entry(self.table_name, self.item_id_col, self.service_col, unique_id, new_service)
 
     def update_item_id(self, unique_id, new_unique_id):
-        db_ops.update_existing_entry(self.table_name, self.item_id_col, self.item_id_col, unique_id, new_unique_id)
+        self.db_ops.update_existing_entry(self.table_name, self.item_id_col, self.item_id_col, unique_id, new_unique_id)
 
     # # # INSERT METHODS FOR ITEMS TABLE # # #
     
     # Inserts one item into the Items table.
     def insert_into_items_table(self, id, title, type, service, linked_id):
-        db_ops.insert_into_db(self.table_name, id, title, type, service, linked_id)
+        self.db_ops.insert_into_db(self.table_name, id, title, type, service, linked_id)
 
     # # # DELETE METHODS FOR ITEMS TABLE # # #
     def delete_item(self, item_id):
-        db_ops.delete_entry(self.table_name, self.item_id_col, item_id)
+        self.db_ops.delete_entry(self.table_name, self.item_id_col, item_id)
 
 
+# Operations for the fields table. When columns are added or updated, make sure to update them in
+# the __init__ method.
 class FieldsTableOps:
     # field_id is primary key (unique identifier in table.)
     def __init__(self, path):
@@ -220,13 +225,14 @@ class FieldsTableOps:
 
     # # # DELETE METHODS FOR FIELDS TABLE # # #
     def delete_fields_in_item(self, item_id):
-        db_ops.delete_entry(self.table_name, self.item_id_col, item_id)
+        self.db_ops.delete_entry(self.table_name, self.item_id_col, item_id)
 
     def delete_field(self, field_id):
-        db_ops.delete_entry(self.table_name, self.field_id_col, field_id)
+        self.db_ops.delete_entry(self.table_name, self.field_id_col, field_id)
 
 
-
+# Operations for the SyncInformation table. When columns are added or updated, make sure to update them in
+# the __init__ method.
 class SyncInformationTableOps:
 
     def __init__(self, path):
