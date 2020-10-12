@@ -1,4 +1,4 @@
-from .calling import get_projects
+from .functions import get_projects
 from server import server
 import base64
 from flask import request
