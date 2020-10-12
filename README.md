@@ -1,10 +1,18 @@
-# C2TB
-Jama and Jira integration
-this is the python server that will act as the bridge between Jama and Jira
+# Jama and Jira integration
+### this is the python server that will act as the bridge between Jama and Jira
 
-requirements
+## requirements
 install PyJama: https://github.com/jamasoftware-ps/py-jama-rest-client
 
-install flask:'pip install flask'
+install flask:`pip3 install flask`
+
+## To run
+
+set the environment variable `"FLASK_APP":"server.py`
+
+
+see link for more information about running flask in VS Code
+
+https://code.visualstudio.com/docs/python/tutorial-flask
 
 make sure that you're using the correct python environment otherwise pyjama and flask wont work
