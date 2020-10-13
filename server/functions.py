@@ -39,12 +39,17 @@ def get_projects(clientID, ClientPass, oauthFlag):
 
     return projects
 
-def authenticate_user(username = "sduncan", password = "Fuck0ffJama"):
+# function fo defining Jama and Jira user authentications
+# as well as session creation. 
+def authenticate_user(organization, username, password):
 
     session = connections.cur_connections.new_connection()
-    session.initiate_jama("capstone2020", username, password, False)
+    
+    if(session.initiate_jama(organization, username, password, False) == "invalid"):
+        return "invalid"
+
     projects = session.jama_connection.jama_client.get_projects()
-    print(projects)
+    #user = session.jama_connection.jama_client.g
     print("user has been authenticated")
     return session.token
 

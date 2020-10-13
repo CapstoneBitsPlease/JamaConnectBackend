@@ -15,8 +15,10 @@ class jama_connection:
         self.oauth = oauth
 
         jama_url = "https://" + self.organization +".jamacloud.com"
-
-        self.jama_client = JamaClient(host_domain=jama_url, credentials=(self.username, self.password), oauth=self.oauth)
+        try:
+            self.jama_client = JamaClient(host_domain=jama_url, credentials=(self.username, self.password), oauth=self.oauth)
+        except:
+            raise ConnectionError()
 
 class jira_connection:
     def __init__(self, organization, username, password):
@@ -33,6 +35,7 @@ class connection:
     
     def initiate_jama(self, org, name, password, oauth):
         self.jama_connection = jama_connection(org, name, password, oauth)
+        return self.jama_connection
 
 
 class connections:
