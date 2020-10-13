@@ -1,13 +1,21 @@
+# This document illustrated the strustures of an open connection
+# the server has a list of all connections
+# each connection consists of an authenticated Jira and Jama interface
+# we use the connections to authenticate a user who has logged in with 
+# either service.
+
+
 from py_jama_rest_client.client import JamaClient
 
 class jama_connection:
-    def __init__(self, org, name, passwrd, oauth):
+    def __init__(self, org, name, password, oauth):
         self.organization = org
         self.username = name
-        self.password = passwrd
+        self.password = password
         self.oauth = oauth
 
         jama_url = "https://" + self.organization +".jamacloud.com"
+
         self.jama_client = JamaClient(host_domain=jama_url, credentials=(self.username, self.password), oauth=self.oauth)
 
 class jira_connection:
@@ -21,15 +29,19 @@ class connection:
         self.token = []
         self.jama_connection = None
         self.jira_connection = None
+        self.token = "Thisisarandomtoke...probably"
+    
+    def initiate_jama(self, org, name, password, oauth):
+        self.jama_connection = jama_connection(org, name, password, oauth)
+
 
 class connections:
     def __init__(self):
         self.all_connections=[]
     
-    def new_connection(self,org, name, passwrd, oauth):
-        connection = jama_connection(org, name, passwrd, oauth)
-        self.all_connections.append(connection)
-        return connection
+    def new_connection(self):
+        new_connection = connection()
+        self.all_connections.append(new_connection)
+        return new_connection
 
-
-connections = connections()
+cur_connections = connections()

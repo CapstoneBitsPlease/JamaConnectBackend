@@ -1,8 +1,8 @@
-from .functions import get_projects
 from server import server
 import base64
 from flask import request
 from flask import Response
+import functions
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
@@ -40,6 +40,12 @@ def verify_login():
     if request.method == "POST":
         cred = request.values
         print(cred)
+        username = cred.get("username")
+        password = cred.get("password")
+        print("username:", username)
+        jwt = functions.authenticate_user(username, password)
+        return jwt
+
         if(cred.get("username")):
             if(cred.get("username") == "FakeUser"):
                 status = Response(status=200)

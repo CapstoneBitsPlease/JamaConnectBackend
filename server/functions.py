@@ -1,6 +1,7 @@
 import json
 from py_jama_rest_client.client import JamaClient
-from .database import *
+import database
+import connections
 
 def get_projects(clientID, ClientPass, oauthFlag):
 
@@ -37,6 +38,15 @@ def get_projects(clientID, ClientPass, oauthFlag):
             print(field_name + ': ' + str(field_data))
 
     return projects
+
+def authenticate_user(username = "sduncan", password = "Fuck0ffJama"):
+
+    session = connections.cur_connections.new_connection()
+    session.initiate_jama("capstone2020", username, password, False)
+    projects = session.jama_connection.jama_client.get_projects()
+    print(projects)
+    print("user has been authenticated")
+    return session.token
 
 
 
