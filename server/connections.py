@@ -4,8 +4,11 @@
 # we use the connections to authenticate a user who has logged in with 
 # either service.
 
-
 from py_jama_rest_client.client import JamaClient
+import string
+import random
+
+secret = "Change me plz"
 
 class jama_connection:
     def __init__(self, org, name, password, oauth):
@@ -18,7 +21,10 @@ class jama_connection:
         try:
             self.jama_client = JamaClient(host_domain=jama_url, credentials=(self.username, self.password), oauth=self.oauth)
         except:
-            raise ConnectionError()
+            print("Invalid credentials")
+
+
+            
 
 class jira_connection:
     def __init__(self, organization, username, password):
@@ -28,15 +34,20 @@ class jira_connection:
 
 class connection:
     def __init__(self):
-        self.token = []
         self.jama_connection = None
         self.jira_connection = None
-        self.token = "Thisisarandomtoke...probably"
+        self.token = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64))
+        print(self.token)
     
     def initiate_jama(self, org, name, password, oauth):
         self.jama_connection = jama_connection(org, name, password, oauth)
         return self.jama_connection
-
+    
+    def match_token(self, token):
+        if self.token == token:
+            return True
+        else:
+            return False
 
 class connections:
     def __init__(self):
@@ -47,4 +58,12 @@ class connections:
         self.all_connections.append(new_connection)
         return new_connection
 
+    def get_session(self, token):
+        num_sessions = len(self.all_connections)
+        for session in range(num_sessions):
+            connection = self.all_connections[session]
+            if(connection.match_token(token)):
+                return connection
+            else:
+                return None
 cur_connections = connections()

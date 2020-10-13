@@ -32,3 +32,14 @@ def verify_login():
             status = Response(status=400)
             return status
         return jwt
+
+@server.route('/users')
+def get_all_user():
+    if request.method == "GET":
+        arg = request.values
+        token = arg.get("Authorization")
+        session = functions.get_session(token)
+        if session == None:
+            status = Response(500)
+            return status
+        return functions.get_cur_users()
