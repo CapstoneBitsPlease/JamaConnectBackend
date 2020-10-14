@@ -1,6 +1,8 @@
 import json
 from py_jama_rest_client.client import JamaClient
-from .database import *
+import database
+import connections
+
 
 def get_projects(clientID, ClientPass, oauthFlag):
 
@@ -18,7 +20,7 @@ def get_projects(clientID, ClientPass, oauthFlag):
         print('\n---------------' + project_name + '------------------')
 
 
-    # Print each field
+    # Print each fieldls
     #
     for field_name, field_data in project.items():
 
@@ -38,6 +40,29 @@ def get_projects(clientID, ClientPass, oauthFlag):
 
     return projects
 
-def login(Username, Password, oauth):
-    cursor = get_db().cursor()
+# function fo defining Jama and Jira user authentications
+# as well as session creation. 
+def authenticate_user(organization, username, password):
+
+    session = connections.cur_connections.new_connection()
+    
+    if(session.initiate_jama(organization, username, password, False) == "invalid"):
+        return "invalid"
+
+    projects = session.jama_connection.jama_client.get_projects()
+    #user = session.jama_connection.jama_client.g
+    print("user has been authenticated")
+    return {"Authorization": session.token}
+
+def get_session(token):
+    session = connections.cur_connections.get_session(token)
+    return session
+    
+def get_cur_users():
+    connection_list = connections.cur_connections.all_connections
+    number = len(connection_list)
+    return {"number of users": number}
+    
+
+
     
