@@ -52,7 +52,7 @@ def authenticate_user(organization, username, password):
     projects = session.jama_connection.jama_client.get_projects()
     #user = session.jama_connection.jama_client.g
     print("user has been authenticated")
-    return {"Authorization": session.token}
+    return session.id
 
 def get_session(token):
     session = connections.cur_connections.get_session(token)

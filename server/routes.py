@@ -3,6 +3,12 @@ import base64
 from flask import request
 from flask import Response
 import functions
+from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , get_jwt_identity)
+from flask import jsonify
+
+
+server.config['JWT_SECRET_KEY']= 'Change_at_some_point' #replace with a real secret?
+jwt = JWTManager(server)
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
@@ -22,16 +28,26 @@ def verify_login():
     if request.method == "POST":
         #request.values converts form items AND URLstring encoded items into a dict
         cred = request.values
-        print(cred)
         username = cred.get("username")
         password = cred.get("password")
         organization = cred.get("organization")
+        
         #authenticate the Jama user
-        jwt = functions.authenticate_user(organization,username, password)
-        if(jwt == "invalid"):
+        connection_id = functions.authenticate_user(organization, username, password)
+        if(connection_id == "invalid"):
             status = Response(status=400)
             return status
-        return jwt
+        
+        #generate the JWT to use as uthentication for future transactions
+        access_token = create_access_token(identity={"username":username,"connection_id":connection_id})
+        return jsonify(access_token=access_token), 200
+
+@server.route('/user')
+@jwt_required
+def user():
+    current_connection = get_jwt_identity()
+    return jsonify(Jama_Login=current_connection), 200
+
 
 @server.route('/users')
 def get_all_user():
@@ -43,3 +59,8 @@ def get_all_user():
             status = Response(500)
             return status
         return functions.get_cur_users()
+
+@server.route('/jama_item')
+@jwt_required
+def jama_item():
+    return 1

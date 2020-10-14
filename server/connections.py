@@ -7,6 +7,7 @@
 from py_jama_rest_client.client import JamaClient
 import string
 import random
+import uuid
 
 secret = "Change me plz"
 
@@ -23,9 +24,6 @@ class jama_connection:
         except:
             print("Invalid credentials")
 
-
-            
-
 class jira_connection:
     def __init__(self, organization, username, password):
         self.organization = organization
@@ -36,15 +34,14 @@ class connection:
     def __init__(self):
         self.jama_connection = None
         self.jira_connection = None
-        self.token = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64))
-        print(self.token)
+        self.id = uuid.uuid4()
     
     def initiate_jama(self, org, name, password, oauth):
         self.jama_connection = jama_connection(org, name, password, oauth)
         return self.jama_connection
     
     def match_token(self, token):
-        if self.token == token:
+        if self.id == token:
             return True
         else:
             return False
