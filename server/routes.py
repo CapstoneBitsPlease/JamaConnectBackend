@@ -6,7 +6,7 @@ import functions
 from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , get_jwt_identity)
 from flask import jsonify
 
-
+# setup for the JWT
 server.config['JWT_SECRET_KEY']= 'Change_at_some_point' #replace with a real secret?
 jwt = JWTManager(server)
 
@@ -47,7 +47,6 @@ def verify_login():
 def user():
     current_connection = get_jwt_identity()
     return jsonify(Jama_Login=current_connection), 200
-
 
 @server.route('/users')
 def get_all_user():
