@@ -12,8 +12,8 @@ def authenticate_user(organization, username, password):
     
     if(session.initiate_jama(organization, username, password, False) == "invalid"):
         return "invalid"
-
-    projects = session.jama_connection.jama_client.get_projects()
+    
+    projects = session.jama_connection.get_projects()
     #user = session.jama_connection.jama_client.g
     print("user has been authenticated")
     return session.id
