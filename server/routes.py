@@ -38,9 +38,11 @@ def verify_login():
             status = Response(status=400)
             return status
         
-        #generate the JWT to use as uthentication for future transactions
+        #generate the JWT to use as authentication for future transactions
         access_token = create_access_token(identity={"username":username,"connection_id":connection_id})
-        return jsonify(access_token=access_token), 200
+        response = jsonify({"access_token": access_token})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 200
 
 @server.route('/user')
 @jwt_required
