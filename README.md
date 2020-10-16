@@ -9,7 +9,13 @@ install flask:`pip3 install flask`
 install the java web token library `pip3 install flask-jwt-extended`
 
 ## To run
-flask can be run quite nicely from through VS Code `shft+cmd+D` will take you to the debug console. from there you will be given the option of running the code. select `python: flask app` from the list of options and set the path to server.py
+### Through the CLI
+navigate into the server folder then run `python routes.py`
+
+this will start the server on HTTP://0.0.0.0:50000 and you wont get any of the nice VS code debugging tools.
+
+
+to run through VS Code `shft+cmd+D` will take you to the debug console. from there you will be given the option of running the code. select `python: flask app` from the list of options and set the path to server.py
 
 see link for more information about running flask in VS Code
 

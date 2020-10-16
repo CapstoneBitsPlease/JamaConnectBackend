@@ -11,9 +11,9 @@
             "request": "launch",
             "module": "flask",
             "env": {
-                "FLASK_APP": "server.py",
+                "FLASK_APP": "bitsplz.py",
                 "FLASK_ENV": "development",
-                "FLASK_DEBUG": "1",
+                "FLASK_DEBUG": "0",
                 "PYTHONPATH": "server"
             },
             "args": [
