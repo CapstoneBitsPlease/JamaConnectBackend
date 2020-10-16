@@ -1,4 +1,7 @@
-from server import server
+from flask import Flask
+
+app = Flask(__name__)
+
 import base64
 from flask import request
 from flask import Response
@@ -7,14 +10,14 @@ from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , 
 from flask import jsonify
 
 # setup for the JWT
-server.config['JWT_SECRET_KEY']= 'Change_at_some_point' #replace with a real secret?
-jwt = JWTManager(server)
+app.config['JWT_SECRET_KEY']= 'Change_at_some_point' #replace with a real secret?
+jwt = JWTManager(app)
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
 # the indicated URL.
-@server.route('/')
-@server.route('/index')
+@app.route('/')
+@app.route('/index')
 def index():
     return "hello world"
 
@@ -23,7 +26,7 @@ def index():
 #function call.
 
 #Login validation interface
-@server.route('/login/basic', methods=['GET', 'POST'])
+@app.route('/login/basic', methods=['GET', 'POST'])
 def verify_login():
     if request.method == "POST":
         #request.values converts form items AND URLstring encoded items into a dict
@@ -44,13 +47,13 @@ def verify_login():
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response, 200
 
-@server.route('/user')
+@app.route('/user')
 @jwt_required
 def user():
     current_connection = get_jwt_identity()
     return jsonify(Jama_Login=current_connection), 200
 
-@server.route('/users')
+@app.route('/users')
 def get_all_user():
     if request.method == "GET":
         arg = request.values
@@ -61,7 +64,10 @@ def get_all_user():
             return status
         return functions.get_cur_users()
 
-@server.route('/jama_item')
+@app.route('/jama_item')
 @jwt_required
 def jama_item():
     return 1
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', debug=True)
