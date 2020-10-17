@@ -6,6 +6,34 @@
 
 from py_jama_rest_client.client import JamaClient
 import uuid
+import requests
+from requests.auth import HTTPBasicAuth
+import json
+from atlassian import Jira
+
+class jira_connection:
+    def __init__(self, org, username, password):
+        self.username = username
+        self.token = password
+        self.url = "https://"+org+".atlassian.com/rest/api/3/"
+    
+    def get_item_types(self):
+
+        auth = HTTPBasicAuth(self.username, self.token)
+
+        headers = {
+            "Accept": "application/json"
+        }
+
+        response = requests.request(
+            "GET",
+            self.url,
+            headers=headers,
+            auth=auth
+        )
+
+        return response
+
 
 class connection:
     def __init__(self):
@@ -21,6 +49,11 @@ class connection:
         self.jama_connection = JamaClient(host_domain=jama_url, credentials=(username, password), oauth=False)
         return self.jama_connection
     
+    def initiate_jira(self, org, username, password):
+        url = "https://" + org +".atlassian.net"
+        self.jira_connection = Jira(url=url, username=username, password=password)
+        return self.jira_connection
+
     def match_token(self, token):
         if self.id == token:
             return True
@@ -48,4 +81,6 @@ class connections:
                 return connection
             else:
                 return None
+
+
 cur_connections = connections()

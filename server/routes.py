@@ -5,6 +5,7 @@ from flask import Response
 import functions
 from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , get_jwt_identity)
 from flask import jsonify
+import connections
 
 # setup for the JWT
 server.config['JWT_SECRET_KEY']= 'Change_at_some_point' #replace with a real secret?
@@ -42,6 +43,26 @@ def verify_login():
         access_token = create_access_token(identity={"username":username,"connection_id":connection_id})
         return jsonify(access_token=access_token), 200
 
+@server.route('/login/jira/basic', methods=['POST'])
+def initialize_jira():
+    cred = request.values
+    org = cred["organization"]
+    username = cred["username"]
+    password = cred["password"]
+
+    token = request.values.get("Authorization")
+    session = None
+    
+    if(token):
+        session = functions.get_session(token)
+    else:
+        session = connections.cur_connections.new_connection()
+    
+    session.initiate_jira(org, username, password)
+
+    access_token = create_access_token(identity={"connection_id":session.id})
+    return jsonify(access_token=access_token), 200
+
 @server.route('/user')
 @jwt_required
 def user():
@@ -63,3 +84,12 @@ def get_all_user():
 @jwt_required
 def jama_item():
     return 1
+
+@server.route('/Jira_item_types')
+@jwt_required
+def item_types():
+    identity = get_jwt_identity()
+    token = identity.get("connection_id")
+    print(token)
+    session = functions.get_session(token)
+    return functions.jira_item_types(session)

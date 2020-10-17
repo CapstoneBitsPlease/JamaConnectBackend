@@ -28,4 +28,11 @@ def get_cur_users():
     connection_list = connections.cur_connections.all_connections
     number = len(connection_list)
     return {"number of users": number}
-    
+
+def get_all_jira_items(session):
+    jira_client = connections.jira_connection('capstone2020teamb', 'sduncan@pdx.edu', 'z7ChqFTNfhm1fBcmX9yIDF4E')
+    return jira_client.get_item_types()
+
+def jira_item_types(session):
+    response = session.jira_connection.get_item_types()
+    return response
