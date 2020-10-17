@@ -29,3 +29,6 @@ def get_cur_users():
     number = len(connection_list)
     return {"number of users": number}
     
+#gets all Jama projects that user is allowed to see
+def get_projects(session):
+    return session.jama_connection.jama_client.get_projects() 

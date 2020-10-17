@@ -1,6 +1,4 @@
-from flask import Flask
-
-app = Flask(__name__)
+from server import server
 
 import base64
 from flask import request
@@ -10,14 +8,14 @@ from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , 
 from flask import jsonify
 
 # setup for the JWT
-app.config['JWT_SECRET_KEY']= 'Change_at_some_point' #replace with a real secret?
-jwt = JWTManager(app)
+server.config['JWT_SECRET_KEY']= 'Change this' #replace with a real secret?
+jwt = JWTManager(server)
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
 # the indicated URL.
-@app.route('/')
-@app.route('/index')
+@server.route('/')
+@server.route('/index')
 def index():
     return "hello world"
 
@@ -26,7 +24,7 @@ def index():
 #function call.
 
 #Login validation interface
-@app.route('/login/basic', methods=['GET', 'POST'])
+@server.route('/login/basic', methods=['GET', 'POST'])
 def verify_login():
     if request.method == "POST":
         #request.values converts form items AND URLstring encoded items into a dict
@@ -43,17 +41,17 @@ def verify_login():
         
         #generate the JWT to use as authentication for future transactions
         access_token = create_access_token(identity={"username":username,"connection_id":connection_id})
-        response = jsonify({"access_token": access_token})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response = jsonify(access_token=access_token)
         return response, 200
 
-@app.route('/user')
+@server.route('/user')
 @jwt_required
 def user():
     current_connection = get_jwt_identity()
-    return jsonify(Jama_Login=current_connection), 200
+    response = jsonify(Jama_Login=current_connection)
+    return response, 200
 
-@app.route('/users')
+@server.route('/users')
 def get_all_user():
     if request.method == "GET":
         arg = request.values
@@ -63,11 +61,23 @@ def get_all_user():
             status = Response(500)
             return status
         return functions.get_cur_users()
+        
 
-@app.route('/jama_item')
+@server.route('/jama_item')
 @jwt_required
 def jama_item():
     return 1
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+@server.route('/get_jama_projects')
+@jwt_required
+def get_jama_projects():
+    if request.method == "GET":
+        arg = request.values
+        token = arg.get("Authorization")
+        session = functions.get_session(token)
+        if session == None:
+            status = Response(500)
+            return status
+        return jsonify(projects=functions.get_projects(session))
+
+
