@@ -79,16 +79,16 @@ class DatabaseOperations:
 
     # Renames column.
     def rename_column(self, table_name, current_column_name, new_column_name):
-        conn = connect_to_db()
+        conn = self.connect_to_db()
         if conn:
             c = conn.cursor()
             c.execute("ALTER TABLE "+table_name+" RENAME COLUMN "+current_column_name+" TO "+new_column_name+"")
             conn.commit()
-            close_connection(conn)
+            self.close_connection(conn)
 
     # Creates a new table based on parameters.
     def create_table(self, table_name, columns, types):
-        conn = connect_to_db()
+        conn = self.connect_to_db()
         if conn:
             num_columns = len(columns)
             num_types = len(types)
@@ -107,7 +107,7 @@ class DatabaseOperations:
                 print(sql)
                 c.execute(sql)
                 conn.commit()
-                close_connection(conn)
+                self.close_connection(conn)
 
 
 # Operations for the Items table. When columns are added or updated, make sure to update them in
