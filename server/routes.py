@@ -30,7 +30,7 @@ def index():
 #function call.
 
 #Login validation interface
-@app.route('/login/basic', methods=['GET', 'POST'])
+@app.route('/login/jama/basic', methods=['GET', 'POST'])
 def initalize_jama():
     if request.method == "POST":
         #request.values converts form items AND URLstring encoded items into a dict
