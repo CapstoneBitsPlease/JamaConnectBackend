@@ -10,49 +10,44 @@ import requests
 from requests.auth import HTTPBasicAuth
 import json
 from atlassian import Jira
-
-class jira_connection:
-    def __init__(self, org, username, password):
-        self.username = username
-        self.token = password
-        self.url = "https://"+org+".atlassian.com/rest/api/3/"
-    
-    def get_item_types(self):
-
-        auth = HTTPBasicAuth(self.username, self.token)
-
-        headers = {
-            "Accept": "application/json"
-        }
-
-        response = requests.request(
-            "GET",
-            self.url,
-            headers=headers,
-            auth=auth
-        )
-
-        return response
+from atlassian.errors import ApiError
+from py_jama_rest_client.client import *
 
 
 class connection:
     def __init__(self):
         self.jama_connection = None
         self.jira_connection = None
-        self.id = uuid.uuid4()
+        self.id = str(uuid.uuid4())
     
     def initiate_jama(self, org, username, password, oauth=False):
         #build the URL with the org name
         jama_url = "https://" + org +".jamacloud.com"
         
-        #initialize a jama connection and save it.
-        self.jama_connection = JamaClient(host_domain=jama_url, credentials=(username, password), oauth=False)
-        return self.jama_connection
+        #initialize a jama connection and test to see if it valid
+        jama_connection = JamaClient(host_domain=jama_url, credentials=(username, password), oauth=False)
+        try:
+            jama_connection.get_projects()
+        except APIException as error:
+            return error.status_code
+        
+        #if it was valid save it and return a 200 status code
+        self.jama_connection = jama_connection
+        return 200
     
     def initiate_jira(self, org, username, password):
+        #build the URL with the org name
         url = "https://" + org +".atlassian.net"
-        self.jira_connection = Jira(url=url, username=username, password=password)
-        return self.jira_connection
+        #initalize the jira connection
+        jira_connection = Jira(url=url, username=username, password=password)
+
+        try:
+            jira_connection.get_all_projects()
+        except:
+            return 401
+        
+        self.jira_connection = jira_connection
+        return 200
 
     def match_token(self, token):
         if self.id == token:
@@ -73,14 +68,13 @@ class connections:
         return new_connection
 
     #takes a session UUID and return the session object
+    #if there is no token then it returns none
     def get_session(self, token):
+        if not token:
+            return None
         num_sessions = len(self.all_connections)
-        for session in range(num_sessions):
+        for session in range(0,num_sessions):
             connection = self.all_connections[session]
             if(connection.match_token(token)):
                 return connection
-            else:
-                return None
-
-
-cur_connections = connections()
+        return None

@@ -11,7 +11,7 @@
             "request": "launch",
             "module": "flask",
             "env": {
-                "FLASK_APP": "server.py",
+                "FLASK_APP": "routes.py",
                 "FLASK_ENV": "development",
                 "FLASK_DEBUG": "1",
                 "PYTHONPATH": "server"
