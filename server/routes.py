@@ -62,7 +62,7 @@ def get_all_user():
             return status
         return functions.get_cur_users()
 
-@app.route('/jama_item')
+@app.route('/item')
 @jwt_required
 def jama_item():
     return 1
