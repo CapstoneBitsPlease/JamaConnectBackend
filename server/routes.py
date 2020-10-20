@@ -1,3 +1,7 @@
+from flask import Flask
+
+app = Flask(__name__)
+
 import base64
 from flask import Flask
 from flask import request
@@ -16,6 +20,7 @@ jwt = JWTManager(app)
 
 #create the active connection list
 cur_connections = connections.connections()
+
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
@@ -94,7 +99,6 @@ def initialize_jira():
 @app.route('/user')
 @jwt_required
 def user():
-
     #This is basicaly the authenticaion chunk
     token = get_jwt_identity()
     uuid = token.get("connection_id")
@@ -135,3 +139,6 @@ def item_types():
     print(token)
     session = functions.get_session(token)
     return session
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', debug=True)
