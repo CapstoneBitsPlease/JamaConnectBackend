@@ -13,15 +13,16 @@ namespace PSUCapstoneTestingProject.Back_end
     public class ChromeBackEndAPITests
     {
         IWebDriver driver;
-        string login_url;
+        string jama_login_url;
         string index_url;
 
         [OneTimeSetUp]
         public void Setup()
         {
             driver = new ChromeDriver("C:/Users/Brandon Danielski/Documents");
-            login_url = "http://127.0.0.1:5000/login/basic";
+            jama_login_url = "http://127.0.0.1:5000/login/basic";
             index_url = "http://127.0.0.1:5000/index";
+            
         }
 
         [Test]
@@ -33,11 +34,11 @@ namespace PSUCapstoneTestingProject.Back_end
         }
 
         [Test]
-        public void login_ping()
+        public void jama_login_ping()
         {
-            driver.Url = login_url;
+            driver.Url = jama_login_url;
             driver.Navigate();
-            Assert.IsTrue(driver.Url.ToString().Equals(login_url));
+            Assert.IsTrue(driver.Url.ToString().Equals(jama_login_url));
         }
     }
 }

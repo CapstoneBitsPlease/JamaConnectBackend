@@ -8,7 +8,7 @@ using OpenQA.Selenium;
 
 namespace PSUCapstoneTestingProject.Back_end.Sprint1
 {
-    class BackEndAPITests
+    class BackEndLoginTestsJama
     {
         string username;
         string password;
