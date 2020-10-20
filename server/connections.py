@@ -49,6 +49,14 @@ class connection:
         self.jira_connection = jira_connection
         return 200
 
+    def get_project_list(self):
+        response = self.jama_connection.get_projects()
+        projects=[]
+        for project in response:
+            item = {"name":project["fields"]["name"], "id":project["id"]}
+            projects.append(item)
+        return projects
+
     def match_token(self, token):
         if self.id == token:
             return True

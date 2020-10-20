@@ -126,6 +126,20 @@ def get_all_user():
             return status
         return {"Number of current connections": len(cur_connections.all_connections)}, 200
 
+@app.route('/jama/projects')
+@jwt_required
+def getprojects():
+    #This is basicaly the authenticaion chunk
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+
+    if session.jama_connection:
+        projects = session.get_project_list()
+        return jsonify(projects)
+    else:
+        return Response(401)
+
 @app.route('/jama_item')
 @jwt_required
 def jama_item():
