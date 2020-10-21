@@ -139,5 +139,69 @@ def item_types():
     session = functions.get_session(token)
     return session
 
+# retrieves all Jama projects 
+@app.route('/jama_projects')
+@jwt_required
+def jama_projects():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    if session.jama_connection:
+        projects = session.get_project_list()
+        return jsonify(projects)
+    else:
+        return Response(401)
+
+# retrieves all Jama items in a given project
+@app.route('/jama_items')
+@jwt_required
+def jama_items():
+    # validate the user
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    # get the Jama items in the given project
+    if session.jama_connection and request.method == 'GET':
+        arguments = request.values
+        project_id = arguments.get("projectid")
+        items = session.get_item_list(project_id)
+        return jsonify(items)
+    else:
+        return Response(401)
+    
+# retrieves all Jama item types of a given project 
+@app.route('/item_types_of_project')
+@jwt_required
+def item_types_of_project():
+    # validate the user
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    # get the Jama item types of a given project
+    if session.jama_connection and request.method == 'GET':
+        arguments = request.values
+        project_id = arguments.get("projectid")
+        item_types = session.get_item_types_of_project_list(project_id)
+        return jsonify(item_types)
+    else:
+        return Response(401)
+
+# retrieves all Jama item types across all projects 
+@app.route('/jama_item_types')
+@jwt_required
+def jama_item_types():
+    # validate the user
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    # get the Jama item types across all projects
+    if session.jama_connection:
+        item_types = session.get_item_type_list()
+        return jsonify(item_types)
+    else:
+        return Response(401)
+
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

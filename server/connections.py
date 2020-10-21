@@ -49,6 +49,43 @@ class connection:
         self.jira_connection = jira_connection
         return 200
 
+    # returns a dictionary with the name and id of all projects
+    def get_project_list(self):
+        response = self.jama_connection.get_projects()
+        projects=[]
+        for project in response:
+            item = {"name":project["fields"]["name"], "id":project["id"]}
+            projects.append(item)
+        return projects
+
+    # returns a dictionary with the name, id, and item_type of all items in a given project
+    def get_item_list(self, project_id):
+        response = self.jama_connection.get_items(project_id)
+        items = []
+        for item in response:
+            entry = {"name":item["fields"]["name"], "id":item["id"], "item_type":item["itemType"]}
+            items.append(entry)
+        return items
+
+    # returns a dictionary with the name and id of all item_types
+    def get_item_type_list(self):
+        response = self.jama_connection.get_item_types()
+        item_types = []
+        for item_type in response:
+            entry = {"name":item_type["fields"][0]["name"], "id":item_type["id"]}
+            item_types.append(entry)
+        return item_types
+
+    # returns a dictionary with the name and id of all item_types
+    def get_item_types_of_project_list(self, project_id):
+        response = self.jama_connection.get_item_types_of_project(project_id)
+        item_types = []
+        for item_type in response:
+            entry = {"name":item_type["fields"][0]["name"], "id":item_type["id"]}
+            item_types.append(entry)
+        return item_types
+    
+
     def match_token(self, token):
         if self.id == token:
             return True
