@@ -1,20 +1,21 @@
-from server import server
+from flask import Flask
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
 
 import base64
-from flask import Flask
 from flask import request
 from flask import Response
 
-app = Flask(__name__)
-
 import functions
 from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , get_jwt_identity)
-from flask import jsonify
+from flask import jsonify 
 import connections
 
 # setup for the JWT
-server.config['JWT_SECRET_KEY']= 'Change this' #replace with a real secret?
-jwt = JWTManager(server)
+app.config['JWT_SECRET_KEY']= 'Change this' #replace with a real secret?
+jwt = JWTManager(app)
 
 #create the active connection list
 cur_connections = connections.connections()
@@ -23,8 +24,8 @@ cur_connections = connections.connections()
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
 # the indicated URL.
-@server.route('/')
-@server.route('/index')
+@app.route('/')
+@app.route('/index')
 def index():
     return "hello world"
 
@@ -94,7 +95,7 @@ def initialize_jira():
         access_token = create_access_token(identity={"connection_id":session.id})
         return jsonify(access_token=access_token), 200
 
-@server.route('/user')
+@app.route('/user')
 @jwt_required
 def user():
     #This is basicaly the authenticaion chunk
@@ -124,7 +125,7 @@ def get_all_user():
             return status
         return {"Number of current connections": len(cur_connections.all_connections)}, 200
 
-@server.route('/jama_item')
+@app.route('/jama_item')
 @jwt_required
 def jama_item():
     return 1
