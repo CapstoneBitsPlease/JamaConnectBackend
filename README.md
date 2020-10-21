@@ -4,6 +4,13 @@
 ## requirements
 install PyJama: https://github.com/jamasoftware-ps/py-jama-rest-client
 
+install Atlassian python client: `pip3 install atlassian-python-api`
+
+Authentication documentation with atlassian python api: https://atlassian-python-api.readthedocs.io/
+
+jira module documentation: https://atlassian-python-api.readthedocs.io/jira.html
+
+
 install flask:`pip3 install flask`
 
 install the java web token library `pip3 install flask-jwt-extended`
