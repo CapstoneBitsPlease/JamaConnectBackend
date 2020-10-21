@@ -23,8 +23,8 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         [OneTimeSetUp]
         public void setup()
         {
-            username = "bld";
-            password = "September217";
+            username = "capstone_tester";
+            password = "capstoneBITZpls!0";
             organization = "capstone2020";
             loginURL = "http://127.0.0.1:5000/login/basic";
             userURL = "http://127.0.0.1:5000/users";
