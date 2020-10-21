@@ -28,14 +28,16 @@ class DatabaseOperations:
             conn.close()
 
     # Inserts one item into a given table and verifies that values added to table match expected.
-    def insert_into_db(self, table_name, primary_key, c2, c3, c4, c5=None):
+    def insert_into_db(self, table_name, primary_key, c2, c3, c4, c5=None, c6 = None, c7 = None):
         conn = self.connect_to_db()
         if conn:
             c = conn.cursor()
             if c5 == None:
                 c.execute("INSERT INTO "+table_name+" VALUES(?, ?, ?, ?)", (primary_key, c2, c3, c4))
-            else:
+            elif c6 == None:
                 c.execute("INSERT INTO "+table_name+" VALUES(?, ?, ?, ?, ?)", (primary_key, c2, c3, c4, c5))
+            else: 
+                c.execute("INSERT INTO "+table_name+" VALUES(?, ?, ?, ?, ?, ?, ?)", (primary_key, c2, c3, c4, c5, c6, c7))
             conn.commit()
             self.close_connection(conn)
         else:
@@ -109,6 +111,24 @@ class DatabaseOperations:
                 conn.commit()
                 self.close_connection(conn)
 
+    # Adds a column to an existing table. Note: cannot have UNIQUE or PRIMARY KEY contraints.
+    def add_column(self, table_name, column_name, column_type):
+        conn = self.connect_to_db()
+        if conn:
+            c = conn.cursor()
+            c.execute("ALTER TABLE "+table_name+" ADD COLUMN "+column_name+" "+column_type+"")
+            conn.commit()
+            self.close_connection(conn)
+
+    # Deletes an existing table. ***USE WITH CAUTION
+    def delete_table(self, table_name):
+        conn = self.connect_to_db()
+        if conn:
+            c = conn.cursor()
+            c.execute("DROP TABLE "+table_name+"")
+            conn.commit()
+            self.close_connection(conn)
+
 
 # Operations for the Items table. When columns are added or updated, make sure to update them in
 # the __init__ method.
@@ -120,6 +140,8 @@ class ItemsTableOps:
         self.linked_id_col = "LinkedID" # TYPE: INT
         self.service_col = "Service" # TYPE: STRING
         self.type_col = "Type" # TYPE: STRING
+        self.project_id = "ProjectID" # TYPE: UNIQUE INT
+        self.last_sync_time = "LastSyncTime" # TYPE: DATETIME, ms precision
         self.table_name = "Items"
         self.db_ops = DatabaseOperations(path)
     
@@ -135,10 +157,10 @@ class ItemsTableOps:
         return self.db_ops.retrieve_by_column_value(self.table_name, self.linked_id_col, linked_id)
 
     def retrieve_by_service(self, service):
-        return self.db_ops.retrieve_by_service(self.table_name, self.service_col, service)
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.service_col, service)
     
     def retrieve_by_type(self, type_):
-        return self.db_ops.retrieve_by_service(self.table_name, self.type_col, type_)
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.type_col, type_)
 
      # # # UPDATE METHODS FOR ITEMS TABLE # # #
 
@@ -162,8 +184,8 @@ class ItemsTableOps:
     # # # INSERT METHODS FOR ITEMS TABLE # # #
     
     # Inserts one item into the Items table.
-    def insert_into_items_table(self, id, title, type, service, linked_id):
-        self.db_ops.insert_into_db(self.table_name, id, title, type, service, linked_id)
+    def insert_into_items_table(self, id, title, type, service, linked_id, project_id, last_sync_time):
+        self.db_ops.insert_into_db(self.table_name, id, title, type, service, linked_id, project_id, last_sync_time)
 
     # # # DELETE METHODS FOR ITEMS TABLE # # #
     def delete_item(self, item_id):
@@ -303,23 +325,32 @@ if __name__ == '__main__':
     fields_table_ops = FieldsTableOps(db_path)
     sync_table_ops = SyncInformationTableOps(db_path)
 
-    # Demo create table. Define list of types and columns to pass in to method.
-    '''columns = ["SyncID", "StartTime", "EndTime", "CompletedSuccessfully"]
-    types = ["INT PRIMARY KEY NOT NULL", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "DATETIME DEFAULT(NULL)", "INT"]
-    db_ops.create_table("SyncInformation", columns, types)'''
+    # Demo create Items table. Define list of types and columns to pass in to method.
+    '''columns = ["ID", "Title", "LinkedID", "Service", "Type", "ProjectID", "LastSyncTime"]
+    types = ["INT PRIMARY KEY NOT NULL", "STRING", "INT UNIQUE", "STRING", "STRING", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))"]
+    db_ops.create_table("Items", columns, types)'''
+
+    # Demo create Fields table. Define list of types and columns to pass in to method.
+    '''columns = ["FieldID", "ItemID", "LastUpdated", "JamaName", "JiraName"]
+    types = ["INT PRIMARY KEY NOT NULL", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "STRING", "STRING"]
+    db_ops.create_table("Fields", columns, types)'''
 
     # Demo rename column. Takes the table name, current column name and updated column name as args.
-    '''db_ops.rename_column(fields_table, "Item", "ItemID")'''
+    #db_ops.rename_column(items_table, "Project", "LastSyncTime")
+    # Demo delete table. ***USE WITH CAUTION***
+    ####### db_ops.delete_table(items_table)
+    # Demo add column to existing table.
+    #db_ops.add_column(items_table, "LastSyncTime", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))")
 
     # Demo INSERT query. NOTE: field id and item id must be unique in order to be added.
     time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
-    items_table_ops.insert_into_items_table(item_id, 'ticketx', 'ticket', 'Jama', 'NULL')
+    items_table_ops.insert_into_items_table(item_id, 'ticketx', 'ticket', 'Jama', 'NULL', "217", time)
     fields_table_ops.insert_into_fields_table(field_id, "1", time, 'Issue', 'Ticket')
 
     # Demo SELECT query.
     item_row = items_table_ops.retrieve_by_item_id(item_id)
     print("Retrieved from items table: ", item_row)
-    field_row = fields_table_ops.retrieve_by_item_id(field_id)
+    field_row = fields_table_ops.retrieve_by_field_id(field_id)
     print("Retrieved from fields table: ", field_row)
 
     # Demo UPDATE query.
