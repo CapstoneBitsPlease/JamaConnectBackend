@@ -64,8 +64,16 @@ def get_all_user():
 
 @app.route('/item')
 @jwt_required
-def jama_item():
-    return 1
+def get_item():
+    if request.method == "GET":
+        arg = request.values
+        item_id = arg.get("ItemID")
+        item = functions.get_item(item_id)
+        if item == None:
+            status = Response(500)
+            return status
+        return jsonify(Item=item), 200
+        
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

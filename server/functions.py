@@ -3,7 +3,6 @@ from py_jama_rest_client.client import JamaClient
 import database
 import connections
 
-
 # function fo defining Jama and Jira user authentications
 # as well as session creation. 
 def authenticate_user(organization, username, password):
@@ -28,4 +27,9 @@ def get_cur_users():
     connection_list = connections.cur_connections.all_connections
     number = len(connection_list)
     return {"number of users": number}
-    
+
+# gets information about an item based on the provided item id
+def get_item(item_id):
+    item = database.ItemsTableOps.retrieve_by_item_id(item_id)
+    item.get
+    return item
