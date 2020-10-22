@@ -28,13 +28,11 @@ class DatabaseOperations:
             conn.close()
 
     # Inserts one item into a given table and verifies that values added to table match expected.
-    def insert_into_db(self, table_name, primary_key, c2, c3, c4, c5=None, c6 = None, c7 = None):
+    def insert_into_db(self, table_name, primary_key, c2, c3, c4, c5, c6 = None, c7 = None):
         conn = self.connect_to_db()
         if conn:
             c = conn.cursor()
-            if c5 == None:
-                c.execute("INSERT INTO "+table_name+" VALUES(?, ?, ?, ?)", (primary_key, c2, c3, c4))
-            elif c6 == None:
+            if c6 == None:
                 c.execute("INSERT INTO "+table_name+" VALUES(?, ?, ?, ?, ?)", (primary_key, c2, c3, c4, c5))
             else: 
                 c.execute("INSERT INTO "+table_name+" VALUES(?, ?, ?, ?, ?, ?, ?)", (primary_key, c2, c3, c4, c5, c6, c7))
@@ -140,8 +138,8 @@ class ItemsTableOps:
         self.linked_id_col = "LinkedID" # TYPE: INT
         self.service_col = "Service" # TYPE: STRING
         self.type_col = "Type" # TYPE: STRING
-        self.project_id = "ProjectID" # TYPE: UNIQUE INT
-        self.last_sync_time = "LastSyncTime" # TYPE: DATETIME, ms precision
+        self.project_id_col = "ProjectID" # TYPE: UNIQUE INT
+        self.last_sync_time_col = "LastSyncTime" # TYPE: DATETIME, ms precision
         self.table_name = "Items"
         self.db_ops = DatabaseOperations(path)
     
@@ -162,6 +160,12 @@ class ItemsTableOps:
     def retrieve_by_type(self, type_):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.type_col, type_)
 
+    def retrieve_by_project_id(self, project_id):
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.project_id_col, project_id)
+
+    def retrieve_by_last_sync_time(self, last_sync_time):
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.last_sync_time_col, last_sync_time)
+
      # # # UPDATE METHODS FOR ITEMS TABLE # # #
 
      # Updates item title based on unique integer id.
@@ -180,6 +184,12 @@ class ItemsTableOps:
 
     def update_item_id(self, unique_id, new_unique_id):
         self.db_ops.update_existing_entry(self.table_name, self.item_id_col, self.item_id_col, unique_id, new_unique_id)
+
+    def update_project_id(self, unique_id, new_project_id):
+        self.db_ops.update_existing_entry(self.table_name, self.item_id_col, self.project_id_col, unique_id, new_project_id)
+    
+    def update_last_sync_time(self, unique_id, updated_sync_time):
+        self.db_ops.update_existing_entry(self.table_name, self.item_id_col, self.last_sync_time_col, unique_id, updated_sync_time)
 
     # # # INSERT METHODS FOR ITEMS TABLE # # #
     
@@ -262,6 +272,7 @@ class SyncInformationTableOps:
         self.start_time_col = "StartTime" # TYPE: DATETIME, ms precision.
         self.end_time_col = "EndTime" # TYPE: DATETIME, ms precision.
         self.completion_status_col = "CompletedSuccessfully" # TYPE: INT, 0 or 1. (functionally a boolean)
+        self.description_col = "Description" # TYPE: TEXT
         self.table_name = "SyncInformation"
         self.db_ops = DatabaseOperations(path)
 
@@ -279,6 +290,9 @@ class SyncInformationTableOps:
     def retrieve_by_completion_status(self, completed_successfully):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.completion_status_col, completed_successfully)
 
+    def retrieve_by_description(self, description):
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.description_col, description)
+
     # # # UPDATE METHODS # # #
     
     def update_sync_id(self, unique_id, new_unique_id):
@@ -293,11 +307,14 @@ class SyncInformationTableOps:
     def update_completion_status(self, unique_id, new_completion_status):
         self.db_ops.update_existing_entry(self.table_name, self.sync_id_col, self.completion_status_col, unique_id, new_completion_status)
 
+    def update_description(self, unique_id, description):
+        self.db_ops.update_existing_entry(self.table_name, self.sync_id_col, self.description_col, unique_id, description)
+
 
     # # # INSERT METHODS # # #
 
-    def insert_into_sync_table(self, sync_id, start_time, end_time, completed_successfully):
-        self.db_ops.insert_into_db(self.table_name, sync_id, start_time, end_time, completed_successfully)
+    def insert_into_sync_table(self, sync_id, start_time, end_time, completed_successfully, description):
+        self.db_ops.insert_into_db(self.table_name, sync_id, start_time, end_time, completed_successfully, description)
 
     # # # DELETE METHODS # # #
 
@@ -305,8 +322,74 @@ class SyncInformationTableOps:
     def delete_sync_record(self, sync_id):
         self.db_ops.delete_entry(self.table_name, self.sync_id_col, sync_id)
 
+    # # # OTHER SPROCS # # #
+
+    def get_recent_sync_failures(self, recent_date):
+        failed_syncs = self.retrieve_by_completion_status(0)
+        length = len(failed_syncs)
+        for i in range(0, length):
+            sync_id, start_time, end_time, completion_status, description = failed_syncs[i]
+            end = datetime.strptime(end_time, '%Y-%m-%d %H:%M:%f')
+            date = datetime.strptime(recent_date, '%Y-%m-%d %H:%M:%f')
+            print("#########################")
+            print("CURRENT DATE", date)
+            print("#########################")
+            if date <= end:
+                failed_syncs.append((sync_id, start_time, end_time, completion_status, description))
+        return failed_syncs
+        
 
 
+def demo_sync_methods(db_path):
+    sync_id = 17
+    sync_table_ops = SyncInformationTableOps(db_path)
+    recent_date = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    
+    # Demo create SyncInformation table.
+    '''columns = ["SyncID", "StartTime", "EndTime", "CompletedSuccessfully", "Description"]
+    types = ["INT PRIMARY KEY NOT NULL", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "DATETIME", "INT", "TEXT"]
+    db_ops.create_table("SyncInformation", columns, types)'''
+
+    sync_start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "0", "Sync in progress")
+
+    print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
+
+    sync_table_ops.update_completion_status(sync_id, "1")
+    sync_end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_table_ops.update_end_time(sync_id, sync_end_time)
+    sync_table_ops.update_description(sync_id, "Sync completed successfully")
+
+    sync_id += 1
+    sync_start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "0", "Sync in progress")
+
+    print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
+
+    sync_end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_table_ops.update_end_time(sync_id, sync_end_time)
+    sync_table_ops.update_description(sync_id, "ERROR: sync failed to complete, interrupted by manual override")
+
+    sync_id += 1
+    sync_start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "0", "Sync in progress")
+
+    print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
+
+    sync_end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_table_ops.update_end_time(sync_id, sync_end_time)
+    sync_table_ops.update_description(sync_id, "ERROR: sync failed to complete, unknown error")
+
+    print("Entries where sync failed: ", sync_table_ops.get_recent_sync_failures(recent_date))
+
+    sync_table_ops.delete_sync_record(sync_id)
+    sync_table_ops.delete_sync_record(sync_id-1)
+    sync_table_ops.delete_sync_record(sync_id-2)
+    print("Retrieved deleted sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
+    print("Retrieved deleted sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id-1))
+    print("Retrieved deleted sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id-2))
+
+    # Sync errors: sync was aborted, unknown error
 
 
 # Main method to demo functionality. Uncomment blocks to observe how they function.
@@ -317,13 +400,11 @@ if __name__ == '__main__':
     items_column = "ID"
     item_id = 100000
     field_id = 20023
-    sync_id = 1
     # Gets absolute path to root folder and appends database file. Should work on any machine.
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
     db_ops = DatabaseOperations(db_path)
     items_table_ops = ItemsTableOps(db_path)
     fields_table_ops = FieldsTableOps(db_path)
-    sync_table_ops = SyncInformationTableOps(db_path)
 
     # Demo create Items table. Define list of types and columns to pass in to method.
     '''columns = ["ID", "Title", "LinkedID", "Service", "Type", "ProjectID", "LastSyncTime"]
@@ -337,8 +418,9 @@ if __name__ == '__main__':
 
     # Demo rename column. Takes the table name, current column name and updated column name as args.
     #db_ops.rename_column(items_table, "Project", "LastSyncTime")
+
     # Demo delete table. ***USE WITH CAUTION***
-    ####### db_ops.delete_table(items_table)
+    # # # # # db_ops.delete_table("Table Name")
     # Demo add column to existing table.
     #db_ops.add_column(items_table, "LastSyncTime", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))")
 
@@ -371,12 +453,4 @@ if __name__ == '__main__':
     items_table_ops.delete_item(item_id)
     print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(item_id))
 
-    sync_start_time = time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
-    sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "1")
-
-    print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
-
-    sync_table_ops.update_completion_status(sync_id, "0")
-
-    sync_table_ops.delete_sync_record(sync_id)
-    print("Retrieved deleted sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
+    demo_sync_methods(db_path)
