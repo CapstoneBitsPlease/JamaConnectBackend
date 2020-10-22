@@ -152,54 +152,30 @@ def jama_projects():
     else:
         return Response(401)
 
-# retrieves all Jama items in a given project
-@app.route('/jama_items')
+@app.route('/last_sync_time')
 @jwt_required
-def jama_items():
+def last_sync_time():
     # validate the user
     token = get_jwt_identity()
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
-    # get the Jama items in the given project
+    # get the time of the last sync entry added to our database 
     if session.jama_connection and request.method == 'GET':
-        arguments = request.values
-        project_id = arguments.get("projectid")
-        items = session.get_item_list(project_id)
-        return jsonify(items)
+        last_sync_time = session.get_last_sync_time()
+        return jsonify(last_sync_time)
     else:
         return Response(401)
     
-# retrieves all Jama item types of a given project 
-@app.route('/item_types_of_project')
-@jwt_required
-def item_types_of_project():
-    # validate the user
-    token = get_jwt_identity()
-    uuid = token.get("connection_id")
-    session = cur_connections.get_session(uuid)
-    # get the Jama item types of a given project
-    if session.jama_connection and request.method == 'GET':
-        arguments = request.values
-        project_id = arguments.get("projectid")
-        item_types = session.get_item_types_of_project_list(project_id)
-        return jsonify(item_types)
-    else:
-        return Response(401)
 
-# retrieves all Jama item types across all projects 
-@app.route('/jama_item_types')
+@app.route('/sync_one')
 @jwt_required
-def jama_item_types():
-    # validate the user
-    token = get_jwt_identity()
-    uuid = token.get("connection_id")
-    session = cur_connections.get_session(uuid)
-    # get the Jama item types across all projects
-    if session.jama_connection:
-        item_types = session.get_item_type_list()
-        return jsonify(item_types)
-    else:
-        return Response(401)
+def sync_one():
+    return 1
+
+@app.route('/sync_all')
+@jwt_required
+def sync_all():
+    return 1
 
 
 
