@@ -337,7 +337,15 @@ class SyncInformationTableOps:
             if date <= end:
                 failed_syncs.append((sync_id, start_time, end_time, completion_status, description))
         return failed_syncs
-        
+
+    def get_most_recent_sync(self):
+        conn = self.db_ops.connect_to_db()
+        if conn:
+            c = conn.cursor()
+            c.execute("SELECT MAX(EndTime) FROM SyncInformation")
+            last_sync = c.fetchall()
+            self.db_ops.close_connection(conn)
+        return last_sync        
 
 
 def demo_sync_methods(db_path):
@@ -381,6 +389,8 @@ def demo_sync_methods(db_path):
     sync_table_ops.update_description(sync_id, "ERROR: sync failed to complete, unknown error")
 
     print("Entries where sync failed: ", sync_table_ops.get_recent_sync_failures(recent_date))
+
+    print("Most recent sync: ", sync_table_ops.get_most_recent_sync())
 
     sync_table_ops.delete_sync_record(sync_id)
     sync_table_ops.delete_sync_record(sync_id-1)
