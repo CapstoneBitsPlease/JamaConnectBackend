@@ -343,13 +343,17 @@ class SyncInformationTableOps:
         if conn:
             c = conn.cursor()
             c.execute("SELECT MAX(EndTime) FROM SyncInformation")
+            last_sync_array = c.fetchall()
+            last_sync_tuple = last_sync_array[0]
+            last_sync_time = ''.join(last_sync_tuple)
+            c.execute("SELECT * FROM "+self.table_name+" WHERE "+self.end_time_col+" = ?", (last_sync_time,))
             last_sync = c.fetchall()
             self.db_ops.close_connection(conn)
         return last_sync        
 
 
 def demo_sync_methods(db_path):
-    sync_id = 17
+    sync_id = 57
     sync_table_ops = SyncInformationTableOps(db_path)
     recent_date = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
     
