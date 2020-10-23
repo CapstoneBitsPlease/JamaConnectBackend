@@ -397,4 +397,5 @@ if __name__ == '__main__':
     items_table_ops.delete_item(53)
     items_table_ops.insert_into_items_table(53, 'ticketx', 'ticket', 'Jama', 10)
     linked_items = items_table_ops.get_linked_items()
+    print("Current linked items: ", linked_items)
 

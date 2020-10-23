@@ -166,16 +166,16 @@ def last_sync_time():
     else:
         return Response(401)
 
-@app.route('/items_ready_to_sync')
+@app.route('/fields_ready_to_sync')
 @jwt_required
-def items_ready_to_sync():
+def fields_ready_to_sync():
     # validate the user
     token = get_jwt_identity()
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
     if session.jama_connection and request.method == 'GET':
-        items_to_sync = functions.get_items_ready_to_sync()
-        return jsonify(items_to_sync)
+        fields_to_sync = functions.get_fields_ready_to_sync()
+        return jsonify(fields_to_sync)
     else:
         return Response(401)
 
