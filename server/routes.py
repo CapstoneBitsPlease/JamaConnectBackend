@@ -137,7 +137,7 @@ def item_types():
     identity = get_jwt_identity()
     token = identity.get("connection_id")
     print(token)
-    session = connections.get_session(token)
+    session = cur_connections.get_session(token)
     return session
 
 if __name__ == '__main__':
