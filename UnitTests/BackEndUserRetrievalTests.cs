@@ -6,7 +6,7 @@ using System.Net.Http.Headers;
 using NUnit.Framework;
 using OpenQA.Selenium;
 
-namespace PSUCapstoneTestingProject.Back_end.Sprint1
+namespace PSUCapstoneTestingProject.Back_end.UnitTests
 {
     class BackEndUserRetrievalTests
     {

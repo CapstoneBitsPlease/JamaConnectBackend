@@ -12,182 +12,70 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
     {
         class BackEndLoginTestsJama
         {
-            string username;
-            string password;
-            string organization;
-            string url;
-            HttpClient client;
-            string correct_parameters;
+            string jama_username;
+            string jama_password;
+            string jama_organization;
+            string jama_url;
+            HttpClient jama_client;
+            string correct_jama_parameters;
+
+            string jira_username;
+            string jira_password;
+            string jira_organization;
+            string jira_url;
+            HttpClient jira_client;
+            string correct_jira_parameters;
+
             string test_parameters;
+
             [OneTimeSetUp]
             public void setup()
             {
-                username = "capstone_tester";
-                password = "capstoneBITZpls!0";
-                organization = "capstone2020";
-                url = "http://127.0.0.1:5000/login/jira/basic";
-                client = new HttpClient();
-                //?username=bld&password=September217&organization=capstone2020
-                correct_parameters = "?username=" + username + "&password=" + password + "&organization=" + organization;
+
+
+                jira_username = "bld@pdx.edu";
+                jira_password = "kRqrISEH4OdcAz68Kg3CC018";
+                jira_organization = "capstone2020teamb";
+                jira_url = "http://127.0.0.1:5000/login/jira/basic";
+                jira_client = new HttpClient();
+                //correct_jira_parameters = "?username=" + jira_username + "&password=" + password + "&organization=" + jira_organization;
+
+                jama_username = "capstone_tester";
+                jama_password = "capstoneBITZpls!0";
+                jama_organization = "capstone2020";
+                jama_url = "http://127.0.0.1:5000/login/jama/basic";
+                jama_client = new HttpClient();
+                correct_jama_parameters = "?username=" + jama_username + "&password=" + jama_password + "&organization=" + jama_organization;
             }
 
             [Test]
             public void login_happy_path_test()
             {
-                client.BaseAddress = new Uri(url + correct_parameters);
-                HttpResponseMessage response = client.PostAsync(client.BaseAddress, null).Result;
-                if (response.IsSuccessStatusCode)
+                jama_client.BaseAddress = new Uri(jama_url + correct_jama_parameters);
+                HttpResponseMessage jama_login_response = jama_client.PostAsync(jama_client.BaseAddress, null).Result;
+                if (jama_login_response.IsSuccessStatusCode)
                 {
-                    Assert.Pass();
+                    string responseBody = jama_login_response.Content.ReadAsStringAsync().Result;
+                    responseBody = responseBody.Remove(responseBody.Length - 3);//Remove the ' "} ' from end of token.
+                    responseBody = responseBody.Substring(17);//Remove token return title.
+                    correct_jira_parameters = "?username=" + jira_username + "&password=" + responseBody + "&organization=" + jira_organization;
+                    jira_client.BaseAddress = new Uri(jira_url + correct_jira_parameters);
+                    jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + responseBody);
+                    HttpResponseMessage jira_login_response = jira_client.PostAsync(jira_client.BaseAddress,null).Result;
+                    if(jira_login_response.IsSuccessStatusCode)
+                    {
+                        Assert.Pass();
+                    }
+                    else
+                    {
+                        Assert.Fail("Jira request has failed! "+ (int)jira_login_response.StatusCode + ": " + jira_login_response.RequestMessage);
+                    }
+
                 }
                 else
                 {
-                    Assert.Fail("Request has failed!");
+                    Assert.Fail("Jama request has failed!"+ (int)jama_login_response.StatusCode + ": " + jama_login_response.RequestMessage);
                 }
-            }
-
-            [Test]
-            public void login_bad_username()
-            {
-                test_parameters = "?username=BadUsername&password=" + password + "&organization=" + organization;
-                client.BaseAddress = new Uri(url + test_parameters);
-                HttpResponseMessage response = client.PostAsync(client.BaseAddress, null).Result;
-                if (response.IsSuccessStatusCode)
-                {
-                    Assert.Fail("Request passed when it should not have.");
-                }
-                else if ((int)response.StatusCode == 401)
-                {
-                    Assert.Pass();
-                }
-                else
-                {
-                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
-                }
-
-            }
-
-            [Test]
-            public void login_bad_password()
-            {
-                test_parameters = "?username=" + username + "&password=badpassword&organization=" + organization;
-                client.BaseAddress = new Uri(url + test_parameters);
-                HttpResponseMessage response = client.PostAsync(client.BaseAddress, null).Result;
-                if (response.IsSuccessStatusCode)
-                {
-                    Assert.Fail("Request passed when it should not have.");
-                }
-                else if ((int)response.StatusCode == 401)
-                {
-                    Assert.Pass();
-                }
-                else
-                {
-                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
-                }
-
-            }
-
-            [Test]
-            public void login_bad_organization()
-            {
-                test_parameters = "?username=" + username + "&password=" + password + "&organization=badorganzation";
-                client.BaseAddress = new Uri(url + test_parameters);
-                HttpResponseMessage response = client.PostAsync(client.BaseAddress, null).Result;
-                if (response.IsSuccessStatusCode)
-                {
-                    Assert.Fail("Request passed when it should not have.");
-                }
-                else if ((int)response.StatusCode == 401)
-                {
-                    Assert.Pass();
-                }
-                else
-                {
-                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
-                }
-
-            }
-            [Test]
-            public void login_bad_username_and_bade_password()
-            {
-                test_parameters = "?username=basusername&password=badpassword&organization=" + organization;
-                client.BaseAddress = new Uri(url + test_parameters);
-                HttpResponseMessage response = client.PostAsync(client.BaseAddress, null).Result;
-                if (response.IsSuccessStatusCode)
-                {
-                    Assert.Fail("Request passed when it should not have.");
-                }
-                else if ((int)response.StatusCode == 401)
-                {
-                    Assert.Pass();
-                }
-                else
-                {
-                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
-                }
-
-            }
-            [Test]
-            public void login_bad_username_and_bad_organization()
-            {
-                test_parameters = "?username=basusername&password=" + password + "&organization=badorganization";
-                client.BaseAddress = new Uri(url + test_parameters);
-                HttpResponseMessage response = client.PostAsync(client.BaseAddress, null).Result;
-                if (response.IsSuccessStatusCode)
-                {
-                    Assert.Fail("Request passed when it should not have.");
-                }
-                else if ((int)response.StatusCode == 401)
-                {
-                    Assert.Pass();
-                }
-                else
-                {
-                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
-                }
-
-            }
-
-            [Test]
-            public void login_bad_password_and_bad_organization()
-            {
-                test_parameters = "?username=" + username + "&password=badpassword&organization=badorganization";
-                client.BaseAddress = new Uri(url + test_parameters);
-                HttpResponseMessage response = client.PostAsync(client.BaseAddress, null).Result;
-                if (response.IsSuccessStatusCode)
-                {
-                    Assert.Fail("Request passed when it should not have.");
-                }
-                else if ((int)response.StatusCode == 401)
-                {
-                    Assert.Pass();
-                }
-                else
-                {
-                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
-                }
-
-            }
-            [Test]
-            public void login_bad_username_bad_password_and_bad_organization()
-            {
-                test_parameters = "?username=badusername&password=badpassword&organization=badorganization";
-                client.BaseAddress = new Uri(url + test_parameters);
-                HttpResponseMessage response = client.PostAsync(client.BaseAddress, null).Result;
-                if (response.IsSuccessStatusCode)
-                {
-                    Assert.Fail("Request passed when it should not have.");
-                }
-                else if ((int)response.StatusCode == 401)
-                {
-                    Assert.Pass();
-                }
-                else
-                {
-                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
-                }
-
             }
         }
     }
