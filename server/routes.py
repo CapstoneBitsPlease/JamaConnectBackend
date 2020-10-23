@@ -71,9 +71,9 @@ def initialize_jira():
     if request.method == "POST":
         #request.values converts form items AND URLstring encoded items into a dict
         cred = request.values
-        username = cred.get("username")
-        password = cred.get("password")
-        organization = cred.get("organization")
+        username = cred["username"]
+        password = cred["password"]
+        organization = cred["organization"]
         
         #check to see if an authorization token is being passed in, otherwise make a new connection
         session= None
