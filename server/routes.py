@@ -139,7 +139,6 @@ def item_types():
     session = functions.get_session(token)
     return session
 
-# retrieves all Jama projects 
 @app.route('/jama_projects')
 @jwt_required
 def jama_projects():
@@ -152,6 +151,7 @@ def jama_projects():
     else:
         return Response(401)
 
+# retrieves the length of time of the last sync 
 @app.route('/last_sync_time')
 @jwt_required
 def last_sync_time():
@@ -159,23 +159,22 @@ def last_sync_time():
     token = get_jwt_identity()
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
-    # get the time of the last sync entry added to our database 
+    # get the length of time of the last sync from our database 
     if session.jama_connection and request.method == 'GET':
-        last_sync_time = session.get_last_sync_time()
+        last_sync_time = functions.get_last_sync_time()
         return jsonify(last_sync_time)
     else:
         return Response(401)
-    
 
 @app.route('/sync_one')
 @jwt_required
 def sync_one():
-    return 1
+    return 
 
 @app.route('/sync_all')
 @jwt_required
 def sync_all():
-    return 1
+    return 
 
 
 

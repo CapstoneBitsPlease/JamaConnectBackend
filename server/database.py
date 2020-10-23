@@ -283,11 +283,38 @@ class SyncInformationTableOps:
     def delete_sync_record(self, sync_id):
         self.db_ops.delete_entry(self.table_name, self.sync_id_col, sync_id)
 
+    # # # OTHER SPROCS # # #
+
+    def get_recent_sync_failures(self, recent_date):
+        failed_syncs = self.retrieve_by_completion_status(0)
+        length = len(failed_syncs)
+        for i in range(0, length):
+            sync_id, start_time, end_time, completion_status, description = failed_syncs[i]
+            end = datetime.strptime(end_time, '%Y-%m-%d %H:%M:%f')
+            date = datetime.strptime(recent_date, '%Y-%m-%d %H:%M:%f')
+            print("#########################")
+            print("CURRENT DATE", date)
+            print("#########################")
+            if date <= end:
+                failed_syncs.append((sync_id, start_time, end_time, completion_status, description))
+        return failed_syncs
+
+    def get_most_recent_sync(self):
+        conn = self.db_ops.connect_to_db()
+        if conn:
+            c = conn.cursor()
+            c.execute("SELECT MAX(EndTime) FROM SyncInformation")
+            last_sync_array = c.fetchall()
+            last_sync_tuple = last_sync_array[0]
+            last_sync_time = ''.join(last_sync_tuple)
+            c.execute("SELECT * FROM " + self.table_name + " WHERE " + self.end_time_col + " = ?", (last_sync_time,))
+            last_sync = c.fetchall()
+            self.db_ops.close_connection(conn)
+        return last_sync
 
 
 
-
-# Main method to demo functionality. Uncomment blocks to observe how they function.
+    # Main method to demo functionality. Uncomment blocks to observe how they function.
 if __name__ == '__main__':
     fields_table = "Fields"
     items_table = "Items"
@@ -341,11 +368,15 @@ if __name__ == '__main__':
     print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(item_id))
 
     sync_start_time = time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
-    sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "1")
+    #sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "1")
 
-    print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
+    #print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
 
-    sync_table_ops.update_completion_status(sync_id, "0")
+    #sync_table_ops.update_completion_status(sync_id, "0")
 
-    sync_table_ops.delete_sync_record(sync_id)
-    print("Retrieved deleted sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
+    #sync_table_ops.delete_sync_record(sync_id)
+    #print("Retrieved deleted sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
+
+    last_sync_data = sync_table_ops.get_most_recent_sync()
+    print("Last sync information added: ", last_sync_data)
+
