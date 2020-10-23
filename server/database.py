@@ -169,6 +169,17 @@ class ItemsTableOps:
     def delete_item(self, item_id):
         self.db_ops.delete_entry(self.table_name, self.item_id_col, item_id)
 
+    # # # OTHER SPROCS # # #
+
+    # Retrieve all linked items from the Items table
+    def get_linked_items(self):
+        conn = self.db_ops.connect_to_db()
+        if conn:
+            c = conn.cursor()
+            c.execute("SELECT * FROM Items WHERE LinkedID IS NOT ? AND LinkedID IS NOT ?", ("NULL","None"))
+            linked_items = c.fetchall()
+        return linked_items
+
 
 # Operations for the fields table. When columns are added or updated, make sure to update them in
 # the __init__ method.
@@ -314,6 +325,9 @@ class SyncInformationTableOps:
 
 
 
+
+
+
     # Main method to demo functionality. Uncomment blocks to observe how they function.
 if __name__ == '__main__':
     fields_table = "Fields"
@@ -322,7 +336,7 @@ if __name__ == '__main__':
     items_column = "ID"
     item_id = 100000
     field_id = 20023
-    sync_id = 1
+    sync_id = 2
     # Gets absolute path to root folder and appends database file. Should work on any machine.
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
     db_ops = DatabaseOperations(db_path)
@@ -368,15 +382,19 @@ if __name__ == '__main__':
     print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(item_id))
 
     sync_start_time = time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
-    #sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "1")
+    sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "1")
 
-    #print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
+    print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
 
-    #sync_table_ops.update_completion_status(sync_id, "0")
+    sync_table_ops.update_completion_status(sync_id, "0")
 
-    #sync_table_ops.delete_sync_record(sync_id)
-    #print("Retrieved deleted sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
+    sync_table_ops.delete_sync_record(sync_id)
+    print("Retrieved deleted sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
 
     last_sync_data = sync_table_ops.get_most_recent_sync()
     print("Last sync information added: ", last_sync_data)
+
+    items_table_ops.delete_item(53)
+    items_table_ops.insert_into_items_table(53, 'ticketx', 'ticket', 'Jama', 10)
+    linked_items = items_table_ops.get_linked_items()
 

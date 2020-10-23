@@ -151,7 +151,7 @@ def jama_projects():
     else:
         return Response(401)
 
-# retrieves the length of time of the last sync 
+# Retrieves the length of time of the last sync from our sqlite database
 @app.route('/last_sync_time')
 @jwt_required
 def last_sync_time():
@@ -165,6 +165,20 @@ def last_sync_time():
         return jsonify(last_sync_time)
     else:
         return Response(401)
+
+@app.route('/items_ready_to_sync')
+@jwt_required
+def items_ready_to_sync():
+    # validate the user
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    if session.jama_connection and request.method == 'GET':
+        items_to_sync = functions.get_items_ready_to_sync()
+        return jsonify(items_to_sync)
+    else:
+        return Response(401)
+
 
 @app.route('/sync_one')
 @jwt_required
