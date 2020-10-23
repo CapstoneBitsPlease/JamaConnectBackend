@@ -26,7 +26,7 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
             username = "capstone_tester";
             password = "capstoneBITZpls!0";
             organization = "capstone2020";
-            loginURL = "http://127.0.0.1:5000/login/basic";
+            loginURL = "http://127.0.0.1:5000/login/jama/basic";
             userURL = "http://127.0.0.1:5000/users";
             login_client = new HttpClient();
             user_client = new HttpClient();

@@ -23,7 +23,7 @@ namespace PSUCapstoneTestingProject.Back_end.Sprint1
             username = "capstone_tester";
             password = "capstoneBITZpls!0";
             organization = "capstone2020";
-            url = "http://127.0.0.1:5000/login/basic";
+            url = "http://127.0.0.1:5000/login/jama/basic";
             client = new HttpClient();
             //?username=bld&password=September217&organization=capstone2020
             correct_parameters = "?username=" + username + "&password=" + password + "&organization=" + organization;
