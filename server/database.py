@@ -326,17 +326,15 @@ class SyncInformationTableOps:
 
     def get_recent_sync_failures(self, recent_date):
         failed_syncs = self.retrieve_by_completion_status(0)
+        failed_syncs_after_date = []
         length = len(failed_syncs)
         for i in range(0, length):
             sync_id, start_time, end_time, completion_status, description = failed_syncs[i]
             end = datetime.strptime(end_time, '%Y-%m-%d %H:%M:%f')
             date = datetime.strptime(recent_date, '%Y-%m-%d %H:%M:%f')
-            print("#########################")
-            print("CURRENT DATE", date)
-            print("#########################")
             if date <= end:
-                failed_syncs.append((sync_id, start_time, end_time, completion_status, description))
-        return failed_syncs
+                failed_syncs_after_date.append((sync_id, start_time, end_time, completion_status, description))
+        return failed_syncs_after_date
 
     def get_most_recent_sync(self):
         conn = self.db_ops.connect_to_db()
@@ -349,11 +347,11 @@ class SyncInformationTableOps:
             c.execute("SELECT * FROM "+self.table_name+" WHERE "+self.end_time_col+" = ?", (last_sync_time,))
             last_sync = c.fetchall()
             self.db_ops.close_connection(conn)
-        return last_sync        
+        return last_sync
 
 
 def demo_sync_methods(db_path):
-    sync_id = 57
+    sync_id = 63
     sync_table_ops = SyncInformationTableOps(db_path)
     recent_date = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
     
