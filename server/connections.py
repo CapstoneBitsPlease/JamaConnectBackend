@@ -65,6 +65,14 @@ class connection:
             types.append(item)
         return types
 
+    def get_items_by_type(self, project, type):
+        response = self.jama_connection.get_items(project_id=project)
+        items=[]
+        #for item in response:
+            #i = {"name":j_type["display"], "id":j_type["id"]}
+            #types.append(i)
+        return response
+
     def match_token(self, token):
         if self.id == token:
             return True

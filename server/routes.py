@@ -13,6 +13,7 @@ import functions
 from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , get_jwt_identity)
 from flask import jsonify
 import connections
+from flask_cors import CORS, cross_origin
 
 # setup for the JWT
 app.config['JWT_SECRET_KEY']= 'Change_at_some_point' #replace with a real secret?
@@ -20,6 +21,9 @@ jwt = JWTManager(app)
 
 #create the active connection list
 cur_connections = connections.connections()
+
+#set the CORS headrer to allow all access
+CORS(app, supports_credentials=True)
 
 
 # "@server.route('...')" indicates the URL path
@@ -154,6 +158,23 @@ def get_item_types():
     else:
         return Response(401)
 
+@app.route('/jama/items_by_type')
+@jwt_required
+def items_by_types():
+    #This is basicaly the authenticaion chunk
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+
+    args = request.values
+    item_type = args["item_type"]
+    project = args["project"]
+
+    if session.jama_connection:
+        items = jsonify(session.get_items_by_type(project,item_type))
+        return items
+    else:
+        return Response(401)
 
 @app.route('/jama_item')
 @jwt_required
