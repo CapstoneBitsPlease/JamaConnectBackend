@@ -8,7 +8,7 @@ using OpenQA.Selenium;
 
 namespace PSUCapstoneTestingProject.Back_end.UnitTests
 {
-    class BackEndLoginTestsJama
+    class LoginTestsJama
     {
         string username;
         string password;

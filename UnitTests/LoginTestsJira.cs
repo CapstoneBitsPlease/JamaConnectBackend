@@ -8,10 +8,8 @@ using OpenQA.Selenium;
 
 namespace PSUCapstoneTestingProject.Back_end.UnitTests
 {
-    class BackEndLoginTestsJira
+    class LoginTestsJira
     {
-        class BackEndLoginTestsJama
-        {
             string jama_username;
             string jama_password;
             string jama_organization;
@@ -746,4 +744,3 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
 
         }
     }
-}

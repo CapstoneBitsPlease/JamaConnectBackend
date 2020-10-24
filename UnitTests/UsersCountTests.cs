@@ -8,7 +8,7 @@ using OpenQA.Selenium;
 
 namespace PSUCapstoneTestingProject.Back_end.UnitTests
 {
-    class BackEndUserRetrievalTests
+    class UsersCountTests
     {
         string jamaToken;
         string jamaUsername;
@@ -46,7 +46,7 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
             jiraParameters = "?username=" + jiraUsername + "&password=" + jiraPassword + "&organization=" + jiraOrganization;
             jiraLoginClient = new HttpClient();
 
-            userURL = "http://127.0.0.1:5000/user";
+            userURL = "http://127.0.0.1:5000/users";
             userClient = new HttpClient();
 
             jamaToken = get_jama_token();
@@ -90,29 +90,14 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_happy_path()
+        public void user_count_jira_token_happy_path()
         {
             userClient.BaseAddress = new Uri(userURL);
             userClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + jiraToken);
             HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
             if (user_response.IsSuccessStatusCode)
             {
-                string[] responseBody = user_response.Content.ReadAsStringAsync().Result
-                                                                               .Replace("\\", "")
-                                                                               .Replace("\n", "")
-                                                                               .Replace("\"", "")
-                                                                               .Replace("{", "")
-                                                                               .Replace("}", "")
-                                                                               .Trim(new char[1] { '"' })
-                                                                               .Split(",");
-                if (responseBody[0].Contains("true") && responseBody[1].Contains("true"))
-                {
-                    Assert.Pass();
-                }
-                else
-                {
-                    Assert.Fail("One or more connections have returned false.");
-                }
+                Assert.Pass();
             }
             else
             {
@@ -121,38 +106,14 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_with_jama_token()
+        public void user_count_jama_token_happy_path()
         {
             userClient.BaseAddress = new Uri(userURL);
-            userClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + jamaToken);
+            userClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + jiraToken);
             HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
             if (user_response.IsSuccessStatusCode)
             {
-                string[] responseBody = user_response.Content.ReadAsStringAsync().Result
-                                                                               .Replace("\\", "")
-                                                                               .Replace("\n", "")
-                                                                               .Replace("\"", "")
-                                                                               .Replace("{", "")
-                                                                               .Replace("}", "")
-                                                                               .Trim(new char[1] { '"' })
-                                                                               .Split(",");
-                if (responseBody[0].Contains("true"))
-                {
-                    Assert.Pass();
-                }
-                else
-                {
-                    Assert.Fail("Jama token returned false.");
-                }
-
-                if(responseBody[1].Contains("false"))
-                {
-                    Assert.Pass();
-                }
-                else
-                {
-                    Assert.Fail("Jira token returned true.");
-                }
+                Assert.Pass();
             }
             else
             {
@@ -161,7 +122,7 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_without_auth_header()
+        public void user_count_without_auth_header()
         {
             userClient.BaseAddress = new Uri(userURL);
             //userClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + jamaToken);
@@ -177,7 +138,7 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_without_bearer_keyword_jama_token()
+        public void user_count_without_bearer_keyword_jama_token()
         {
             userClient.BaseAddress = new Uri(userURL);
             userClient.DefaultRequestHeaders.Add("Authorization", jamaToken);
@@ -186,7 +147,7 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
             {
                 Assert.Pass();
             }
-            else if(user_response.IsSuccessStatusCode)
+            else if (user_response.IsSuccessStatusCode)
             {
                 Assert.Fail("Login request passed when it should not have.");
             }
@@ -198,7 +159,7 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_without_bearer_keyword_jira_token()
+        public void user_count_without_bearer_keyword_jira_token()
         {
             userClient.BaseAddress = new Uri(userURL);
             userClient.DefaultRequestHeaders.Add("Authorization", jiraToken);
@@ -219,7 +180,7 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_expired_jira_token()
+        public void user_count_expired_jira_token()
         {
             userClient.BaseAddress = new Uri(userURL);
             userClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MDM1NjEzMjIsIm5iZiI6MTYwMzU2MTMyMiwianRpIjoiNTQ4YjUyYWQtMWE3YS00YTY0LTg3OTMtNGRjY2FlOWIxM2JhIiwiZXhwIjoxNjAzNTYyMjIyLCJpZGVudGl0eSI6eyJjb25uZWN0aW9uX2lkIjoiYjc4Y2I4MzEtYTQ3ZC00ZWU1LTkyNDAtYTgyMThkYjM2MWRiIn0sImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyJ9.b0psrxqkie6XOkqwEG0L8zJh1lL6bp17O_SA4Bi45Ss");
@@ -240,7 +201,7 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_expired_jama_token()
+        public void user_count_expired_jama_token()
         {
             userClient.BaseAddress = new Uri(userURL);
             userClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MDM1NzAxNDQsIm5iZiI6MTYwMzU3MDE0NCwianRpIjoiMWZlNGNkYTgtNTQ1My00MzljLWI2MTAtODExN2IzNTgzNzNlIiwiZXhwIjoxNjAzNTcxMDQ0LCJpZGVudGl0eSI6eyJjb25uZWN0aW9uX2lkIjoiOGE3YWE1Y2UtNzk2OS00NzFmLThmZDMtNjYxOTBkYTYwZTE5In0sImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyJ9.VFe7WSpdy5oKF4e0UDE73ecVCdNwFEET5Ij949A_UOQ");
@@ -261,7 +222,7 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_bad_token()
+        public void user_count_bad_token()
         {
             userClient.BaseAddress = new Uri(userURL);
             userClient.DefaultRequestHeaders.Add("Authorization", "Bearer badtokenhere");
@@ -282,7 +243,7 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_empty_token()
+        public void user_count_empty_token()
         {
             userClient.BaseAddress = new Uri(userURL);
             userClient.DefaultRequestHeaders.Add("Authorization", "Bearer");
@@ -301,5 +262,6 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
 
             }
         }
+
     }
 }
