@@ -10,7 +10,6 @@ from flask import Response
 
 app = Flask(__name__)
 
-import functions
 from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , get_jwt_identity)
 from flask import jsonify
 import connections
