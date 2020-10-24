@@ -150,6 +150,600 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
                 }
 
             }
+
+            [Test]
+            public void login_bad_username_and_bad_password()
+            {
+                test_parameters = "?username=basusername&password=badpassword&organization=" + jira_organization;
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+
+            }
+
+            [Test]
+            public void login_bad_username_and_bad_organization()
+            {
+                test_parameters = "?username=basusername&password=" + jira_password + "&organization=badorganization";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+
+            }
+
+            [Test]
+            public void login_bad_password_and_bad_organization()
+            {
+                test_parameters = "?username=" + jira_username + "&password=badpassword&organization=badorganization";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+
+            }
+
+            [Test]
+            public void login_bad_username_bad_password_and_bad_organization()
+            {
+                test_parameters = "?username=badusername&password=badpassword&organization=badorganization";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+
+            }
+
+            [Test]
+            public void login_no_username()
+            {
+                test_parameters = "?username=&password=" + jira_password + "&organization=" + jira_organization;
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_password()
+            {
+                test_parameters = "?username=" + jira_username + "&password=&organization=" + jira_organization;
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_organization()
+            {
+                test_parameters = "?username=" + jira_username + "&password=" + jira_password + "&organization=";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_username_or_password()
+            {
+                test_parameters = "?username=&password=&organization=" + jira_organization;
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_username_or_organization()
+            {
+                test_parameters = "?username=&password=" + jira_password + "&organization=";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_password_or_ogranization()
+            {
+                test_parameters = "?username=" + jira_username + "&password=&organization=";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_password_username_or_organization()
+            {
+                test_parameters = "?username=&password=&organization=";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_query()
+            {
+                test_parameters = "";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 400)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_query_no_auth_header()
+            {
+                test_parameters = "";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 400)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_auth_header()
+            {
+                jira_client.BaseAddress = new Uri(jira_url + correct_jira_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage jira_login_response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if ((int)jira_login_response.StatusCode == 401)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Jira request passed when it shoudl not have.! ");
+                }
+            }
+
+            [Test]
+            public void login_bad_username_no_auth_header()
+            {
+                test_parameters = "?username=BadUsername&password=" + jira_password + "&organization=" + jira_organization;
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+
+            }
+
+            [Test]
+            public void login_bad_password_no_auth_header()
+            {
+                test_parameters = "?username=" + jira_username + "&password=badpassword&organization=" + jira_organization;
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+
+            }
+
+            [Test]
+            public void login_bad_organization_no_auth_header()
+            {
+                test_parameters = "?username=" + jira_username + "&password=" + jira_password + "&organization=badorganization";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+
+            }
+
+            [Test]
+            public void login_bad_username_and_bad_password_no_auth_header()
+            {
+                test_parameters = "?username=basusername&password=badpassword&organization=" + jira_organization;
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+
+            }
+
+            [Test]
+            public void login_bad_username_and_bad_organization_no_auth_header()
+            {
+                test_parameters = "?username=basusername&password=" + jira_password + "&organization=badorganization";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+
+            }
+
+            [Test]
+            public void login_bad_password_and_bad_organization_no_auth_header()
+            {
+                test_parameters = "?username=" + jira_username + "&password=badpassword&organization=badorganization";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+
+            }
+
+            [Test]
+            public void login_bad_username_bad_password_and_bad_organization_no_auth_header()
+            {
+                test_parameters = "?username=badusername&password=badpassword&organization=badorganization";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+
+            }
+
+            [Test]
+            public void login_no_username_no_auth_header()
+            {
+                test_parameters = "?username=&password=" + jira_password + "&organization=" + jira_organization;
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_password_no_auth_header()
+            {
+                test_parameters = "?username=" + jira_username + "&password=&organization=" + jira_organization;
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_organization_no_auth_header()
+            {
+                test_parameters = "?username=" + jira_username + "&password=" + jira_password + "&organization=";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_username_or_password_no_auth_header()
+            {
+                test_parameters = "?username=&password=&organization=" + jira_organization;
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_username_or_organization_no_auth_header()
+            {
+                test_parameters = "?username=&password=" + jira_password + "&organization=";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_password_or_ogranization_no_auth_header()
+            {
+                test_parameters = "?username=" + jira_username + "&password=&organization=";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
+            [Test]
+            public void login_no_password_username_or_organization_no_auth_header()
+            {
+                test_parameters = "?username=&password=&organization=";
+                jira_client.BaseAddress = new Uri(jira_url + test_parameters);
+                //jira_client.DefaultRequestHeaders.Add("Authorization", "Bearer " + jama_token);
+                HttpResponseMessage response = jira_client.PostAsync(jira_client.BaseAddress, null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Assert.Fail("Request passed when it should not have.");
+                }
+                else if ((int)response.StatusCode == 401 || (int)response.StatusCode == 422)
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Incorrect request code: " + (int)response.StatusCode + ": " + response.RequestMessage);
+                }
+            }
+
         }
     }
 }
