@@ -99,13 +99,13 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
             {
                 string[] responseBody = user_response.Content.ReadAsStringAsync().Result
                                                                                .Replace("\\", "")
-                                                                               .Replace("\n","")
-                                                                               .Replace("\"","")
-                                                                               .Replace("{","")
-                                                                               .Replace("}","")
+                                                                               .Replace("\n", "")
+                                                                               .Replace("\"", "")
+                                                                               .Replace("{", "")
+                                                                               .Replace("}", "")
                                                                                .Trim(new char[1] { '"' })
                                                                                .Split(",");
-                if(responseBody[0].Contains("true") && responseBody[1].Contains("true"))
+                if (responseBody[0].Contains("true") && responseBody[1].Contains("true"))
                 {
                     Assert.Pass();
                 }
@@ -120,158 +120,186 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
             }
         }
 
-        /*
-                [Test]
-        public void user_retrieval_without_bearer_keyword()
+        [Test]
+        public void user_retrieval_with_jama_token()
         {
-            login_client.BaseAddress = new Uri(loginURL + correct_parameters);
-            HttpResponseMessage login_response = login_client.PostAsync(login_client.BaseAddress, null).Result;
-
-            if (login_response.IsSuccessStatusCode)
+            userClient.BaseAddress = new Uri(userURL);
+            userClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + jamaToken);
+            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            if (user_response.IsSuccessStatusCode)
             {
-                string responseBody = login_response.Content.ReadAsStringAsync().Result;
-                responseBody = responseBody.Remove(responseBody.Length - 3);//Remove the ' "} ' from end of token.
-                responseBody = responseBody.Substring(17);//Remove token return title.
-                user_client.BaseAddress = new Uri(userURL);
-                user_client.DefaultRequestHeaders.Add("Authorization", responseBody);
-                HttpResponseMessage user_response = user_client.GetAsync(userURL).Result;
-                if (user_response.IsSuccessStatusCode)
-                {
-                    Assert.Fail("Test passed when it should not have.");
-                }
-                else if ((int)user_response.StatusCode == 422)
+                string[] responseBody = user_response.Content.ReadAsStringAsync().Result
+                                                                               .Replace("\\", "")
+                                                                               .Replace("\n", "")
+                                                                               .Replace("\"", "")
+                                                                               .Replace("{", "")
+                                                                               .Replace("}", "")
+                                                                               .Trim(new char[1] { '"' })
+                                                                               .Split(",");
+                if (responseBody[0].Contains("true"))
                 {
                     Assert.Pass();
                 }
                 else
                 {
-                    Assert.Fail("Incorrect request code: " + (int)user_response.StatusCode + ": " + user_response.RequestMessage);
+                    Assert.Fail("Jama token returned false.");
+                }
+
+                if(responseBody[1].Contains("false"))
+                {
+                    Assert.Pass();
+                }
+                else
+                {
+                    Assert.Fail("Jira token returned true.");
                 }
             }
             else
             {
-                Assert.Fail("Login has failed!");
+                Assert.Fail("The user request did not succeed. " + (int)user_response.StatusCode + ": " + user_response.RequestMessage);
             }
         }
 
         [Test]
-        public void user_retrieval_with_expired_token()
+        public void user_retrieval_without_auth_header()
         {
-            user_client.BaseAddress = new Uri(userURL);
-            user_client.DefaultRequestHeaders.Add("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MDMyMjcyNDAsIm5iZiI6MTYwMzIyNzI0MCwianRpIjoiNDU2M2E5M2EtMDU3MC00ZTljLWJjMjgtOWU3ZGIzNGZkNDQ5IiwiZXhwIjoxNjAzMjI4MTQwLCJpZGVudGl0eSI6eyJ1c2VybmFtZSI6ImJsZCIsImNvbm5lY3Rpb25faWQiOiI3NmZhYWQ5NC02YWY5LTRiMmItYjg0OS1iM2M0OTBiMTE3MDAifSwiZnJlc2giOmZhbHNlLCJ0eXBlIjoiYWNjZXNzIn0.QdCbC6CRfpDD3oXXcVp4Ul24XO-AwhGtntSaIbz8Az4");
-            HttpResponseMessage user_response = user_client.GetAsync(userURL).Result;
-            if (user_response.IsSuccessStatusCode)
-            {
-                Assert.Fail("The user request passed when it should not have.");
-            }
-            else if ((int)user_response.StatusCode == 401)
+            userClient.BaseAddress = new Uri(userURL);
+            //userClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + jamaToken);
+            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            if ((int)user_response.StatusCode == 400 || (int)user_response.StatusCode == 401)
             {
                 Assert.Pass();
             }
             else
             {
-                Assert.Fail("Incorrect request code: " + (int)user_response.StatusCode + ": " + user_response.RequestMessage);
+                Assert.Fail("Login request passed when it should not have.");
             }
         }
 
         [Test]
-        public void user_retrieval_with_bad_token()
+        public void user_retrieval_without_bearer_keyword_jama_token()
         {
-            login_client.BaseAddress = new Uri(loginURL + correct_parameters);
-            HttpResponseMessage login_response = login_client.PostAsync(login_client.BaseAddress, null).Result;
-
-            if (login_response.IsSuccessStatusCode)
+            userClient.BaseAddress = new Uri(userURL);
+            userClient.DefaultRequestHeaders.Add("Authorization", jamaToken);
+            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            if ((int)user_response.StatusCode == 400 || (int)user_response.StatusCode == 422)
             {
-                string responseBody = login_response.Content.ReadAsStringAsync().Result;
-                responseBody = responseBody.Remove(responseBody.Length - 3);//Remove the ' "} ' from end of token.
-                responseBody = responseBody.Substring(17);//Remove token return title.
-                user_client.BaseAddress = new Uri(userURL);
-                user_client.DefaultRequestHeaders.Add("Authorization", "Bearer badtokensbewe12321");
-                HttpResponseMessage user_response = user_client.GetAsync(userURL).Result;
-                if (user_response.IsSuccessStatusCode)
-                {
-                    Assert.Fail("Request passed when it should not have.");
-                }
-                else if ((int)user_response.StatusCode == 401 || (int)user_response.StatusCode == 422)
-                {
-                    Assert.Pass();
-                }
-                else
-                {
-                    Assert.Fail("Incorrect request code: " + (int)user_response.StatusCode + ": " + user_response.RequestMessage);
-                }
+                Assert.Pass();
+            }
+            else if(user_response.IsSuccessStatusCode)
+            {
+                Assert.Fail("Login request passed when it should not have.");
             }
             else
             {
-                Assert.Fail("Login has failed!");
+                Assert.Fail("The user request did not succeed. " + (int)user_response.StatusCode + ": " + user_response.RequestMessage);
+
             }
         }
 
         [Test]
-        public void user_retrieval_with_no_header()
+        public void user_retrieval_without_bearer_keyword_jira_token()
         {
-            login_client.BaseAddress = new Uri(loginURL + correct_parameters);
-            HttpResponseMessage login_response = login_client.PostAsync(login_client.BaseAddress, null).Result;
-
-            if (login_response.IsSuccessStatusCode)
+            userClient.BaseAddress = new Uri(userURL);
+            userClient.DefaultRequestHeaders.Add("Authorization", jiraToken);
+            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            if ((int)user_response.StatusCode == 400 || (int)user_response.StatusCode == 422)
             {
-                string responseBody = login_response.Content.ReadAsStringAsync().Result;
-                responseBody = responseBody.Remove(responseBody.Length - 3);//Remove the ' "} ' from end of token.
-                responseBody = responseBody.Substring(17);//Remove token return title.
-                user_client.BaseAddress = new Uri(userURL);
-                //user_client.DefaultRequestHeaders.Add("Authorization", "Bearer badtokensbewe12321");
-                HttpResponseMessage user_response = user_client.GetAsync(userURL).Result;
-                if (user_response.IsSuccessStatusCode)
-                {
-                    Assert.Fail("Request passed when it should not have.");
-                }
-                else if ((int)user_response.StatusCode == 401)
-                {
-                    Assert.Pass();
-                }
-                else
-                {
-                    Assert.Fail("Incorrect request code: " + (int)user_response.StatusCode + ": " + user_response.RequestMessage);
-                }
+                Assert.Pass();
+            }
+            else if (user_response.IsSuccessStatusCode)
+            {
+                Assert.Fail("Login request passed when it should not have.");
             }
             else
             {
-                Assert.Fail("Login has failed!");
+                Assert.Fail("The user request did not succeed. " + (int)user_response.StatusCode + ": " + user_response.RequestMessage);
+
             }
         }
 
         [Test]
-        public void user_retrieval_with_bad_header_title()
+        public void user_retrieval_expired_jira_token()
         {
-            login_client.BaseAddress = new Uri(loginURL + correct_parameters);
-            HttpResponseMessage login_response = login_client.PostAsync(login_client.BaseAddress, null).Result;
-
-            if (login_response.IsSuccessStatusCode)
+            userClient.BaseAddress = new Uri(userURL);
+            userClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MDM1NjEzMjIsIm5iZiI6MTYwMzU2MTMyMiwianRpIjoiNTQ4YjUyYWQtMWE3YS00YTY0LTg3OTMtNGRjY2FlOWIxM2JhIiwiZXhwIjoxNjAzNTYyMjIyLCJpZGVudGl0eSI6eyJjb25uZWN0aW9uX2lkIjoiYjc4Y2I4MzEtYTQ3ZC00ZWU1LTkyNDAtYTgyMThkYjM2MWRiIn0sImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyJ9.b0psrxqkie6XOkqwEG0L8zJh1lL6bp17O_SA4Bi45Ss");
+            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            if ((int)user_response.StatusCode == 401)
             {
-                string responseBody = login_response.Content.ReadAsStringAsync().Result;
-                responseBody = responseBody.Remove(responseBody.Length - 3);//Remove the ' "} ' from end of token.
-                responseBody = responseBody.Substring(17);//Remove token return title.
-                user_client.BaseAddress = new Uri(userURL);
-                user_client.DefaultRequestHeaders.Add("BadTitle", "Bearer " + responseBody);
-                HttpResponseMessage user_response = user_client.GetAsync(userURL).Result;
-                if (user_response.IsSuccessStatusCode)
-                {
-                    Assert.Fail("Request passed when it should not have.");
-                }
-                else if ((int)user_response.StatusCode == 401)
-                {
-                    Assert.Pass();
-                }
-                else
-                {
-                    Assert.Fail("Incorrect request code: " + (int)user_response.StatusCode + ": " + user_response.RequestMessage);
-                }
+                Assert.Pass();
+            }
+            else if (user_response.IsSuccessStatusCode)
+            {
+                Assert.Fail("Login request passed when it should not have.");
             }
             else
             {
-                Assert.Fail("Login has failed!");
+                Assert.Fail("The user request did not succeed. " + (int)user_response.StatusCode + ": " + user_response.RequestMessage);
+
             }
-        } 
-        */
+        }
+
+        [Test]
+        public void user_retrieval_expired_jama_token()
+        {
+            userClient.BaseAddress = new Uri(userURL);
+            userClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MDM1NzAxNDQsIm5iZiI6MTYwMzU3MDE0NCwianRpIjoiMWZlNGNkYTgtNTQ1My00MzljLWI2MTAtODExN2IzNTgzNzNlIiwiZXhwIjoxNjAzNTcxMDQ0LCJpZGVudGl0eSI6eyJjb25uZWN0aW9uX2lkIjoiOGE3YWE1Y2UtNzk2OS00NzFmLThmZDMtNjYxOTBkYTYwZTE5In0sImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyJ9.VFe7WSpdy5oKF4e0UDE73ecVCdNwFEET5Ij949A_UOQ");
+            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            if ((int)user_response.StatusCode == 401)
+            {
+                Assert.Pass();
+            }
+            else if (user_response.IsSuccessStatusCode)
+            {
+                Assert.Fail("Login request passed when it should not have.");
+            }
+            else
+            {
+                Assert.Fail("The user request did not succeed. " + (int)user_response.StatusCode + ": " + user_response.RequestMessage);
+
+            }
+        }
+
+        [Test]
+        public void user_retrieval_bad_token()
+        {
+            userClient.BaseAddress = new Uri(userURL);
+            userClient.DefaultRequestHeaders.Add("Authorization", "Bearer badtokenhere");
+            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            if ((int)user_response.StatusCode == 401)
+            {
+                Assert.Pass();
+            }
+            else if (user_response.IsSuccessStatusCode)
+            {
+                Assert.Fail("Login request passed when it should not have.");
+            }
+            else
+            {
+                Assert.Fail("The user request did not succeed. " + (int)user_response.StatusCode + ": " + user_response.RequestMessage);
+
+            }
+        }
+
+        [Test]
+        public void user_retrieval_empty_token()
+        {
+            userClient.BaseAddress = new Uri(userURL);
+            userClient.DefaultRequestHeaders.Add("Authorization", "Bearer");
+            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            if ((int)user_response.StatusCode == 422)
+            {
+                Assert.Pass();
+            }
+            else if (user_response.IsSuccessStatusCode)
+            {
+                Assert.Fail("Login request passed when it should not have.");
+            }
+            else
+            {
+                Assert.Fail("The user request did not succeed. " + (int)user_response.StatusCode + ": " + user_response.RequestMessage);
+
+            }
+        }
     }
 }
