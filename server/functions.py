@@ -23,11 +23,12 @@ def get_last_sync_time():
     response = [last_sync_time, units]
     return response
 
-# Retrieves number of fields ready to be synced
-def get_fields_ready_to_sync():
+# Retrieves fields ready to be synced. Returns the number of fields and their content.
+def get_fields_to_sync():
     items_table = database.ItemsTableOps(db_path)
     fields_table = database.FieldsTableOps(db_path)
-    fields_to_sync = 0
+    num_fields_to_sync = 0
+    fields_to_sync = []
 
     # for testing
     #fields_table.delete_field(13)
@@ -40,14 +41,12 @@ def get_fields_ready_to_sync():
     # get all linked items and their fields
     response = items_table.get_linked_items()
     for item in response:
-        print()
-        print("Item: ", item)
         item_id = item[0]
         fields = fields_table.retrieve_by_item_id(item_id)
         for field in fields:
-            print("Field: ", field)
+            fields_to_sync.append(field)
             # if field's last_updated datetime is less than the current datetime, it needs to be synced
             if(field[2] < datetime.now().strftime('%Y-%m-%d %H:%M:%f')):
-                fields_to_sync += 1
+                num_fields_to_sync += 1
 
-    return fields_to_sync
+    return [num_fields_to_sync, fields_to_sync]
