@@ -403,9 +403,14 @@ def demo_sync_methods(db_path):
 
     # Sync errors: sync was aborted, unknown error
 
+def logging_demo():
+    logging.debug('debug')
+    logging.info('info')
+    logging.warning('warning')
+    logging.error('error')
 
 # Main method to demo functionality. Uncomment blocks to observe how they function.
-if __name__ == '__main__':
+'''if __name__ == '__main__':
     fields_table = "Fields"
     items_table = "Items"
     fields_column = "FieldID"
@@ -419,14 +424,14 @@ if __name__ == '__main__':
     fields_table_ops = FieldsTableOps(db_path)
 
     # Demo create Items table. Define list of types and columns to pass in to method.
-    '''columns = ["ID", "Title", "LinkedID", "Service", "Type", "ProjectID", "LastSyncTime"]
+    columns = ["ID", "Title", "LinkedID", "Service", "Type", "ProjectID", "LastSyncTime"]
     types = ["INT PRIMARY KEY NOT NULL", "STRING", "INT UNIQUE", "STRING", "STRING", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))"]
-    db_ops.create_table("Items", columns, types)'''
+    db_ops.create_table("Items", columns, types)
 
     # Demo create Fields table. Define list of types and columns to pass in to method.
-    '''columns = ["FieldID", "ItemID", "LastUpdated", "JamaName", "JiraName"]
+    columns = ["FieldID", "ItemID", "LastUpdated", "JamaName", "JiraName"]
     types = ["INT PRIMARY KEY NOT NULL", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "STRING", "STRING"]
-    db_ops.create_table("Fields", columns, types)'''
+    db_ops.create_table("Fields", columns, types)
 
     # Demo rename column. Takes the table name, current column name and updated column name as args.
     #db_ops.rename_column(items_table, "Project", "LastSyncTime")
@@ -466,3 +471,5 @@ if __name__ == '__main__':
     print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(item_id))
 
     demo_sync_methods(db_path)
+
+    logging_demo()'''

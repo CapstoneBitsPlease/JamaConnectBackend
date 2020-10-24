@@ -1,4 +1,5 @@
 from flask import Flask
+import logging
 
 app = Flask(__name__)
 
@@ -13,6 +14,11 @@ import functions
 from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , get_jwt_identity)
 from flask import jsonify
 import connections
+from database import logging_demo
+from set_up_log import log_setup
+
+# setup logging
+log_setup()
 
 # setup for the JWT
 app.config['JWT_SECRET_KEY']= 'Change_at_some_point' #replace with a real secret?
@@ -139,6 +145,11 @@ def item_types():
     print(token)
     session = cur_connections.get_session(token)
     return session
+
+@app.route('/')
+def default():
+    print('running')
+    logging_demo()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
