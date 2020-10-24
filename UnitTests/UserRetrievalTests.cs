@@ -26,8 +26,8 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         string jiraParameters;
         HttpClient jiraLoginClient;
 
-        string userURL;
-        HttpClient userClient;
+        string projectURL;
+        HttpClient projectClient;
 
         [OneTimeSetUp]
         public void setup()
@@ -46,8 +46,8 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
             jiraParameters = "?username=" + jiraUsername + "&password=" + jiraPassword + "&organization=" + jiraOrganization;
             jiraLoginClient = new HttpClient();
 
-            userURL = "http://127.0.0.1:5000/user";
-            userClient = new HttpClient();
+            projectURL = "http://127.0.0.1:5000/user";
+            projectClient = new HttpClient();
 
             jamaToken = get_jama_token();
             jiraToken = get_jira_token();
@@ -90,11 +90,11 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_happy_path()
+        public void projects_happy_path()
         {
-            userClient.BaseAddress = new Uri(userURL);
-            userClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + jiraToken);
-            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            projectClient.BaseAddress = new Uri(projectURL);
+            projectClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + jiraToken);
+            HttpResponseMessage user_response = projectClient.GetAsync(projectURL).Result;
             if (user_response.IsSuccessStatusCode)
             {
                 string[] responseBody = user_response.Content.ReadAsStringAsync().Result
@@ -121,11 +121,11 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_with_jama_token()
+        public void projects_with_jama_token()
         {
-            userClient.BaseAddress = new Uri(userURL);
-            userClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + jamaToken);
-            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            projectClient.BaseAddress = new Uri(projectURL);
+            projectClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + jamaToken);
+            HttpResponseMessage user_response = projectClient.GetAsync(projectURL).Result;
             if (user_response.IsSuccessStatusCode)
             {
                 string[] responseBody = user_response.Content.ReadAsStringAsync().Result
@@ -161,11 +161,11 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_without_auth_header()
+        public void projects_without_auth_header()
         {
-            userClient.BaseAddress = new Uri(userURL);
-            //userClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + jamaToken);
-            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            projectClient.BaseAddress = new Uri(projectURL);
+            //projectClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + jamaToken);
+            HttpResponseMessage user_response = projectClient.GetAsync(projectURL).Result;
             if ((int)user_response.StatusCode == 400 || (int)user_response.StatusCode == 401)
             {
                 Assert.Pass();
@@ -177,11 +177,11 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_without_bearer_keyword_jama_token()
+        public void projects_without_bearer_keyword_jama_token()
         {
-            userClient.BaseAddress = new Uri(userURL);
-            userClient.DefaultRequestHeaders.Add("Authorization", jamaToken);
-            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            projectClient.BaseAddress = new Uri(projectURL);
+            projectClient.DefaultRequestHeaders.Add("Authorization", jamaToken);
+            HttpResponseMessage user_response = projectClient.GetAsync(projectURL).Result;
             if ((int)user_response.StatusCode == 400 || (int)user_response.StatusCode == 422)
             {
                 Assert.Pass();
@@ -198,11 +198,11 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_without_bearer_keyword_jira_token()
+        public void projects_without_bearer_keyword_jira_token()
         {
-            userClient.BaseAddress = new Uri(userURL);
-            userClient.DefaultRequestHeaders.Add("Authorization", jiraToken);
-            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            projectClient.BaseAddress = new Uri(projectURL);
+            projectClient.DefaultRequestHeaders.Add("Authorization", jiraToken);
+            HttpResponseMessage user_response = projectClient.GetAsync(projectURL).Result;
             if ((int)user_response.StatusCode == 400 || (int)user_response.StatusCode == 422)
             {
                 Assert.Pass();
@@ -219,11 +219,11 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_expired_jira_token()
+        public void projects_expired_jira_token()
         {
-            userClient.BaseAddress = new Uri(userURL);
-            userClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MDM1NjEzMjIsIm5iZiI6MTYwMzU2MTMyMiwianRpIjoiNTQ4YjUyYWQtMWE3YS00YTY0LTg3OTMtNGRjY2FlOWIxM2JhIiwiZXhwIjoxNjAzNTYyMjIyLCJpZGVudGl0eSI6eyJjb25uZWN0aW9uX2lkIjoiYjc4Y2I4MzEtYTQ3ZC00ZWU1LTkyNDAtYTgyMThkYjM2MWRiIn0sImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyJ9.b0psrxqkie6XOkqwEG0L8zJh1lL6bp17O_SA4Bi45Ss");
-            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            projectClient.BaseAddress = new Uri(projectURL);
+            projectClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MDM1NjEzMjIsIm5iZiI6MTYwMzU2MTMyMiwianRpIjoiNTQ4YjUyYWQtMWE3YS00YTY0LTg3OTMtNGRjY2FlOWIxM2JhIiwiZXhwIjoxNjAzNTYyMjIyLCJpZGVudGl0eSI6eyJjb25uZWN0aW9uX2lkIjoiYjc4Y2I4MzEtYTQ3ZC00ZWU1LTkyNDAtYTgyMThkYjM2MWRiIn0sImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyJ9.b0psrxqkie6XOkqwEG0L8zJh1lL6bp17O_SA4Bi45Ss");
+            HttpResponseMessage user_response = projectClient.GetAsync(projectURL).Result;
             if ((int)user_response.StatusCode == 401)
             {
                 Assert.Pass();
@@ -240,11 +240,11 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_expired_jama_token()
+        public void projects_expired_jama_token()
         {
-            userClient.BaseAddress = new Uri(userURL);
-            userClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MDM1NzAxNDQsIm5iZiI6MTYwMzU3MDE0NCwianRpIjoiMWZlNGNkYTgtNTQ1My00MzljLWI2MTAtODExN2IzNTgzNzNlIiwiZXhwIjoxNjAzNTcxMDQ0LCJpZGVudGl0eSI6eyJjb25uZWN0aW9uX2lkIjoiOGE3YWE1Y2UtNzk2OS00NzFmLThmZDMtNjYxOTBkYTYwZTE5In0sImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyJ9.VFe7WSpdy5oKF4e0UDE73ecVCdNwFEET5Ij949A_UOQ");
-            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            projectClient.BaseAddress = new Uri(projectURL);
+            projectClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MDM1NzAxNDQsIm5iZiI6MTYwMzU3MDE0NCwianRpIjoiMWZlNGNkYTgtNTQ1My00MzljLWI2MTAtODExN2IzNTgzNzNlIiwiZXhwIjoxNjAzNTcxMDQ0LCJpZGVudGl0eSI6eyJjb25uZWN0aW9uX2lkIjoiOGE3YWE1Y2UtNzk2OS00NzFmLThmZDMtNjYxOTBkYTYwZTE5In0sImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyJ9.VFe7WSpdy5oKF4e0UDE73ecVCdNwFEET5Ij949A_UOQ");
+            HttpResponseMessage user_response = projectClient.GetAsync(projectURL).Result;
             if ((int)user_response.StatusCode == 401)
             {
                 Assert.Pass();
@@ -261,11 +261,11 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_bad_token()
+        public void projects_bad_token()
         {
-            userClient.BaseAddress = new Uri(userURL);
-            userClient.DefaultRequestHeaders.Add("Authorization", "Bearer badtokenhere");
-            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            projectClient.BaseAddress = new Uri(projectURL);
+            projectClient.DefaultRequestHeaders.Add("Authorization", "Bearer badtokenhere");
+            HttpResponseMessage user_response = projectClient.GetAsync(projectURL).Result;
             if ((int)user_response.StatusCode == 401)
             {
                 Assert.Pass();
@@ -282,11 +282,11 @@ namespace PSUCapstoneTestingProject.Back_end.UnitTests
         }
 
         [Test]
-        public void user_retrieval_empty_token()
+        public void projects_empty_token()
         {
-            userClient.BaseAddress = new Uri(userURL);
-            userClient.DefaultRequestHeaders.Add("Authorization", "Bearer");
-            HttpResponseMessage user_response = userClient.GetAsync(userURL).Result;
+            projectClient.BaseAddress = new Uri(projectURL);
+            projectClient.DefaultRequestHeaders.Add("Authorization", "Bearer");
+            HttpResponseMessage user_response = projectClient.GetAsync(projectURL).Result;
             if ((int)user_response.StatusCode == 422)
             {
                 Assert.Pass();
