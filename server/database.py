@@ -4,6 +4,7 @@ from sqlite3 import Error
 from datetime import datetime
 import os
 import logging
+import functions
 
 # Utility class. Contains methods to connect to database, create table, rename column, add entry
 # to table, update an existing entry, retrieve an existing entry, and delete an existing entry.
@@ -140,6 +141,7 @@ class ItemsTableOps:
     def retrieve_by_type(self, type_):
         return self.db_ops.retrieve_by_service(self.table_name, self.type_col, type_)
 
+
      # # # UPDATE METHODS FOR ITEMS TABLE # # #
 
      # Updates item title based on unique integer id.
@@ -171,14 +173,25 @@ class ItemsTableOps:
 
     # # # OTHER SPROCS # # #
 
-    # Retrieve all linked items from the Items table
+    # Retrieve all linked items from the Items table as a list of tuples
     def get_linked_items(self):
         conn = self.db_ops.connect_to_db()
         if conn:
             c = conn.cursor()
             c.execute("SELECT * FROM Items WHERE LinkedID IS NOT ? AND LinkedID IS NOT ?", ("NULL","None"))
             linked_items = c.fetchall()
+            self.db_ops.close_connection(conn)
         return linked_items
+
+    # Retrieves service of a given item. Queries the items table and returns the service as a string
+    def get_service_of_item_id(self, item_id):
+        id, title, linked_id, service, type = self.retrieve_by_item_id(item_id)[0]
+        return service
+
+    # Retrieves linked ID of a given item. Queries the items table and returns the linked_id as an integer
+    def get_linked_id_of_item_id(self, item_id):
+        id, title, linked_id, service, type = self.retrieve_by_item_id(item_id)[0]
+        return linked_id
 
 
 # Operations for the fields table. When columns are added or updated, make sure to update them in
@@ -211,6 +224,7 @@ class FieldsTableOps:
     def retrieve_by_jira_name(self, jira_name):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.jira_name_col, jira_name)
 
+
     # # # UPDATE METHODS FOR FIELDS TABLE # # #
 
     def update_field_id(self, unique_id, new_unique_id):
@@ -240,6 +254,32 @@ class FieldsTableOps:
 
     def delete_field(self, field_id):
         self.db_ops.delete_entry(self.table_name, self.field_id_col, field_id)
+
+    # OTHER SPROCS #
+
+    # Retrieves time of last update of a given field. Queries the fields table and returns the date as a datetime object
+    def get_last_update_of_field(self, field_id):
+        id, item_id, last_update, jama_name, jira_name = self.retrieve_by_field_id(field_id)[0]
+        date_obj = datetime.strptime(last_update, '%Y-%m-%d %H:%M:%f')
+        last_update = date_obj
+        return last_update
+
+    # Retrieves fields ready to be synced. Queries the items and fields tables and returns an array containing the number of fields and their content.
+    def get_fields_to_sync(self, items_table):
+        num_fields_to_sync = 0
+        fields_to_sync = []
+        # get all linked items and their fields
+        response = items_table.get_linked_items()
+        for item in response:
+            item_id = item[0]
+            fields = self.retrieve_by_item_id(item_id)
+            for field in fields:
+                fields_to_sync.append(field)
+                # if field's last_updated datetime is less than the current datetime, it needs to be synced
+                if (field[2] < datetime.now().strftime('%Y-%m-%d %H:%M:%f')):
+                    num_fields_to_sync += 1
+
+        return [num_fields_to_sync, fields_to_sync]
 
 
 # Operations for the SyncInformation table. When columns are added or updated, make sure to update them in
@@ -323,10 +363,17 @@ class SyncInformationTableOps:
             self.db_ops.close_connection(conn)
         return last_sync
 
+    # Retrieves length of time of last sync. Queries the SyncInformation table and returns an array containing the last sync time and the time units (currently in seconds)
+    def get_last_sync_time(self):
+        # get most recent sync entry
+        id, start_time, end_time, completed = self.get_most_recent_sync()[0]
+        start_time = functions.convert_to_seconds(start_time)
+        end_time = functions.convert_to_seconds(end_time)
+        # format difference and add units
+        last_sync_time = format(end_time - start_time, '.2f')
+        units = "seconds"
 
-
-
-
+        return [last_sync_time, units]
 
     # Main method to demo functionality. Uncomment blocks to observe how they function.
 if __name__ == '__main__':
@@ -353,9 +400,9 @@ if __name__ == '__main__':
     '''db_ops.rename_column(fields_table, "Item", "ItemID")'''
 
     # Demo INSERT query. NOTE: field id and item id must be unique in order to be added.
-    time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
-    items_table_ops.insert_into_items_table(item_id, 'ticketx', 'ticket', 'Jama', 'NULL')
-    fields_table_ops.insert_into_fields_table(field_id, "1", time, 'Issue', 'Ticket')
+    #time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    #items_table_ops.insert_into_items_table(item_id, 'ticketx', 'ticket', 'Jama', 'NULL')
+    #fields_table_ops.insert_into_fields_table(field_id, "1", time, 'Issue', 'Ticket')
 
     # Demo SELECT query.
     item_row = items_table_ops.retrieve_by_item_id(item_id)
@@ -394,8 +441,16 @@ if __name__ == '__main__':
     last_sync_data = sync_table_ops.get_most_recent_sync()
     print("Last sync information added: ", last_sync_data)
 
-    items_table_ops.delete_item(53)
-    items_table_ops.insert_into_items_table(53, 'ticketx', 'ticket', 'Jama', 10)
+    # testing linked_items
+    item_id = 53
+    items_table_ops.delete_item(item_id)
+    items_table_ops.insert_into_items_table(item_id, 'ticketx', 'ticket', 'Jama', 10)
     linked_items = items_table_ops.get_linked_items()
     print("Current linked items: ", linked_items)
 
+    # testing get_last_update_of_field
+    field_id = 12
+    fields_table_ops.delete_field(field_id)
+    fields_table_ops.insert_into_fields_table(field_id, 15, datetime.now().strftime('%Y-%m-%d %H:%M:%f'), 'defect', 'bug')
+    last_update = fields_table_ops.get_last_update_of_field(field_id)
+    print("Last update of fieldID " + str(field_id) + ": " + str(last_update))

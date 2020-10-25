@@ -12,6 +12,8 @@ import functions
 from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , get_jwt_identity)
 from flask import jsonify 
 import connections
+from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
+import os
 
 # setup for the JWT
 app.config['JWT_SECRET_KEY']= 'Change this' #replace with a real secret?
@@ -161,7 +163,9 @@ def last_sync_time():
     session = cur_connections.get_session(uuid)
     # get the length of time of the last sync from our database 
     if session.jama_connection and request.method == 'GET':
-        last_sync_time = functions.get_last_sync_time()
+        db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+        sync_table = SyncInformationTableOps(db_path)
+        last_sync_time = sync_table.get_last_sync_time()
         return jsonify(last_sync_time)
     else:
         return Response(401)
@@ -174,8 +178,12 @@ def fields_to_sync():
     token = get_jwt_identity()
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
+    # get the number of fields and content ready to be synced
     if session.jama_connection and request.method == 'GET':
-        response = functions.get_fields_to_sync()
+        db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+        fields_table = FieldsTableOps(db_path)
+        items_table = ItemsTableOps(db_path)
+        response = fields_table.get_fields_to_sync(items_table)
         num_fields = response[0]
         fields_to_sync = response[1]
         return jsonify(num_fields=num_fields, fields_to_sync=fields_to_sync)
