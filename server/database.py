@@ -54,12 +54,25 @@ class DatabaseOperations:
             print("Failed to connect")
 
     # Retrieves all items that match the value in the specified column.
-    def retrieve_by_column_value(self, table_name, column_to_search, value):
+    def retrieve_by_column_value(self, table_name, column_to_search, value = None, col2 = None, distinct = False):
         row = None
         conn = self.connect_to_db()
         if conn:
             c = conn.cursor()
-            c.execute("SELECT * FROM "+table_name+" WHERE "+column_to_search+" = ?", (value,))
+            # If value to compare against is None, user wants to get all items in specified column.
+            if value == None:
+                # If distinct, then only return unique values from that column (no duplicates).
+                if distinct != False:
+                    c.execute("SELECT DISTINCT "+column_to_search+" FROM "+table_name+"")
+                else:
+                    c.execute("SELECT "+column_to_search+" FROM "+table_name+"")
+            # If there is a value to compare to, either the user wants all items that match that item,
+            # OR they want all items from a column that match the value specified for column 2.
+            else:
+                if distinct != False and col2 != None:
+                    c.execute("SELECT DISTINCT "+column_to_search+" FROM "+table_name+" WHERE "+col2+" = ?", (value,))
+                else:
+                    c.execute("SELECT * FROM "+table_name+" WHERE "+column_to_search+" = ?", (value,))
             row = c.fetchall()
             self.close_connection(conn)
         else:
@@ -165,6 +178,9 @@ class ItemsTableOps:
 
     def retrieve_by_last_sync_time(self, last_sync_time):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.last_sync_time_col, last_sync_time)
+
+    def get_all_types(self):
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.type_col, "Jama", self.service_col, True)
 
      # # # UPDATE METHODS FOR ITEMS TABLE # # #
 
@@ -413,8 +429,8 @@ def logging_demo():
     items_table = "Items"
     fields_column = "FieldID"
     items_column = "ID"
-    item_id = 100000
-    field_id = 20023
+    item_id = 455
+    field_id = 978
     # Gets absolute path to root folder and appends database file. Should work on any machine.
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
     db_ops = DatabaseOperations(db_path)
@@ -422,26 +438,26 @@ def logging_demo():
     fields_table_ops = FieldsTableOps(db_path)
 
     # Demo create Items table. Define list of types and columns to pass in to method.
-    columns = ["ID", "Title", "LinkedID", "Service", "Type", "ProjectID", "LastSyncTime"]
-    types = ["INT PRIMARY KEY NOT NULL", "STRING", "INT UNIQUE", "STRING", "STRING", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))"]
-    db_ops.create_table("Items", columns, types)
+    #columns = ["ID", "Title", "LinkedID", "Service", "Type", "ProjectID", "LastSyncTime"]
+    #types = ["INT PRIMARY KEY NOT NULL", "STRING", "INT", "STRING", "STRING", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))"]
+    #db_ops.create_table("Items", columns, types)
 
     # Demo create Fields table. Define list of types and columns to pass in to method.
-    columns = ["FieldID", "ItemID", "LastUpdated", "JamaName", "JiraName"]
-    types = ["INT PRIMARY KEY NOT NULL", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "STRING", "STRING"]
-    db_ops.create_table("Fields", columns, types)
+    #columns = ["FieldID", "ItemID", "LastUpdated", "JamaName", "JiraName"]
+    #types = ["INT PRIMARY KEY NOT NULL", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "STRING", "STRING"]
+    #db_ops.create_table("Fields", columns, types)
 
     # Demo rename column. Takes the table name, current column name and updated column name as args.
     #db_ops.rename_column(items_table, "Project", "LastSyncTime")
 
     # Demo delete table. ***USE WITH CAUTION***
-    # # # # # db_ops.delete_table("Table Name")
+    # # # # db_ops.delete_table("Items")
     # Demo add column to existing table.
     #db_ops.add_column(items_table, "LastSyncTime", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))")
 
     # Demo INSERT query. NOTE: field id and item id must be unique in order to be added.
     time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
-    items_table_ops.insert_into_items_table(item_id, 'ticketx', 'ticket', 'Jama', 'NULL', "217", time)
+    items_table_ops.insert_into_items_table(item_id, 'bug1', '100', 'Jama', 'bug', "3", time)
     fields_table_ops.insert_into_fields_table(field_id, "1", time, 'Issue', 'Ticket')
 
     # Demo SELECT query.
@@ -470,4 +486,4 @@ def logging_demo():
 
     demo_sync_methods(db_path)
 
-    logging_demo()'''
+    logging_demo() '''

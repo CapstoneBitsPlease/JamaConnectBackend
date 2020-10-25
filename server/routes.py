@@ -14,8 +14,10 @@ from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , 
 from flask import jsonify
 import connections
 import database
+from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 from set_up_log import json_log_setup
 import json
+import os
 
 # setup for the JWT
 app.config['JWT_SECRET_KEY']= 'Change_at_some_point' #replace with a real secret?
@@ -129,10 +131,15 @@ def get_all_user():
             return status
         return {"Number of current connections": len(cur_connections.all_connections)}, 200
 
-@app.route('/jama_item')
-@jwt_required
-def jama_item():
-    return 1
+@app.route('/jama_item_types')
+#@jwt_required
+def get_jama_item_types():
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    print(db_path)
+    itemsTableOps = ItemsTableOps(db_path)
+    types = itemsTableOps.get_all_types()
+    print(types)
+    return jsonify(types = types), 200
 
 @app.route('/Jira_item_types')
 @jwt_required
