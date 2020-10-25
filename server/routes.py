@@ -13,11 +13,9 @@ app = Flask(__name__)
 from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , get_jwt_identity)
 from flask import jsonify
 import connections
-from database import logging_demo
-from set_up_log import log_setup
-
-# setup logging
-log_setup()
+import database
+from set_up_log import json_log_setup
+import json
 
 # setup for the JWT
 app.config['JWT_SECRET_KEY']= 'Change_at_some_point' #replace with a real secret?
@@ -145,10 +143,20 @@ def item_types():
     session = cur_connections.get_session(token)
     return session
 
-@app.route('/')
+@app.route('/demo_logs')
 def default():
-    print('running')
-    logging_demo()
+    json_log_setup()
+    database.logging_demo()
+    return {"logging": "lit"}, 200
+
+@app.route('/get_logs')
+def get_logs():
+    error_list = []
+    with open('error_json.log') as f:
+        for json_obj in f:
+            error = json.loads(json_obj)
+            error_list.append(error)
+    return jsonify(error_list), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

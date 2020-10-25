@@ -1,8 +1,0 @@
-10/23/2020 04:46:43 PM DEBUG root This message should go to the log file
-10/23/2020 04:46:43 PM INFO root So should this
-10/23/2020 04:46:43 PM WARNING root And this, too
-10/23/2020 04:46:43 PM ERROR root And non-ASCII stuff, too, like Øresund and Malmö
-10/23/2020 04:52:20 PM DEBUG root debug
-10/23/2020 04:52:20 PM INFO root info
-10/23/2020 04:52:20 PM WARNING root warning
-10/23/2020 04:52:20 PM ERROR root error

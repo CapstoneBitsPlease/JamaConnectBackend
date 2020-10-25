@@ -401,8 +401,6 @@ def demo_sync_methods(db_path):
     print("Retrieved deleted sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id-1))
     print("Retrieved deleted sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id-2))
 
-    # Sync errors: sync was aborted, unknown error
-
 def logging_demo():
     logging.debug('debug')
     logging.info('info')
