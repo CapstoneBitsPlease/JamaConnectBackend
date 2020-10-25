@@ -4,7 +4,7 @@
 # we use the connections to authenticate a user who has logged in with 
 # either service.
 
-from py_jama_rest_client.client import JamaClient
+#from py_jama_rest_client.client import JamaClient
 import uuid
 import requests
 from requests.auth import HTTPBasicAuth
