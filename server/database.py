@@ -273,11 +273,18 @@ class FieldsTableOps:
         for item in response:
             item_id = item[0]
             fields = self.retrieve_by_item_id(item_id)
+            # check all the fields' last_updated column
             for field in fields:
-                fields_to_sync.append(field)
-                # if field's last_updated datetime is less than the current datetime, it needs to be synced
-                if (field[2] < datetime.now().strftime('%Y-%m-%d %H:%M:%f')):
-                    num_fields_to_sync += 1
+                if(field):
+                    id, item_id, last_updated, jama_name, jira_name = field
+                    # convert to epoch
+                    last_updated = functions.convert_to_seconds(last_updated)
+                    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+                    current_time = functions.convert_to_seconds(current_time)
+                    # check if it needs to be synced, increment and append if so
+                    if (last_updated < current_time):
+                        num_fields_to_sync += 1
+                        fields_to_sync.append(field)
 
         return [num_fields_to_sync, fields_to_sync]
 
@@ -441,16 +448,7 @@ if __name__ == '__main__':
     last_sync_data = sync_table_ops.get_most_recent_sync()
     print("Last sync information added: ", last_sync_data)
 
-    # testing linked_items
-    item_id = 53
-    items_table_ops.delete_item(item_id)
-    items_table_ops.insert_into_items_table(item_id, 'ticketx', 'ticket', 'Jama', 10)
-    linked_items = items_table_ops.get_linked_items()
-    print("Current linked items: ", linked_items)
-
-    # testing get_last_update_of_field
-    field_id = 12
-    fields_table_ops.delete_field(field_id)
-    fields_table_ops.insert_into_fields_table(field_id, 15, datetime.now().strftime('%Y-%m-%d %H:%M:%f'), 'defect', 'bug')
-    last_update = fields_table_ops.get_last_update_of_field(field_id)
-    print("Last update of fieldID " + str(field_id) + ": " + str(last_update))
+    # testing get_fields_to_sync
+    fields = fields_table_ops.get_fields_to_sync(items_table_ops)
+    print("Number of fields ready to sync: " + str(fields[0]))
+    print("Fields ready to sync: " + str(fields[1]))
