@@ -132,7 +132,7 @@ def get_all_user():
         return {"Number of current connections": len(cur_connections.all_connections)}, 200
 
 @app.route('/jama_item_types')
-#@jwt_required
+@jwt_required
 def get_jama_item_types():
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     print(db_path)
