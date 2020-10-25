@@ -157,12 +157,8 @@ def jama_projects():
 @app.route('/last_sync_time')
 @jwt_required
 def last_sync_time():
-    # validate the user
-    token = get_jwt_identity()
-    uuid = token.get("connection_id")
-    session = cur_connections.get_session(uuid)
     # get the length of time of the last sync from our database 
-    if session.jama_connection and request.method == 'GET':
+    if request.method == 'GET':
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
         sync_table = SyncInformationTableOps(db_path)
         last_sync_time = sync_table.get_last_sync_time()
@@ -174,12 +170,8 @@ def last_sync_time():
 @app.route('/fields_to_sync')
 @jwt_required
 def fields_to_sync():
-    # validate the user
-    token = get_jwt_identity()
-    uuid = token.get("connection_id")
-    session = cur_connections.get_session(uuid)
     # get the number of fields and content ready to be synced
-    if session.jama_connection and request.method == 'GET':
+    if request.method == 'GET':
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
         fields_table = FieldsTableOps(db_path)
         items_table = ItemsTableOps(db_path)
