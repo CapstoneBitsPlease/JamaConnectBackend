@@ -376,12 +376,13 @@ class SyncInformationTableOps:
 
 
 def demo_sync_methods(db_path):
-    sync_id = 63
+    sync_id = 69
     sync_table_ops = SyncInformationTableOps(db_path)
     recent_date = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
     
     # Demo create SyncInformation table.
-    '''columns = ["SyncID", "StartTime", "EndTime", "CompletedSuccessfully", "Description"]
+    '''db_ops = DatabaseOperations(db_path)
+    columns = ["SyncID", "StartTime", "EndTime", "CompletedSuccessfully", "Description"]
     types = ["INT PRIMARY KEY NOT NULL", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "DATETIME DEFAULT NULL", "INT", "TEXT"]
     db_ops.create_table("SyncInformation", columns, types)'''
 
