@@ -1,4 +1,5 @@
 from flask import Flask
+import logging
 
 app = Flask(__name__)
 
@@ -9,11 +10,15 @@ from flask import Response
 
 app = Flask(__name__)
 
-import functions
 from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , get_jwt_identity)
 from flask import jsonify
 import connections
 from flask_cors import CORS, cross_origin
+import database
+from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
+from set_up_log import json_log_setup
+import json
+import os
 
 # setup for the JWT
 app.config['JWT_SECRET_KEY']= 'Change_at_some_point' #replace with a real secret?
@@ -177,10 +182,14 @@ def get_items_of_type():
     else:
         return Response(401)
 
-@app.route('/jama_item')
-@jwt_required
-def jama_item():
-    return 1
+@app.route('/jama_item_types')
+def get_jama_item_types():
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    print(db_path)
+    itemsTableOps = ItemsTableOps(db_path)
+    types = itemsTableOps.get_all_types()
+    print(types)
+    return jsonify(types = types), 200
 
 @app.route('/Jira_item_types')
 @jwt_required
@@ -188,8 +197,23 @@ def item_types():
     identity = get_jwt_identity()
     token = identity.get("connection_id")
     print(token)
-    session = functions.get_session(token)
+    session = cur_connections.get_session(token)
     return session
+
+@app.route('/demo_logs')
+def default():
+    json_log_setup()
+    database.logging_demo()
+    return {"logging": "lit"}, 200
+
+@app.route('/get_logs')
+def get_logs():
+    error_list = []
+    with open('error_json.log') as f:
+        for json_obj in f:
+            error = json.loads(json_obj)
+            error_list.append(error)
+    return jsonify(error_list), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
