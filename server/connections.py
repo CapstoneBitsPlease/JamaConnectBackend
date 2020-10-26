@@ -42,8 +42,11 @@ class connection:
         jira_connection = Jira(url=url, username=username, password=password)
 
         try:
-            jira_connection.get_all_projects()
+            projects = jira_connection.get_all_projects()
         except:
+            return 401
+
+        if projects == []:
             return 401
         
         self.jira_connection = jira_connection
