@@ -382,7 +382,7 @@ def demo_sync_methods(db_path):
     
     # Demo create SyncInformation table.
     '''columns = ["SyncID", "StartTime", "EndTime", "CompletedSuccessfully", "Description"]
-    types = ["INT PRIMARY KEY NOT NULL", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "DATETIME", "INT", "TEXT"]
+    types = ["INT PRIMARY KEY NOT NULL", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "DATETIME DEFAULT NULL", "INT", "TEXT"]
     db_ops.create_table("SyncInformation", columns, types)'''
 
     sync_start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
@@ -460,7 +460,7 @@ def logging_demo():
     #db_ops.rename_column(items_table, "Project", "LastSyncTime")
 
     # Demo delete table. ***USE WITH CAUTION***
-    ### db_ops.delete_table("Fields")
+    # # # db_ops.delete_table("SyncInformation")
     # Demo add column to existing table.
     #db_ops.add_column(items_table, "LastSyncTime", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))")
 
@@ -495,4 +495,4 @@ def logging_demo():
 
     demo_sync_methods(db_path)
 
-    logging_demo() '''
+    logging_demo()'''
