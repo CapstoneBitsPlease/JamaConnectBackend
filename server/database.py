@@ -228,6 +228,7 @@ class FieldsTableOps:
         self.last_updated_col = "LastUpdated" # TYPE: DATETIME, ms precision.
         self.jama_name_col = "JamaName" # TYPE: STRING
         self.jira_name_col = "JiraName" # TYPE: STRING
+        self.linked_id_col = "LinkedID" # TYPE: INT
         self.table_name = "Fields"
         self.db_ops = DatabaseOperations(path)
 
@@ -248,6 +249,9 @@ class FieldsTableOps:
     def retrieve_by_jira_name(self, jira_name):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.jira_name_col, jira_name)
 
+    def retrieve_by_linked_id(self, linked_id):
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.linked_id_col, linked_id)
+
     # # # UPDATE METHODS FOR FIELDS TABLE # # #
 
     def update_field_id(self, unique_id, new_unique_id):
@@ -264,6 +268,9 @@ class FieldsTableOps:
             
     def update_jira_name(self, unique_id, new_jira_name):
         self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.jira_name_col, unique_id, new_jira_name)
+    
+    def update_linked_id(self, unique_id, linked_id):
+        self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.linked_id_col, unique_id, linked_id)
 
     # # # INSERT METHODS FOR FIELDS TABLE # # #
 
@@ -424,7 +431,7 @@ def logging_demo():
     logging.error('error')
 
 # Main method to demo functionality. Uncomment blocks to observe how they function.
-'''if __name__ == '__main__':
+if __name__ == '__main__':
     fields_table = "Fields"
     items_table = "Items"
     fields_column = "FieldID"
@@ -443,15 +450,15 @@ def logging_demo():
     #db_ops.create_table("Items", columns, types)
 
     # Demo create Fields table. Define list of types and columns to pass in to method.
-    #columns = ["FieldID", "ItemID", "LastUpdated", "JamaName", "JiraName"]
-    #types = ["INT PRIMARY KEY NOT NULL", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "STRING", "STRING"]
+    columns = ["FieldID", "ItemID", "LastUpdated", "JamaName", "JiraName", "LinkedID"]
+    types = ["INT PRIMARY KEY NOT NULL", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "STRING", "STRING", "INT"]
     #db_ops.create_table("Fields", columns, types)
 
     # Demo rename column. Takes the table name, current column name and updated column name as args.
     #db_ops.rename_column(items_table, "Project", "LastSyncTime")
 
     # Demo delete table. ***USE WITH CAUTION***
-    # # # # db_ops.delete_table("Items")
+    ### db_ops.delete_table("Fields")
     # Demo add column to existing table.
     #db_ops.add_column(items_table, "LastSyncTime", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))")
 
@@ -486,4 +493,4 @@ def logging_demo():
 
     demo_sync_methods(db_path)
 
-    logging_demo() '''
+    logging_demo() 
