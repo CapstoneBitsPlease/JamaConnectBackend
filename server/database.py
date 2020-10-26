@@ -185,12 +185,12 @@ class ItemsTableOps:
 
     # Retrieves service of a given item. Queries the items table and returns the service as a string
     def get_service_of_item_id(self, item_id):
-        id, title, linked_id, service, type = self.retrieve_by_item_id(item_id)[0]
+        id, title, type, service, linked_id = self.retrieve_by_item_id(item_id)[0]
         return service
 
     # Retrieves linked ID of a given item. Queries the items table and returns the linked_id as an integer
     def get_linked_id_of_item_id(self, item_id):
-        id, title, linked_id, service, type = self.retrieve_by_item_id(item_id)[0]
+        id, title , type, service, linked_id = self.retrieve_by_item_id(item_id)[0]
         return linked_id
 
 
@@ -265,29 +265,27 @@ class FieldsTableOps:
         return last_update
 
     # Retrieves fields ready to be synced. Queries the items and fields tables and returns an array containing the number of fields and their content.
-    def get_fields_to_sync(self, items_table):
+    def get_fields_to_sync(self, items_table, sync_table):
         num_fields_to_sync = 0
         fields_to_sync = []
         # get all linked items and their fields
-        response = items_table.get_linked_items()
-        for item in response:
+        linked_items = items_table.get_linked_items()
+        for item in linked_items:
             item_id = item[0]
             fields = self.retrieve_by_item_id(item_id)
-            # check all the fields' last_updated column
             for field in fields:
                 if(field):
                     id, item_id, last_updated, jama_name, jira_name = field
-                    # convert to epoch
                     last_updated = functions.convert_to_seconds(last_updated)
-                    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
-                    current_time = functions.convert_to_seconds(current_time)
-                    # check if it needs to be synced, increment and append if so
-                    if (last_updated < current_time):
+                    # get last sync from syncinfo table
+                    last_sync = sync_table.get_most_recent_sync()
+                    id, start_time, end_time, completed = last_sync[0]
+                    last_sync_end_time = functions.convert_to_seconds(end_time)
+                    # check if field needs to be synced, increment and append if so
+                    if (last_updated > last_sync_end_time):
                         num_fields_to_sync += 1
                         fields_to_sync.append(field)
-
         return [num_fields_to_sync, fields_to_sync]
-
 
 # Operations for the SyncInformation table. When columns are added or updated, make sure to update them in
 # the __init__ method.
@@ -370,17 +368,15 @@ class SyncInformationTableOps:
             self.db_ops.close_connection(conn)
         return last_sync
 
-    # Retrieves length of time of last sync. Queries the SyncInformation table and returns an array containing the last sync time and the time units (currently in seconds)
+    # Retrieves length of time of last sync. Queries the SyncInformation table and returns an array containing the length of time of the last sync,
+    # the time units (currently in seconds)
     def get_last_sync_time(self):
-        # get most recent sync entry
         id, start_time, end_time, completed = self.get_most_recent_sync()[0]
         start_time = functions.convert_to_seconds(start_time)
         end_time = functions.convert_to_seconds(end_time)
-        # format difference and add units
         last_sync_time = format(end_time - start_time, '.2f')
         units = "seconds"
-
-        return [last_sync_time, units]
+        return [last_sync_time, units, end_time]
 
     # Main method to demo functionality. Uncomment blocks to observe how they function.
 if __name__ == '__main__':
@@ -448,7 +444,9 @@ if __name__ == '__main__':
     last_sync_data = sync_table_ops.get_most_recent_sync()
     print("Last sync information added: ", last_sync_data)
 
-    # testing get_fields_to_sync
-    fields = fields_table_ops.get_fields_to_sync(items_table_ops)
+     #testing get_fields_to_sync
+    fields = fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)
     print("Number of fields ready to sync: " + str(fields[0]))
     print("Fields ready to sync: " + str(fields[1]))
+
+
