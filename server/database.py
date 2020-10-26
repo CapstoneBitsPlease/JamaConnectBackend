@@ -34,6 +34,8 @@ class DatabaseOperations:
             c = conn.cursor()
             if c6 == None:
                 c.execute("INSERT INTO "+table_name+" VALUES(?, ?, ?, ?, ?)", (primary_key, c2, c3, c4, c5))
+            elif c7 == None:
+                c.execute("INSERT INTO "+table_name+" VALUES(?, ?, ?, ?, ?, ?)", (primary_key, c2, c3, c4, c5, c6))
             else: 
                 c.execute("INSERT INTO "+table_name+" VALUES(?, ?, ?, ?, ?, ?, ?)", (primary_key, c2, c3, c4, c5, c6, c7))
             conn.commit()
@@ -275,8 +277,8 @@ class FieldsTableOps:
     # # # INSERT METHODS FOR FIELDS TABLE # # #
 
     # Inserts one item into the Fields table.
-    def insert_into_fields_table(self, field_id, item_id, last_updated, jama_name, jira_name):
-        self.db_ops.insert_into_db(self.table_name, field_id, item_id, last_updated, jama_name, jira_name)
+    def insert_into_fields_table(self, field_id, item_id, last_updated, jama_name, jira_name, linked_id):
+        self.db_ops.insert_into_db(self.table_name, field_id, item_id, last_updated, jama_name, jira_name, linked_id)
 
     # # # DELETE METHODS FOR FIELDS TABLE # # #
     def delete_fields_in_item(self, item_id):
@@ -431,13 +433,13 @@ def logging_demo():
     logging.error('error')
 
 # Main method to demo functionality. Uncomment blocks to observe how they function.
-if __name__ == '__main__':
+'''if __name__ == '__main__':
     fields_table = "Fields"
     items_table = "Items"
     fields_column = "FieldID"
     items_column = "ID"
-    item_id = 455
-    field_id = 978
+    item_id = 459
+    field_id = 981
     # Gets absolute path to root folder and appends database file. Should work on any machine.
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
     db_ops = DatabaseOperations(db_path)
@@ -450,8 +452,8 @@ if __name__ == '__main__':
     #db_ops.create_table("Items", columns, types)
 
     # Demo create Fields table. Define list of types and columns to pass in to method.
-    columns = ["FieldID", "ItemID", "LastUpdated", "JamaName", "JiraName", "LinkedID"]
-    types = ["INT PRIMARY KEY NOT NULL", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "STRING", "STRING", "INT"]
+    #columns = ["FieldID", "ItemID", "LastUpdated", "JamaName", "JiraName", "LinkedID"]
+    #types = ["INT PRIMARY KEY NOT NULL", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "STRING", "STRING", "INT"]
     #db_ops.create_table("Fields", columns, types)
 
     # Demo rename column. Takes the table name, current column name and updated column name as args.
@@ -465,7 +467,7 @@ if __name__ == '__main__':
     # Demo INSERT query. NOTE: field id and item id must be unique in order to be added.
     time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
     items_table_ops.insert_into_items_table(item_id, 'bug1', '100', 'Jama', 'bug', "3", time)
-    fields_table_ops.insert_into_fields_table(field_id, "1", time, 'Issue', 'Ticket')
+    fields_table_ops.insert_into_fields_table(field_id, "1", time, 'Issue', 'Ticket', "None")
 
     # Demo SELECT query.
     item_row = items_table_ops.retrieve_by_item_id(item_id)
@@ -493,4 +495,4 @@ if __name__ == '__main__':
 
     demo_sync_methods(db_path)
 
-    logging_demo() 
+    logging_demo() '''
