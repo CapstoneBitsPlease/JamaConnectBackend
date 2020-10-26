@@ -175,7 +175,8 @@ def fields_to_sync():
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
         fields_table = FieldsTableOps(db_path)
         items_table = ItemsTableOps(db_path)
-        response = fields_table.get_fields_to_sync(items_table)
+        sync_table = SyncInformationTableOps(db_path)
+        response = fields_table.get_fields_to_sync(items_table, sync_table)
         num_fields = response[0]
         fields_to_sync = response[1]
         return jsonify(num_fields=num_fields, fields_to_sync=fields_to_sync)

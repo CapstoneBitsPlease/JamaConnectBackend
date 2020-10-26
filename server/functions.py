@@ -6,8 +6,16 @@ from datetime import datetime
 
 # Utility functions
 
-# Convert datetime string or float to Unix time (seconds since 1/1/1970)
+# Convert datetime string to Unix time
 def convert_to_seconds(date):
-        date_time_object = datetime.strptime(date, '%Y-%m-%d %H:%M:%f')
-        seconds = date_time_object.timestamp()
-        return seconds
+    if(date == "NULL"):
+        return 0
+    else:
+        return datetime.strptime(date, '%Y-%m-%d %H:%M:%f').timestamp()
+
+# Convert Unix time to datetime string
+def convert_to_datetime(seconds):
+    if(seconds == "NULL"):
+        return 0
+    else:
+        return datetime.fromtimestamp(seconds).strftime('%Y-%m-%d %H:%M:%f')
