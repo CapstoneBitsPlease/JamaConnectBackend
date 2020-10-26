@@ -13,6 +13,7 @@ app = Flask(__name__)
 from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , get_jwt_identity)
 from flask import jsonify
 import connections
+from flask_cors import CORS, cross_origin
 import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 from set_up_log import json_log_setup
@@ -26,6 +27,8 @@ jwt = JWTManager(app)
 #create the active connection list
 cur_connections = connections.connections()
 
+#set the CORS headrer to allow all access
+CORS(app, supports_credentials=True)
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
@@ -76,9 +79,9 @@ def initialize_jira():
     if request.method == "POST":
         #request.values converts form items AND URLstring encoded items into a dict
         cred = request.values
-        username = cred.get("username")
-        password = cred.get("password")
-        organization = cred.get("organization")
+        username = cred["username"]
+        password = cred["password"]
+        organization = cred["organization"]
         
         #check to see if an authorization token is being passed in, otherwise make a new connection
         session= None
@@ -101,7 +104,7 @@ def initialize_jira():
         access_token = create_access_token(identity={"connection_id":session.id})
         return jsonify(access_token=access_token), 200
 
-@app.route('/user')
+@app.route('/user', methods=['GET'])
 @jwt_required
 def user():
     #This is basicaly the authenticaion chunk
@@ -119,7 +122,7 @@ def user():
 
     return {"jama_connected": jama, "jira_connected": jira}, 200
 
-@app.route('/users')
+@app.route('/users', methods=['GET'])
 @jwt_required
 def get_all_user():
     if request.method == "GET":
@@ -131,7 +134,7 @@ def get_all_user():
             return status
         return {"Number of current connections": len(cur_connections.all_connections)}, 200
 
-@app.route('/jama/projects')
+@app.route('/jama/projects', methods=['GET'])
 @jwt_required
 def getprojects():
     #This is basicaly the authenticaion chunk
@@ -145,7 +148,7 @@ def getprojects():
     else:
         return Response(401)
 
-@app.route('/jama/item_types')
+@app.route('/jama/item_types', methods=['GET'])
 @jwt_required
 def get_item_types():
     #This is basicaly the authenticaion chunk
@@ -159,6 +162,25 @@ def get_item_types():
     else:
         return Response(401)
 
+@app.route('/jama/items_by_type', methods=['GET'])
+@jwt_required
+def get_items_of_type():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    
+    args = request.values
+    type_id = int(args["type_id"])
+    project_id = int(args["project_id"])
+    
+    if type_id == "" or project_id == "":
+        return jsonify("Must specify an item type ID and Project ID"), 422
+    
+    if session.jama_connection:
+        items = jsonify(session.get_items_by_type(project_id, type_id))
+        return items
+    else:
+        return Response(401)
 
 @app.route('/jama_item_types')
 def get_jama_item_types():

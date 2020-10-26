@@ -65,6 +65,17 @@ class connection:
             types.append(item)
         return types
 
+    def get_items_by_type(self, project_id, type_id):
+        """
+        get a list of items and item_id's given a project and an item type
+        """
+        response = self.jama_connection.get_abstract_items(project=project_id, item_type=type_id)
+        items=[]
+        for item_chunk in response:
+            item = {"name":item_chunk["fields"]["name"], "id":item_chunk["id"]}
+            items.append(item)
+        return items
+
     def match_token(self, token):
         if self.id == token:
             return True
