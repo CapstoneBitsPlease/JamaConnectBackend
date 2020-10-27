@@ -347,8 +347,8 @@ class FieldsTableOps:
                         fields_to_sync.append(field)
         return [num_fields_to_sync, fields_to_sync]
 
-    # Sync fields of one item - WIP
-    def sync_fields(self, item_id, items_table, sync_table):
+    # Sync fields of one item - WIP (this prob needs to go somewhere else)
+    def sync_fields_of_item(self, item_id, items_table, sync_table):
         fields = self.retrieve_by_item_id(item_id)
         last_sync_time, units, last_sync_end_time = sync_table.get_last_sync_time()
 
@@ -366,25 +366,25 @@ class FieldsTableOps:
                 # check whether fields for either service were updated after last sync
                 if (service == 'Jama'):
                     if (last_updated > last_sync_end_time):
-                        print("Jama was updated after last_sync_end_time, needs to update, set both to this value")
+                        print("Jama was updated after the last sync")
                         jira_fields = self.retrieve_by_item_id(linked_id)
-                        print("linked jira fields:" + str(jira_fields))
+                        print("Linked Jira fields:" + str(jira_fields))
                         # update Jama db with new value - PUT/POST Jama
                         # update Jira db to match Jama - PUT/POST Jira
                         # update last_updated for both fields to current time
                     else:
-                        print("no need for Jama to update")
+                        print("Jama was not updated since the last sync")
 
                 elif (service == 'Jira'):
                     if (last_updated > last_sync_end_time):
-                        print("Jira was updated after last_sync_end_time, needs to update, set both to this value")
+                        print("Jira was updated after the last sync")
                         jama_fields = self.retrieve_by_item_id(linked_id)
-                        print("linked jama fields: " + str(jama_fields))
+                        print("Linked Jama fields: " + str(jama_fields))
                         # update Jira db with new value - PUT/POST Jira
                         # update Jama db to match Jira - PUT/POST Jama
                         # update last_updated for both fields to current time
                     else:
-                        print("no need for Jira to update")
+                        print("Jira was not updated since the last sync")
 
                 else: print("service entry not labeled as Jama or Jira")
 
@@ -655,7 +655,7 @@ if __name__ == '__main__':
     #sync_table_ops.delete_sync_record(sync_id)
     #sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "0", "Sync in progress")"""
 
-     #testing get_fields_to_sync
+    #testing get_fields_to_sync
     fields = fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)
     print("Number of fields ready to sync: " + str(fields[0]))
     print("Fields ready to sync: " + str(fields[1]))
@@ -669,7 +669,7 @@ if __name__ == '__main__':
     fields_table_ops.insert_into_fields_table(34234, item_id, now, "test10000", "blank", 100001)
     #fields_table_ops.insert_into_fields_table(34237, item_id, now, "test10001", "test", 100000)
     #fields_table_ops.insert_into_fields_table(34236, item_id, now, "test10002", "test", 100000)
-    fields = fields_table_ops.sync_fields(item_id, items_table_ops, sync_table_ops)
+    fields = fields_table_ops.sync_fields_of_item(item_id, items_table_ops, sync_table_ops)
     #print("sync_fields output: " + str(fields))
     print("length of time of last sync: " + str(sync_table_ops.get_last_sync_time()))
     print("completed syncs: " + str(sync_table_ops.retrieve_by_completion_status(1)))
