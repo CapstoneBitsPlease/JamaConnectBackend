@@ -347,7 +347,7 @@ class FieldsTableOps:
                         fields_to_sync.append(field)
         return [num_fields_to_sync, fields_to_sync]
 
-    # Sync fields of one item - WIP (this prob needs to go somewhere else)
+    # Sync fields of one item - WIP (the finalized fn prob needs to go somewhere else)
     def sync_fields_of_item(self, item_id, items_table, sync_table):
         fields = self.retrieve_by_item_id(item_id)
         last_sync_time, units, last_sync_end_time = sync_table.get_last_sync_time()
@@ -506,7 +506,7 @@ class SyncInformationTableOps:
         id, start_time, end_time, completed, description = self.get_last_successful_sync()[0]
         start_time = functions.convert_to_seconds(start_time)
         end_time = functions.convert_to_seconds(end_time)
-        last_sync_time = format(end_time - start_time, '.2f')
+        last_sync_time = format(end_time - start_time, '.4f')
         units = "seconds"
         return [last_sync_time, units, end_time]
 
@@ -671,7 +671,7 @@ if __name__ == '__main__':
     #fields_table_ops.insert_into_fields_table(34236, item_id, now, "test10002", "test", 100000)
     fields = fields_table_ops.sync_fields_of_item(item_id, items_table_ops, sync_table_ops)
     #print("sync_fields output: " + str(fields))
-    print("length of time of last sync: " + str(sync_table_ops.get_last_sync_time()))
+    print("length of time of last sync: " + str(sync_table_ops.get_last_sync_time()[0]) + " seconds")
     print("completed syncs: " + str(sync_table_ops.retrieve_by_completion_status(1)))
 
     #demo_sync_methods(db_path)
