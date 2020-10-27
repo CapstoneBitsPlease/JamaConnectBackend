@@ -1,27 +1,22 @@
-from flask import Flask
-import logging
-
-app = Flask(__name__)
-
 import base64
 from flask import Flask
 from flask import request
 from flask import Response
+from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , get_jwt_identity)
+from flask import jsonify
+from flask_cors import CORS, cross_origin
+import json
+import os
+from set_up_log import json_log_setup
+import connections
+import functions
+import database
+from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 
 app = Flask(__name__)
 
-from flask_jwt_extended import (JWTManager, jwt_required, create_access_token , get_jwt_identity)
-from flask import jsonify
-import connections
-from flask_cors import CORS, cross_origin
-import database
-from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
-from set_up_log import json_log_setup
-import json
-import os
-
 # setup for the JWT
-app.config['JWT_SECRET_KEY']= 'Change_at_some_point' #replace with a real secret?
+app.config['JWT_SECRET_KEY']= 'Change this' #replace with a real secret?
 jwt = JWTManager(app)
 
 #create the active connection list
@@ -199,6 +194,48 @@ def item_types():
     print(token)
     session = cur_connections.get_session(token)
     return session
+
+@app.route('/jama_projects')
+@jwt_required
+def jama_projects():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    if session.jama_connection:
+        projects = session.get_project_list()
+        return jsonify(projects)
+    else:
+        return Response(401)
+
+# Retrieves the length of time of the last sync from sqlite database
+@app.route('/last_sync_time')
+@jwt_required
+def last_sync_time():
+    # get the length of time of the last sync from our database 
+    if request.method == 'GET':
+        db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+        sync_table = SyncInformationTableOps(db_path)
+        last_sync_time = sync_table.get_last_sync_time()
+        return jsonify(last_sync_time)
+    else:
+        return Response(401)
+
+# Retrieves the number of fields ready to be synced and their content from sqlite database
+@app.route('/fields_to_sync')
+@jwt_required
+def fields_to_sync():
+    # get the number of fields and content ready to be synced
+    if request.method == 'GET':
+        db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+        fields_table = FieldsTableOps(db_path)
+        items_table = ItemsTableOps(db_path)
+        sync_table = SyncInformationTableOps(db_path)
+        response = fields_table.get_fields_to_sync(items_table, sync_table)
+        num_fields = response[0]
+        fields_to_sync = response[1]
+        return jsonify(num_fields=num_fields, fields_to_sync=fields_to_sync)
+    else:
+        return Response(401)
 
 @app.route('/demo_logs')
 def default():

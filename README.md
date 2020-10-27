@@ -21,6 +21,8 @@ install the java web token library `pip3 install flask-jwt-extended`
 
 install Flask-CORS `pip3 install flask-cors`
 
+install python-json-logger `pip3 install python-json-logger`
+
 ## To run
 ### Through the CLI
 navigate into the server folder then run `python routes.py`

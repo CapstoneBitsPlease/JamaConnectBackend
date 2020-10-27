@@ -51,7 +51,8 @@ class connection:
 
     def get_project_list(self):
         response = self.jama_connection.get_projects()
-        projects=[]
+        projects =[]
+
         for project in response:
             item = {"name":project["fields"]["name"], "id":project["id"]}
             projects.append(item)
