@@ -110,6 +110,40 @@ class DatabaseOperations:
                 self.close_connection(conn)
 
 
+	#Linking Code
+
+    def __find_links(self, type, id):
+        conn = self.connect_to_db()
+        if conn:
+            c=conn.cursor()
+            c.execute("SELECT Title FROM Items WHERE ID = "+id+" and Type = "+type)
+            results = c.fetchall()
+            return results
+
+    def __find_mappings(self, type, id):
+        conn = self.connect_to_db()
+        if conn:
+            c=conn.cursor()
+            c.execute("SELECT Title FROM Items WHERE ID = "+id+" and Type = "+type)
+            titles = c.fetchall()
+            c.execute("SELECT jama_name FROM Fields WHERE jira_name in "+titles)
+            results = c.fetchall()
+            if len(results) == 0:
+                c.execute("SELECT jira_name FROM Fields WHERE jama_name in " + titles)
+                results = c.fetchall()
+            return results
+
+    def __find_mappings(self, title):
+        conn = self.connect_to_db()
+        if conn:
+            c=conn.cursor()
+            c.execute("SELECT jama_name FROM Fields WHERE jira_name in "+title)
+            results = c.fetchall()
+            if len(results) == 0:
+                c.execute("SELECT jira_name FROM Fields WHERE jama_name in " + title)
+                results = c.fetchall()
+            return results
+
 # Operations for the Items table. When columns are added or updated, make sure to update them in
 # the __init__ method.
 class ItemsTableOps:
