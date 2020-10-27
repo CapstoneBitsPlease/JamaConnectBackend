@@ -2,6 +2,10 @@
 ### this is the python server that will act as the bridge between Jama and Jira
 
 ## requirements
+to install all packages: `pip3 install -r requirements.txt`
+
+###           --OR--
+
 install PyJama: https://github.com/jamasoftware-ps/py-jama-rest-client
 
 install Atlassian python client: `pip3 install atlassian-python-api`
@@ -14,6 +18,10 @@ jira module documentation: https://atlassian-python-api.readthedocs.io/jira.html
 install flask:`pip3 install flask`
 
 install the java web token library `pip3 install flask-jwt-extended`
+
+install Flask-CORS `pip3 install flask-cors`
+
+install python-json-logger `pip3 install python-json-logger`
 
 ## To run
 ### Through the CLI

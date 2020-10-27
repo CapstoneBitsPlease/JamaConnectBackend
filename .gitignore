@@ -1,4 +1,11 @@
+env/
 *.pyc
+<<<<<<< HEAD
 *.db
 *.log
 *.DS_Store
+=======
+__pycache__/
+*.log
+*.db
+>>>>>>> 93effcc91c66e8b8a4395754f0b757e01a7ae1ca

@@ -1,0 +1,8 @@
+{"asctime": "10/24/2020 05:08:48 PM", "levelname": "WARNING", "name": "root", "message": "warning"}
+{"asctime": "10/24/2020 05:08:48 PM", "levelname": "ERROR", "name": "root", "message": "error"}
+{"asctime": "10/24/2020 05:08:48 PM", "levelname": "INFO", "name": "werkzeug", "message": "127.0.0.1 - - [24/Oct/2020 17:08:48] \"GET /demo_logs HTTP/1.1\" 200 -"}
+{"asctime": "10/24/2020 05:09:49 PM", "levelname": "DEBUG", "name": "root", "message": "debug"}
+{"asctime": "10/24/2020 05:09:49 PM", "levelname": "INFO", "name": "root", "message": "info"}
+{"asctime": "10/24/2020 05:09:49 PM", "levelname": "WARNING", "name": "root", "message": "warning"}
+{"asctime": "10/24/2020 05:09:49 PM", "levelname": "ERROR", "name": "root", "message": "error"}
+{"asctime": "10/24/2020 05:09:49 PM", "levelname": "INFO", "name": "werkzeug", "message": "127.0.0.1 - - [24/Oct/2020 17:09:49] \"GET /demo_logs HTTP/1.1\" 200 -"}
