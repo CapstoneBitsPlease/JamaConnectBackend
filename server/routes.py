@@ -160,14 +160,21 @@ def get_item_types():
         return Response(401)
 
 
-@app.route('/jama_item_types')
-def get_jama_item_types():
+@app.route('/capstone/item_types')
+def get_capstone_item_types():
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
-    print(db_path)
     itemsTableOps = ItemsTableOps(db_path)
     types = itemsTableOps.get_all_types()
     print(types)
     return jsonify(types = types), 200
+
+@app.route('/capstone/items_of_type')
+def get_capstone_items_of_type():
+    type_ = request.values
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    itemsTableOps = ItemsTableOps(db_path)
+    items = itemsTableOps.retrieve_by_type(type_)
+    return jsonify(items = items), 200
 
 @app.route('/Jira_item_types')
 @jwt_required
