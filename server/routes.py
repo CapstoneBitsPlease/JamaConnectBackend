@@ -12,6 +12,7 @@ import connections
 import functions
 import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
+import sync
 
 app = Flask(__name__)
 
@@ -208,17 +209,15 @@ def jama_projects():
         return Response(401)
 
 # Retrieves the length of time of the last sync from sqlite database
-@app.route('/last_sync_time')
+@app.route('/last_sync_time', methods=['GET'])
 @jwt_required
 def last_sync_time():
     # get the length of time of the last sync from our database 
-    if request.method == 'GET':
-        db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
-        sync_table = SyncInformationTableOps(db_path)
-        last_sync_time = sync_table.get_last_sync_time()
-        return jsonify(last_sync_time)
+    time = sync.last_sync_period()
+    if time:
+        return jsonify(time)
     else:
-        return Response(401)
+        Response(401)
 
 # Retrieves the number of fields ready to be synced and their content from sqlite database
 @app.route('/fields_to_sync')
