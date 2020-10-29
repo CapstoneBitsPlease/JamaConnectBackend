@@ -195,23 +195,8 @@ def item_types():
     session = cur_connections.get_session(token)
     return session
 
-@app.route('/jama_projects')
-@jwt_required
-def jama_projects():
-    token = get_jwt_identity()
-    uuid = token.get("connection_id")
-    session = cur_connections.get_session(uuid)
-    if session.jama_connection:
-        projects = session.get_project_list()
-        return jsonify(projects)
-    else:
-        return Response(401)
-
-# Retrieves the length of time of the last sync from sqlite database
-@app.route('/last_sync_time')
-@jwt_required
+@app.route('/capstone/last_sync_time')
 def last_sync_time():
-    # get the length of time of the last sync from our database 
     if request.method == 'GET':
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
         sync_table = SyncInformationTableOps(db_path)
@@ -220,11 +205,8 @@ def last_sync_time():
     else:
         return Response(401)
 
-# Retrieves the number of fields ready to be synced and their content from sqlite database
-@app.route('/fields_to_sync')
-@jwt_required
+@app.route('/capstone/fields_to_sync')
 def fields_to_sync():
-    # get the number of fields and content ready to be synced
     if request.method == 'GET':
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
         fields_table = FieldsTableOps(db_path)
