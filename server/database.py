@@ -111,36 +111,77 @@ class DatabaseOperations:
 
 
 	#Linking Code
+#    def __add_item_link(self, first_ID, first_type, second_ID, second_type):#Makes one item LinkedID equal to the unique ID of the other item
+#        conn = self.connect_to_db()
+#        if conn:
+#            c=conn.cursor()
+#            c.execute("SELECT UniqueID")
 
-    def __find_links(self, type, id):
+    def add_field_link(self, jira_name, jama_name):
         conn = self.connect_to_db()
         if conn:
             c=conn.cursor()
-            c.execute("SELECT Title FROM Items WHERE ID = "+id+" and Type = "+type)
+            c.execute("Select unique_id FROM Fields WHERE JamaName = "+jama_name)
+            unique_id=c.fetchall()
+            if unique_id is not None:
+                update_jira_name(unique_id, jira_name)
+            c.execute("Select unique_id FROM Fields WHERE JiraName = "+jira_name)
+            unique_id=c.fetchall()
+            if unique_id is not None:
+                update_jira_name(unique_id, jamaa_name)
+
+    def find_items(self, type, id):
+        conn = self.connect_to_db()
+        if conn:
+            c=conn.cursor()
+            c.execute("SELECT Title FROM Items WHERE ID = "+id+" AND Type = "+type)
             results = c.fetchall()
             return results
 
-    def __find_mappings(self, type, id):
+    def find_fields(item_type, item_id):
         conn = self.connect_to_db()
         if conn:
             c=conn.cursor()
-            c.execute("SELECT Title FROM Items WHERE ID = "+id+" and Type = "+type)
-            titles = c.fetchall()
-            c.execute("SELECT jama_name FROM Fields WHERE jira_name in "+titles)
+            c.execute("SELECT JiraNme FROM Fields WHERE ItemID = "+item_id)
+            jira_results=c.fetchall()
+            c.execute("SELECT JamaNme FROM Fields WHERE ItemID = "+item_id)
+            jama_results=c.fetchall()
+
+    def find_item_primary_key(self, type, id):#This probably isn't strictly necessary, but it's probably easier to change
+        conn = self.connect_to_db()
+        if conn:
+            c=conn.cursor()
+            c.execute("SELECT ID FROM Items WHERE ID = "+id+" AND Type = "+type)
+            results = c.fetchall()
+            return results
+
+    def find_field_primary_key(self, type, id):#This probably isn't strictly necessary, but it's probably easier to change
+        conn = self.connect_to_db()
+        if conn:
+            c=conn.cursor()
+            c.execute("SELECT FieldID FROM Items WHERE ID = "+id+" AND Type = "+type)
+            results = c.fetchall()
+            return results
+
+    def find_mappings(self, type, id):
+        conn = self.connect_to_db()
+        if conn:
+            c=conn.cursor()
+            c.execute("SELECT JamaName FROM Fields WHERE ItemID IN "+id)
             results = c.fetchall()
             if len(results) == 0:
-                c.execute("SELECT jira_name FROM Fields WHERE jama_name in " + titles)
+                c.execute("SELECT JiraName FROM Fields WHERE ItemID IN " + id)
                 results = c.fetchall()
             return results
 
-    def __find_mappings(self, title):
+    def find_mappings(self, id):
         conn = self.connect_to_db()
         if conn:
             c=conn.cursor()
-            c.execute("SELECT jama_name FROM Fields WHERE jira_name in "+title)
+            c.execute("SELECT jama_name FROM Fields WHERE item_id IN "+id)
             results = c.fetchall()
-            if len(results) == 0:
-                c.execute("SELECT jira_name FROM Fields WHERE jama_name in " + title)
+            if results == null:
+                c.execute("SELECT jira_name FROM Fields WHERE jama_name IN " + title)
                 results = c.fetchall()
             return results
 
