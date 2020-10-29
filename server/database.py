@@ -439,8 +439,8 @@ def logging_demo():
     items_table = "Items"
     fields_column = "FieldID"
     items_column = "ID"
-    item_id = 459
-    field_id = 981
+    item_id = 470
+    field_id = 983
     # Gets absolute path to root folder and appends database file. Should work on any machine.
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
     db_ops = DatabaseOperations(db_path)
@@ -485,11 +485,11 @@ def logging_demo():
     field_row = fields_table_ops.retrieve_by_field_id(field_id)
     print("Updated fields row: ", field_row)
 
-    # Demo DELETE query.
-    fields_table_ops.delete_fields_in_item(item_id)
-    fields_table_ops.delete_field(field_id)
-    print("Deleted field id (expect none or empty): ", fields_table_ops.retrieve_by_item_id(item_id))
-    print("Deleted fields that match item id (expect none or empty): ", fields_table_ops.retrieve_by_field_id(field_id))
+    # # Demo DELETE query.
+    # fields_table_ops.delete_fields_in_item(item_id)
+    # fields_table_ops.delete_field(field_id)
+    # print("Deleted field id (expect none or empty): ", fields_table_ops.retrieve_by_item_id(item_id))
+    # print("Deleted fields that match item id (expect none or empty): ", fields_table_ops.retrieve_by_field_id(field_id))
 
     items_table_ops.delete_item(item_id)
     print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(item_id))
