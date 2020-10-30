@@ -116,19 +116,42 @@ class DatabaseOperations:
 #        if conn:
 #            c=conn.cursor()
 #            c.execute("SELECT UniqueID")
-
-    def add_field_link(self, jira_name, jama_name):
+    
+    def present_in_table(self, table, primary_key):
         conn = self.connect_to_db()
         if conn:
             c=conn.cursor()
-            c.execute("Select unique_id FROM Fields WHERE JamaName = "+jama_name)
-            unique_id=c.fetchall()
-            if unique_id is not None:
-                update_jira_name(unique_id, jira_name)
-            c.execute("Select unique_id FROM Fields WHERE JiraName = "+jira_name)
-            unique_id=c.fetchall()
-            if unique_id is not None:
-                update_jira_name(unique_id, jamaa_name)
+            if table=="Fields":
+                c.execute("SELECT FieldID FROM Fields WHERE FieldID = "+primary_key)
+                result=c.fetchall()
+                if result == None:
+                    return False
+                return true
+            elif table=="Items":
+                c.execute("SELECT FieldID FROM Items WHERE FieldID = "+primary_key)
+                result=c.fetchall()
+                if result == None:
+                    return False
+                return true
+            else:
+                c.execute("SELECT SyncID FROM SyncInformation WHERE SyncID = "+primary_key)
+                result=c.fetchall()
+                if result == None:
+                    return False
+                return true
+
+    def add_field_link(self, jama_item_id, jama_field_id, jira_field_id, jira_feild_id):
+        conn = self.connect_to_db()
+        if conn:
+            c=conn.cursor()
+            c.execute("SELECT JamaName FROM Fields WHERE FieldID = "+jama_field_id+" AND ItemID = "+jama_item_id)
+            jama_name=c.fetchall()
+            c.execute("SELECT JiraName FROM Fields WHERE FieldID = "+jira_field_id+" AND ItemID = "+jira_item_id)
+            jira_name=c.fetchall()
+            if jama_name is not None:#checks to ensure the field is present
+                update_jira_name(jama_field_id, jira_name)
+            if jira_name is not None:#checks to ensure the field is present
+                update_jira_name(jira_field_id, jama_name)
 
     def find_items(self, type, id):
         conn = self.connect_to_db()
@@ -142,26 +165,9 @@ class DatabaseOperations:
         conn = self.connect_to_db()
         if conn:
             c=conn.cursor()
-            c.execute("SELECT JiraNme FROM Fields WHERE ItemID = "+item_id)
-            jira_results=c.fetchall()
-            c.execute("SELECT JamaNme FROM Fields WHERE ItemID = "+item_id)
-            jama_results=c.fetchall()
-
-    def find_item_primary_key(self, type, id):#This probably isn't strictly necessary, but it's probably easier to change
-        conn = self.connect_to_db()
-        if conn:
-            c=conn.cursor()
-            c.execute("SELECT ID FROM Items WHERE ID = "+id+" AND Type = "+type)
-            results = c.fetchall()
-            return results
-
-    def find_field_primary_key(self, type, id):#This probably isn't strictly necessary, but it's probably easier to change
-        conn = self.connect_to_db()
-        if conn:
-            c=conn.cursor()
-            c.execute("SELECT FieldID FROM Items WHERE ID = "+id+" AND Type = "+type)
-            results = c.fetchall()
-            return results
+            c.execute("SELECT FeildID, FieldID FROM Fields WHERE ItemID = "+item_id)
+            field_ids=c.fetchall()
+            return field_ids
 
     def find_mappings(self, type, id):
         conn = self.connect_to_db()
@@ -174,16 +180,16 @@ class DatabaseOperations:
                 results = c.fetchall()
             return results
 
-    def find_mappings(self, id):
-        conn = self.connect_to_db()
-        if conn:
-            c=conn.cursor()
-            c.execute("SELECT jama_name FROM Fields WHERE item_id IN "+id)
-            results = c.fetchall()
-            if results == null:
-                c.execute("SELECT jira_name FROM Fields WHERE jama_name IN " + title)
-                results = c.fetchall()
-            return results
+#    def find_mappings(self, id):
+#        conn = self.connect_to_db()
+#        if conn:
+#            c=conn.cursor()
+#            c.execute("SELECT jama_name FROM Fields WHERE item_id IN "+id)
+#            results = c.fetchall()
+#            if results == null:
+#                c.execute("SELECT jira_name FROM Fields WHERE jama_name IN " + title)
+#                results = c.fetchall()
+#            return results
 
 # Operations for the Items table. When columns are added or updated, make sure to update them in
 # the __init__ method.
