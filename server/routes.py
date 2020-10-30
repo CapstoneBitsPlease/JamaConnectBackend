@@ -169,5 +169,14 @@ def item_types():
     session = functions.get_session(token)
     return session
 
+#Linking
+@app.route('/Linking')
+def link_items():
+    toLink = request.values
+    jiraItemId = toLink["jira_item"]
+    jamaItemId = toLink["jama_item"]
+    jiraFields = toLink["jira_fields"]
+    jamaFields = toLink["jama_fields"]
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

@@ -111,11 +111,13 @@ class DatabaseOperations:
 
 
 	#Linking Code
-#    def __add_item_link(self, first_ID, first_type, second_ID, second_type):#Makes one item LinkedID equal to the unique ID of the other item
-#        conn = self.connect_to_db()
-#        if conn:
-#            c=conn.cursor()
-#            c.execute("SELECT UniqueID")
+    def generate_field_id(self):
+        conn = self.connect_to_db()
+        if conn:
+            c=conn.cursor()
+            c.execute("SELECT max(Field_ID) FROM Fields")
+            field_id=c.fetchone()
+        return field_id+1
     
     def present_in_table(self, table, primary_key):
         conn = self.connect_to_db()
@@ -140,7 +142,7 @@ class DatabaseOperations:
                     return False
                 return true
 
-    def add_field_link(self, jama_item_id, jama_field_id, jira_field_id, jira_feild_id):
+    def add_field_link_database(self, jama_item_id, jama_field_id, jira_field_id, jira_feild_id):
         conn = self.connect_to_db()
         if conn:
             c=conn.cursor()
@@ -153,7 +155,7 @@ class DatabaseOperations:
             if jira_name is not None:#checks to ensure the field is present
                 update_jira_name(jira_field_id, jama_name)
 
-    def find_items(self, type, id):
+    def find_items_database(self, type, id):
         conn = self.connect_to_db()
         if conn:
             c=conn.cursor()
@@ -161,7 +163,7 @@ class DatabaseOperations:
             results = c.fetchall()
             return results
 
-    def find_fields(item_type, item_id):
+    def find_fields_database(item_type, item_id):
         conn = self.connect_to_db()
         if conn:
             c=conn.cursor()
@@ -169,7 +171,7 @@ class DatabaseOperations:
             field_ids=c.fetchall()
             return field_ids
 
-    def find_mappings(self, type, id):
+    def find_mappings_database(self, type, id):
         conn = self.connect_to_db()
         if conn:
             c=conn.cursor()
