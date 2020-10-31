@@ -188,7 +188,7 @@ class ItemsTableOps:
 
     def get_all_jama_types(self):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.type_col, "Jama", self.service_col, True)
-
+        
     def get_all_jira_types(self):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.type_col, "Jira", self.service_col, True)
 
