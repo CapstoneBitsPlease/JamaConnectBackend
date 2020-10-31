@@ -195,7 +195,7 @@ def get_capstone_item_types_jama():
 
 @app.route('/capstone/items_of_type')
 def get_capstone_items_of_type():
-    type_ = request.values
+    type_ = request.values("type")
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     itemsTableOps = ItemsTableOps(db_path)
     items = itemsTableOps.retrieve_by_type(type_)
