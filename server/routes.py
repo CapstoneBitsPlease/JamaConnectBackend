@@ -226,6 +226,16 @@ def jama_projects():
     else:
         return Response(401)
 
+# Retrieves item by id
+@app.route('/capstone/item_of_id')
+def get_capstone_item_of_id():
+    print(request)
+    id_ = request.values["id"]
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    itemsTableOps = ItemsTableOps(db_path)
+    items = itemsTableOps.retrieve_by_item_id(id_)
+    return jsonify(items = items), 200
+
 # Retrieves the length of time of the last sync from sqlite database
 @app.route('/last_sync_time')
 @jwt_required
