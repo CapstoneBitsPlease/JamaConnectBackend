@@ -45,7 +45,8 @@ class connection:
             jira_connection.get_all_projects()
         except:
             return 401
-        
+
+
         self.jira_connection = jira_connection
         return 200
 
@@ -76,6 +77,7 @@ class connection:
             item = {"name":item_chunk["fields"]["name"], "id":item_chunk["id"]}
             items.append(item)
         return items
+
 
     def match_token(self, token):
         if self.id == token:

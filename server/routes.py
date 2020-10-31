@@ -236,6 +236,21 @@ def fields_to_sync():
     else:
         return Response(401)
 
+@app.route('/sync/single')
+@jwt_required
+def sync_one():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+
+    success = sync.sync_one_item("100", session)
+
+    if success:
+        return 200
+    else:
+        return 500
+
+
 @app.route('/demo_logs')
 def default():
     json_log_setup()
