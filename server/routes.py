@@ -226,7 +226,7 @@ def jama_projects():
     else:
         return Response(401)
 
-# Retrieves item by id
+# Retrieves item by ID
 @app.route('/capstone/item_of_id')
 def get_capstone_item_of_id():
     print(request)
