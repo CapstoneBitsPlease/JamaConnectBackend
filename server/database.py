@@ -33,6 +33,7 @@ class DatabaseOperations:
         conn = self.connect_to_db()
         if conn:
             c = conn.cursor()
+            c.execute("PRAGMA foreign_keys = ON;")
             if c6 == None:
                 c.execute("INSERT INTO "+table_name+" VALUES(?, ?, ?, ?, ?)", (primary_key, c2, c3, c4, c5))
             elif c7 == None:
@@ -188,7 +189,7 @@ class ItemsTableOps:
 
     def get_all_jama_types(self):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.type_col, "Jama", self.service_col, True)
-        
+
     def get_all_jira_types(self):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.type_col, "Jira", self.service_col, True)
 
@@ -252,7 +253,7 @@ class FieldsTableOps:
     # field_id is primary key (unique identifier in table.)
     def __init__(self, path):
         self.field_id_col = "FieldID" # TYPE: PRIMARY KEY INT
-        self.item_id_col = "ItemID" # TYPE: INT
+        self.item_id_col = "ItemID" # TYPE: INT, FOREIGN KEY
         self.last_updated_col = "LastUpdated" # TYPE: DATETIME, ms precision.
         self.jama_name_col = "JamaName" # TYPE: STRING
         self.jira_name_col = "JiraName" # TYPE: STRING
@@ -509,10 +510,10 @@ def demo_sync_methods(db_path):
     recent_date = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
 
     # Demo create SyncInformation table.
-    '''db_ops = DatabaseOperations(db_path)
+    db_ops = DatabaseOperations(db_path)
     columns = ["SyncID", "StartTime", "EndTime", "CompletedSuccessfully", "Description"]
     types = ["INT PRIMARY KEY NOT NULL", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "DATETIME DEFAULT NULL", "INT", "TEXT"]
-    db_ops.create_table("SyncInformation", columns, types)'''
+    db_ops.create_table("SyncInformation", columns, types)
 
     sync_start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
     sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "0", "Sync in progress")
@@ -567,8 +568,8 @@ def logging_demo():
     items_table = "Items"
     fields_column = "FieldID"
     items_column = "ID"
-    item_id = 470
-    field_id = 983
+    item_id = 484
+    field_id = 10
     # Gets absolute path to root folder and appends database file. Should work on any machine.
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
     db_ops = DatabaseOperations(db_path)
@@ -587,18 +588,31 @@ def logging_demo():
     #types = ["INT PRIMARY KEY NOT NULL", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "STRING", "STRING", "INT"]
     #db_ops.create_table("Fields", columns, types)
 
+    '''conn = db_ops.connect_to_db()
+    c = conn.cursor()
+    c.execute("PRAGMA foreign_keys = ON;")
+    c.execute("CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')), JamaName STRING, JiraName STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));")
+    conn.commit()
+    db_ops.close_connection(conn)'''
+
     # Demo rename column. Takes the table name, current column name and updated column name as args.
     #db_ops.rename_column(items_table, "Project", "LastSyncTime")
 
     # Demo delete table. ***USE WITH CAUTION***
-    # # # db_ops.delete_table("SyncInformation")
+    # # # db_ops.delete_table("Fields")
     # Demo add column to existing table.
     #db_ops.add_column(items_table, "LastSyncTime", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))")
 
     # Demo INSERT query. NOTE: field id and item id must be unique in order to be added.
-    """time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
     items_table_ops.insert_into_items_table(item_id, 'bug1', '100', 'Jama', 'bug', "3", time)
-    fields_table_ops.insert_into_fields_table(field_id, "1", time, 'Issue', 'Ticket', "None")
+    # This one should pass
+    fields_table_ops.insert_into_fields_table(field_id, item_id, time, 'Issue', 'Ticket', "None")
+
+    # This one should FAIL
+    fields_table_ops.insert_into_fields_table(field_id+1, -1, time, 'Issue', 'Ticket', "None")
+    field_row1 = fields_table_ops.retrieve_by_field_id(field_id+1)
+    print("IF RETRIEVED FOREIGN KEY NOT WORKING: ", field_row1)
 
     # Demo SELECT query.
     item_row = items_table_ops.retrieve_by_item_id(item_id)
@@ -632,7 +646,7 @@ def logging_demo():
     #sync_table_ops.delete_sync_record(sync_id)
     #print("Retrieved deleted sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
 
-    last_sync_data = sync_table_ops.get_most_recent_sync()
-    print("Last sync information added: ", last_sync_data)
+    #last_sync_data = sync_table_ops.get_most_recent_sync()
+    #print("Last sync information added: ", last_sync_data)
 
-    logging_demo()'''
+    #logging_demo()'''
