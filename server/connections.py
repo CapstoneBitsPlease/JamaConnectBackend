@@ -77,6 +77,10 @@ class connection:
             items.append(item)
         return items
 
+    def get_item_by_id(self, item_id):
+        response = self.jama_connection.get_item(item_id = item_id)
+        return response
+        
     def match_token(self, token):
         if self.id == token:
             return True

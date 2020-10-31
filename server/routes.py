@@ -186,6 +186,25 @@ def get_jama_item_types():
     print(types)
     return jsonify(types = types), 200
 
+@app.route('/jama/item_by_id', methods=['GET'])
+@jwt_required
+def get_item_of_id():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    
+    args = request.values
+    item_id = int(args["item_id"])
+    
+    if item_id == "":
+        return jsonify("Must specify an item ID"), 422
+    
+    if session.jama_connection:
+        item = jsonify(session.get_item_by_id(item_id))
+        return item
+    else:
+        return Response(401)
+
 @app.route('/Jira_item_types')
 @jwt_required
 def item_types():
@@ -206,6 +225,16 @@ def jama_projects():
         return jsonify(projects)
     else:
         return Response(401)
+
+# Retrieves item by ID
+@app.route('/capstone/item_of_id')
+def get_capstone_item_of_id():
+    print(request)
+    id_ = request.values["id"]
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    itemsTableOps = ItemsTableOps(db_path)
+    items = itemsTableOps.retrieve_by_item_id(id_)
+    return jsonify(items = items), 200
 
 # Retrieves the length of time of the last sync from sqlite database
 @app.route('/last_sync_time')
