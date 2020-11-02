@@ -1,6 +1,8 @@
 from .calling import get_projects
 from server import server
 import base64
+from flask import request
+from flask import Response
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
@@ -31,3 +33,17 @@ def all_projects(credentials):
     password = credentials[1]
     projects = get_projects(username, password, True)
     return "Number of Projects:" + str(projects)
+
+#Login validation interface
+@server.route('/login/basic', methods=['GET', 'POST'])
+def verify_login():
+    if request.method == "POST":
+        cred = request.values
+        print(cred)
+        if(cred.get("username")):
+            if(cred.get("username") == "FakeUser"):
+                status = Response(status=200)
+                return status
+            else:
+                status = Response(status=401)
+                return status

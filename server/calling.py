@@ -18,7 +18,7 @@ def get_projects(clientID, ClientPass, oauthFlag):
         print('\n---------------' + project_name + '------------------')
 
 
-    # Print each field
+    # Print each fieldls
     #
     for field_name, field_data in project.items():
 
@@ -38,6 +38,4 @@ def get_projects(clientID, ClientPass, oauthFlag):
 
     return projects
 
-def login(Username, Password, oauth):
-    cursor = get_db().cursor()
     
