@@ -1,5 +1,5 @@
-from connections import connection
-from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
+from server.connections import connection
+from server.database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 from atlassian import Jira
 import os
 
