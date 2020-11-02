@@ -177,14 +177,48 @@ def get_items_of_type():
     else:
         return Response(401)
 
-@app.route('/jama_item_types')
-def get_jama_item_types():
+@app.route('/capstone/item_types_jira')
+def get_capstone_item_types_jira():
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
-    print(db_path)
     itemsTableOps = ItemsTableOps(db_path)
-    types = itemsTableOps.get_all_types()
+    types = itemsTableOps.get_all_jira_types()
     print(types)
     return jsonify(types = types), 200
+
+@app.route('/capstone/item_types_jama')
+def get_capstone_item_types_jama():
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    itemsTableOps = ItemsTableOps(db_path)
+    types = itemsTableOps.get_all_jama_types()
+    print(types)
+    return jsonify(types = types), 200
+
+@app.route('/capstone/items_of_type')
+def get_capstone_items_of_type():
+    type_ = request.values("type")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    itemsTableOps = ItemsTableOps(db_path)
+    items = itemsTableOps.retrieve_by_type(type_)
+    return jsonify(items = items), 200
+
+@app.route('/jama/item_by_id', methods=['GET'])
+@jwt_required
+def get_item_of_id():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    
+    args = request.values
+    item_id = int(args["item_id"])
+    
+    if item_id == "":
+        return jsonify("Must specify an item ID"), 422
+    
+    if session.jama_connection:
+        item = jsonify(session.get_item_by_id(item_id))
+        return item
+    else:
+        return Response(401)
 
 @app.route('/Jira_item_types')
 @jwt_required
@@ -195,6 +229,29 @@ def item_types():
     session = cur_connections.get_session(token)
     return session
 
+@app.route('/jama_projects')
+@jwt_required
+def jama_projects():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    if session.jama_connection:
+        projects = session.get_project_list()
+        return jsonify(projects)
+    else:
+        return Response(401)
+
+# Retrieves item by ID
+@app.route('/capstone/item_of_id')
+def get_capstone_item_of_id():
+    print(request)
+    id_ = request.values["id"]
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    itemsTableOps = ItemsTableOps(db_path)
+    items = itemsTableOps.retrieve_by_item_id(id_)
+    return jsonify(items = items), 200
+
+# Retrieves the length of time of the last sync
 @app.route('/capstone/last_sync_time')
 def last_sync_time():
     if request.method == 'GET':
@@ -205,6 +262,7 @@ def last_sync_time():
     else:
         return Response(401)
 
+# Retrieves fields ready to sync
 @app.route('/capstone/fields_to_sync')
 def fields_to_sync():
     if request.method == 'GET':
