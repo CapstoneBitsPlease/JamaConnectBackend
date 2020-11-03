@@ -28,6 +28,7 @@ class connection:
         jama_connection = JamaClient(host_domain=jama_url, credentials=(username, password), oauth=False)
         try:
             jama_connection.get_projects()
+            
         except APIException as error:
             return error.status_code
         
@@ -77,7 +78,20 @@ class connection:
             item = {"name":item_chunk["fields"]["name"], "id":item_chunk["id"]}
             items.append(item)
         return items
+    
+    # gets a jama item and returns only the fields specified in the array
+    def get_jama_item(item_id, fields):
+        jama_object = self.jama_connection.get_item(item_id)
+        item = []
+        for field in fields:
+            item.append({field:jama_object[field]})
+        return item
+    # updates the fields of the jama item specified by the item_key
+    # and fields in the form ["field":"value", "field":"value",..]
+    def set_jira_item(item_key, fields):
 
+        self.jira_connection.update_issue_field()
+    return True
 
     def match_token(self, token):
         if self.id == token:
@@ -105,6 +119,6 @@ class connections:
         num_sessions = len(self.all_connections)
         for session in range(0,num_sessions):
             connection = self.all_connections[session]
-            if(connection.match_token(token)):
+             if(connection.match_token(token)):
                 return connection
         return None
