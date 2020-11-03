@@ -547,12 +547,12 @@ if __name__ == '__main__':
     #types = ["INT PRIMARY KEY NOT NULL", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "STRING", "STRING", "INT"]
     #db_ops.create_table("Fields", columns, types)
 
-    #conn = db_ops.connect_to_db()
-    #c = conn.cursor()
-    #c.execute("PRAGMA foreign_keys = ON;")
-    #c.execute("CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')), JamaName STRING, JiraName STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));")
-    #conn.commit()
-    #db_ops.close_connection(conn)
+    conn = db_ops.connect_to_db()
+    c = conn.cursor()
+    c.execute("PRAGMA foreign_keys = ON;")
+    c.execute("CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')), JamaName STRING, JiraName STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));")
+    conn.commit()
+    db_ops.close_connection(conn)
 
     # Demo rename column. Takes the table name, current column name and updated column name as args.
     #db_ops.rename_column(items_table, "Project", "LastSyncTime")

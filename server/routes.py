@@ -251,7 +251,43 @@ def get_capstone_item_of_id():
     items = itemsTableOps.retrieve_by_item_id(id_)
     return jsonify(items = items), 200
 
-# Retrieves the length of time of the last sync
+# Unlinkes a pair of linked Jira and Jama items from the JamaJira Connect DataBase
+@app.route('/capstone/unlink_with_id')
+def get_capstone_unlink_with_id():
+    print(request)
+    id_ = request.values["id"]
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    itemsTableOps = ItemsTableOps(db_path)
+    items = itemsTableOps.retrieve_by_item_id(id_)
+    if not items:
+        return "Unlinking did not occure. This item was not found.", 200
+
+    item = items[0]
+    if str(item[2]).lower() == "none" or str(item[2]).lower() == "null":
+        return "Unlinking did not occure. This item is not linked.", 200
+
+    fieldsTableOps = FieldsTableOps(db_path)
+    fields = fieldsTableOps.retrieve_by_item_id(id_)
+    IDs_to_unlink = []
+    for field in fields:
+        IDs_to_unlink.append(field[5])
+
+    fields_to_unlink = []
+    for ID in IDs_to_unlink:
+        fields_to_unlink += fieldsTableOps.retrieve_by_linked_id(ID)
+
+    for field in fields_to_unlink:
+        fieldsTableOps.update_linked_id(field[0], "None") 
+        fieldsTableOps.delete_field(field[0])
+
+    item_ID_to_unlink = item[2]
+    items_to_unlink = itemsTableOps.retrieve_by_linked_id(item_ID_to_unlink)
+    for item in items_to_unlink:
+        itemsTableOps.update_linked_id(item[0], "None")
+        itemsTableOps.delete_item(item[0])
+    return "Unlinking successful.", 200
+
+# Retrieves the length of time of the last sync from sqlite database
 @app.route('/capstone/last_sync_time')
 def last_sync_time():
     if request.method == 'GET':
