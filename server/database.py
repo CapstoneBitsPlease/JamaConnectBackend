@@ -28,6 +28,29 @@ class DatabaseOperations:
         if conn:
             conn.close()
 
+    def present_in_table(self, table, primary_key):
+        conn = self.connect_to_db()
+        if conn:
+            c=conn.cursor()
+            if table=="Fields":
+                c.execute("SELECT FieldID FROM Fields WHERE FieldID = "+primary_key)
+                result=c.fetchall()
+                if result == None:
+                    return False
+                return true
+            elif table=="Items":
+                c.execute("SELECT ID FROM Items WHERE ID = "+primary_key)
+                result=c.fetchall()
+                if result == None:
+                    return False
+                return True
+            else:
+                c.execute("SELECT SyncID FROM SyncInformation WHERE SyncID = "+primary_key)
+                result=c.fetchall()
+                if result == None:
+                    return False
+                return True
+
     # Inserts one item into a given table and verifies that values added to table match expected.
     def insert_into_db(self, table_name, primary_key, c2, c3, c4, c5, c6 = None, c7 = None):
         conn = self.connect_to_db()
