@@ -220,7 +220,7 @@ def get_logs():
 #    return test_jira_issue_retrieval(self)
 
 @app.route('/post_link_item', methods=['POST'])
-def post_link_item():
+def post_link_item():#returns false if the item called for does not exist in the Items table, does not check to see if the linked item exists in the items table
     if request.method == 'POST':
         input = request.values
         id_primary=input["primary_ID"]#This is the id that remains the same whose linked_id is being updated
@@ -228,7 +228,11 @@ def post_link_item():
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
         print(db_path)
         itemsTableOps = ItemsTableOps(db_path)
-        itemsTableOps.update_linked_id(id_primary, id_update)
+        databaseOperations = DatabaseOperations(db_path)
+        if databaseOperations.present_in_table("Items", id_primary):
+            itemsTableOps.update_linked_id(id_primary, id_update)
+            return jsonify("Success"), 200
+        return jsonify("The Item does not exist in the Items table"), 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
