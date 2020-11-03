@@ -288,10 +288,8 @@ def get_capstone_unlink_with_id():
     return "Unlinking successful.", 200
 
 # Retrieves the length of time of the last sync from sqlite database
-@app.route('/last_sync_time')
-@jwt_required
+@app.route('/capstone/last_sync_time')
 def last_sync_time():
-    # get the length of time of the last sync from our database 
     if request.method == 'GET':
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
         sync_table = SyncInformationTableOps(db_path)
@@ -300,11 +298,9 @@ def last_sync_time():
     else:
         return Response(401)
 
-# Retrieves the number of fields ready to be synced and their content from sqlite database
-@app.route('/fields_to_sync')
-@jwt_required
+# Retrieves fields ready to sync
+@app.route('/capstone/fields_to_sync')
 def fields_to_sync():
-    # get the number of fields and content ready to be synced
     if request.method == 'GET':
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
         fields_table = FieldsTableOps(db_path)
