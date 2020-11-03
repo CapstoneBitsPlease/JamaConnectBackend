@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
+    "\\.idea",
     "\\server"
   ],
-  "SelectedNode": "\\server\\routes.py",
+  "SelectedNode": "\\server\\linking.py",
   "PreviewInSolutionExplorer": false
 }

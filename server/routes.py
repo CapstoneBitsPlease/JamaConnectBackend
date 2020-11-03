@@ -215,5 +215,20 @@ def get_logs():
             error_list.append(error)
     return jsonify(error_list), 200
 
+#@app.route('/test_jira_issue')
+#def test_jira_issue():
+#    return test_jira_issue_retrieval(self)
+
+@app.route('/post_link_item', methods=['POST'])
+def post_link_item():
+    if request.method == 'POST':
+        input = request.values
+        id_primary=input["primary_ID"]#This is the id that remains the same whose linked_id is being updated
+        id_update=input["update_ID"]#this is the new linked_id
+        db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+        print(db_path)
+        itemsTableOps = ItemsTableOps(db_path)
+        itemsTableOps.update_linked_id(id_primary, id_update)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
