@@ -160,8 +160,6 @@ class ItemsTableOps:
         self.project_id_col = "ProjectID" # TYPE: UNIQUE INT
         self.last_sync_time_col = "LastSyncTime" # TYPE: DATETIME, ms precision
         self.table_name = "Items"
-        self.project_id_col = "ProjectID"  # TYPE: UNIQUE INT
-        self.last_sync_time_col = "LastSyncTime"  # TYPE: DATETIME, ms precision
         self.db_ops = DatabaseOperations(path)
     
     # # # RETRIEVE METHODS FOR ITEMS TABLE # # #
@@ -192,7 +190,6 @@ class ItemsTableOps:
 
     def get_all_jira_types(self):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.type_col, "Jira", self.service_col, True)
-
 
      # # # UPDATE METHODS FOR ITEMS TABLE # # #
 
@@ -241,11 +238,10 @@ class ItemsTableOps:
             self.db_ops.close_connection(conn)
         return linked_items
 
-    # Retrieves service of a given item. Queries the items table and returns the service as a string
+    # Retrieves service of a given item
     def get_service_of_item_id(self, item_id):
         _, _, _, service, _, _, _ = self.retrieve_by_item_id(item_id)[0]
         return service
-
 
 # Operations for the fields table. When columns are added or updated, make sure to update them in
 # the __init__ method.
@@ -316,7 +312,7 @@ class FieldsTableOps:
 
     # OTHER SPROCS #
 
-    # Retrieves all linked fields ready to be synced. Queries the items and fields tables and returns an array containing the number of fields and their content.
+    # Retrieves all linked fields ready to be synced. Returns an array containing the number of fields and their content.
     def get_fields_to_sync(self, items_table, sync_table):
         num_fields_to_sync = 0
         fields_to_sync = []
@@ -334,57 +330,11 @@ class FieldsTableOps:
                     _, _, end_time, _, _ = last_sync[0]
                     if(end_time):
                         last_sync_end_time = functions.convert_to_seconds(end_time)
-                    # check if field needs to be synced, increment and append if so
-                    if (last_updated > last_sync_end_time):
-                        num_fields_to_sync += 1
-                        fields_to_sync.append(field)
+                        # check if field needs to be synced, increment and append if so
+                        if last_updated > last_sync_end_time:
+                            num_fields_to_sync += 1
+                            fields_to_sync.append(field)
         return [num_fields_to_sync, fields_to_sync]
-
-    # Sync fields of one item - WIP (the finalized fn prob needs to go somewhere else)
-    def sync_fields_of_item(self, item_id, items_table, sync_table):
-        fields = self.retrieve_by_item_id(item_id)
-        _, _, last_sync_end_time = sync_table.get_last_sync_time()
-
-        try:
-            for field in fields:
-                _, item_id, last_updated, _, _, linked_id = field
-
-                if (not linked_id):
-                    print("error - field not linked")
-                    return
-
-                service = items_table.get_service_of_item_id(item_id)
-                last_updated = functions.convert_to_seconds(last_updated)
-
-                # check whether fields for either service were updated after last sync
-                if (service == 'Jama'):
-                    if (last_updated > last_sync_end_time):
-                        print("Jama was updated after the last sync")
-                        jira_fields = self.retrieve_by_item_id(linked_id)
-                        print("Linked Jira fields:" + str(jira_fields))
-                        # update Jama db with new value - PUT/POST Jama
-                        # update Jira db to match Jama - PUT/POST Jira
-                        # update last_updated for both fields to current time
-                    else:
-                        print("Jama was not updated since the last sync")
-
-                elif (service == 'Jira'):
-                    if (last_updated > last_sync_end_time):
-                        print("Jira was updated after the last sync")
-                        jama_fields = self.retrieve_by_item_id(linked_id)
-                        print("Linked Jama fields: " + str(jama_fields))
-                        # update Jira db with new value - PUT/POST Jira
-                        # update Jama db to match Jira - PUT/POST Jama
-                        # update last_updated for both fields to current time
-                    else:
-                        print("Jira was not updated since the last sync")
-
-                else: print("service entry not labeled as Jama or Jira")
-
-        except: print("exception occurred, maybe no fields for this item id")
-
-        return fields
-
 
 
 # Operations for the SyncInformation table. When columns are added or updated, make sure to update them in
@@ -478,6 +428,7 @@ class SyncInformationTableOps:
             self.db_ops.close_connection(conn)
         return last_sync
 
+
     # Retrieves last successful sync
     def get_last_successful_sync(self):
         conn = self.db_ops.connect_to_db()
@@ -493,14 +444,22 @@ class SyncInformationTableOps:
         return last_successful_sync
 
 
-    # Retrieves length of time of last successful sync. Queries the SyncInformation table and returns an array containing the length of time of the last sync,
-    # the time units (currently in seconds)
+    # Retrieves length of time of last successful sync. Returns an array containing the length of time of the last sync,
+    # the time units, and the end time
     def get_last_sync_time(self):
         _, start_time, end_time, _, _ = self.get_last_successful_sync()[0]
         start_time = functions.convert_to_seconds(start_time)
         end_time = functions.convert_to_seconds(end_time)
-        last_sync_time = format(end_time - start_time, '.4f')
-        units = "seconds"
+        last_sync_time = end_time - start_time
+        if last_sync_time <= 120:
+            units = "seconds"
+        elif last_sync_time > 120 and last_sync_time < 3600:
+            last_sync_time /= 60
+            units = "minutes"
+        elif last_sync_time >= 3600:
+            last_sync_time /= 3600
+            units = "hours"
+        last_sync_time = format(last_sync_time, '.4f')
         return [last_sync_time, units, end_time]
 
 
@@ -563,13 +522,13 @@ def logging_demo():
     logging.error('error')
 
 # Main method to demo functionality. Uncomment blocks to observe how they function.
-'''if __name__ == '__main__':
+if __name__ == '__main__':
     fields_table = "Fields"
     items_table = "Items"
     fields_column = "FieldID"
     items_column = "ID"
-    item_id = 484
-    field_id = 10
+    item_id = 486
+    field_id = 12
     # Gets absolute path to root folder and appends database file. Should work on any machine.
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
     db_ops = DatabaseOperations(db_path)
@@ -588,12 +547,12 @@ def logging_demo():
     #types = ["INT PRIMARY KEY NOT NULL", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "STRING", "STRING", "INT"]
     #db_ops.create_table("Fields", columns, types)
 
-    '''conn = db_ops.connect_to_db()
-    c = conn.cursor()
-    c.execute("PRAGMA foreign_keys = ON;")
-    c.execute("CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')), JamaName STRING, JiraName STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));")
-    conn.commit()
-    db_ops.close_connection(conn)'''
+    #conn = db_ops.connect_to_db()
+    #c = conn.cursor()
+    #c.execute("PRAGMA foreign_keys = ON;")
+    #c.execute("CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')), JamaName STRING, JiraName STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));")
+    #conn.commit()
+    #db_ops.close_connection(conn)
 
     # Demo rename column. Takes the table name, current column name and updated column name as args.
     #db_ops.rename_column(items_table, "Project", "LastSyncTime")
@@ -649,4 +608,12 @@ def logging_demo():
     #last_sync_data = sync_table_ops.get_most_recent_sync()
     #print("Last sync information added: ", last_sync_data)
 
-    #logging_demo()'''
+    print("Length of time of last sync:", sync_table_ops.get_last_sync_time()[0], sync_table_ops.get_last_sync_time()[1])
+    print("Number of fields ready to sync:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[0])
+    print("Field(s) ready for syncing:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[1])
+
+
+    #demo_sync_methods(db_path)
+    logging_demo()
+
+
