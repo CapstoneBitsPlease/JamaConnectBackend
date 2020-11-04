@@ -8,7 +8,7 @@ from flask_cors import CORS, cross_origin
 import json
 import os
 from set_up_log import json_log_setup
-import connections
+import server.connections
 import functions
 import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)

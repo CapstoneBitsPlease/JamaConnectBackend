@@ -28,10 +28,10 @@ def sync_one_item(item_id, session):
     sync_item = items_table.retrieve_by_item_id(item_id)
 
     #look up the src and destination fields for the synced item
-    field_id = sync_item[0][2]
+    field_id = sync_item[0][2] #(LinkedID)
     
-    src_field = fields_table.retrieve_by_field_id(str(field_id))
-    dst_field = fields_table.retrieve_by_field_id(str(src_field[0][5]))
+    src_fields = fields_table.retrieve_by_field_id(str(field_id))
+    dst_fields = fields_table.retrieve_by_field_id(str(src_field[0][5]))
 
     # get the data from jama to be handed off to jira
     src_id = src_field[0][1]
@@ -44,3 +44,15 @@ def sync_one_item(item_id, session):
     session.jira_connection.update_issue_field("C2TB-41", fields)
 
     return True
+
+#function for getting the list of items to be synced and passing them off to the sync function
+
+
+if __name__ == '__main__':
+    session = connection()
+    session.initiate_jama("capstone2020", "sduncan", "Fuck0ffJama")
+    session.initiate_jira("capstone2020teamb", "sduncan@pdx.edu", "hgTbykR23f57YxsYYgRY84F3")
+
+    sync_one_item("100", session)
+
+
