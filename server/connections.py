@@ -77,9 +77,19 @@ class connection:
             items.append(item)
         return items
 
-    def get_item_by_id(self, item_id):
-        response = self.jama_connection.get_item(item_id = item_id)
+    def get_jama_item_by_id(self, item_id):
+        try:
+            response = self.jama_connection.get_item(item_id = item_id)
+        except ResourceNotFoundException:
+            response = "Item ID not found."
         return response
+
+    def get_jira_item_by_id(self, key):
+        try:
+            response = self.jira_connection.issue(key = key)
+        except requests.exceptions.HTTPError:
+            response = "Item key not found."
+        return response    
         
     def match_token(self, token):
         if self.id == token:
