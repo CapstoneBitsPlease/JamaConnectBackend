@@ -178,14 +178,48 @@ def get_items_of_type():
     else:
         return Response(401)
 
-@app.route('/jama_item_types')
-def get_jama_item_types():
+@app.route('/capstone/item_types_jira')
+def get_capstone_item_types_jira():
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
-    print(db_path)
     itemsTableOps = ItemsTableOps(db_path)
-    types = itemsTableOps.get_all_types()
+    types = itemsTableOps.get_all_jira_types()
     print(types)
     return jsonify(types = types), 200
+
+@app.route('/capstone/item_types_jama')
+def get_capstone_item_types_jama():
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    itemsTableOps = ItemsTableOps(db_path)
+    types = itemsTableOps.get_all_jama_types()
+    print(types)
+    return jsonify(types = types), 200
+
+@app.route('/capstone/items_of_type')
+def get_capstone_items_of_type():
+    type_ = request.values("type")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    itemsTableOps = ItemsTableOps(db_path)
+    items = itemsTableOps.retrieve_by_type(type_)
+    return jsonify(items = items), 200
+
+@app.route('/jama/item_by_id', methods=['GET'])
+@jwt_required
+def get_item_of_id():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    
+    args = request.values
+    item_id = int(args["item_id"])
+    
+    if item_id == "":
+        return jsonify("Must specify an item ID"), 422
+    
+    if session.jama_connection:
+        item = jsonify(session.get_item_by_id(item_id))
+        return item
+    else:
+        return Response(401)
 
 @app.route('/Jira_item_types')
 @jwt_required
@@ -208,6 +242,52 @@ def jama_projects():
     else:
         return Response(401)
 
+# Retrieves item by ID
+@app.route('/capstone/item_of_id')
+def get_capstone_item_of_id():
+    print(request)
+    id_ = request.values["id"]
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    itemsTableOps = ItemsTableOps(db_path)
+    items = itemsTableOps.retrieve_by_item_id(id_)
+    return jsonify(items = items), 200
+
+# Unlinkes a pair of linked Jira and Jama items from the JamaJira Connect DataBase
+@app.route('/capstone/unlink_with_id')
+def get_capstone_unlink_with_id():
+    print(request)
+    id_ = request.values["id"]
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    itemsTableOps = ItemsTableOps(db_path)
+    items = itemsTableOps.retrieve_by_item_id(id_)
+    if not items:
+        return "Unlinking did not occure. This item was not found.", 200
+
+    item = items[0]
+    if str(item[2]).lower() == "none" or str(item[2]).lower() == "null":
+        return "Unlinking did not occure. This item is not linked.", 200
+
+    fieldsTableOps = FieldsTableOps(db_path)
+    fields = fieldsTableOps.retrieve_by_item_id(id_)
+    IDs_to_unlink = []
+    for field in fields:
+        IDs_to_unlink.append(field[5])
+
+    fields_to_unlink = []
+    for ID in IDs_to_unlink:
+        fields_to_unlink += fieldsTableOps.retrieve_by_linked_id(ID)
+
+    for field in fields_to_unlink:
+        fieldsTableOps.update_linked_id(field[0], "None") 
+        fieldsTableOps.delete_field(field[0])
+
+    item_ID_to_unlink = item[2]
+    items_to_unlink = itemsTableOps.retrieve_by_linked_id(item_ID_to_unlink)
+    for item in items_to_unlink:
+        itemsTableOps.update_linked_id(item[0], "None")
+        itemsTableOps.delete_item(item[0])
+    return "Unlinking successful.", 200
+
 # Retrieves the length of time of the last sync from sqlite database
 @app.route('/last_sync_time', methods=['GET'])
 @jwt_required
@@ -219,11 +299,9 @@ def last_sync_time():
     else:
         Response(401)
 
-# Retrieves the number of fields ready to be synced and their content from sqlite database
-@app.route('/fields_to_sync')
-@jwt_required
+# Retrieves fields ready to sync
+@app.route('/capstone/fields_to_sync')
 def fields_to_sync():
-    # get the number of fields and content ready to be synced
     if request.method == 'GET':
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
         fields_table = FieldsTableOps(db_path)
