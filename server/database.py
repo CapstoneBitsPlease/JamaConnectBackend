@@ -34,6 +34,7 @@ class DatabaseOperations:
         if conn:
             c = conn.cursor()
             c.execute("PRAGMA foreign_keys = ON;")
+            conn.commit()
             if c6 == None:
                 c.execute("INSERT INTO "+table_name+" VALUES(?, ?, ?, ?, ?)", (primary_key, c2, c3, c4, c5))
             elif c7 == None:
@@ -44,6 +45,7 @@ class DatabaseOperations:
             self.close_connection(conn)
         else:
             print("Failed to connect")
+        return 0
 
     # Updates an existing entry. Column to search should probably be some unique identifier.
     def update_existing_entry(self, table_name, column_to_search, column_to_update, value_to_search, value_to_update):
@@ -255,8 +257,8 @@ class FieldsTableOps:
         self.field_id_col = "FieldID" # TYPE: PRIMARY KEY INT
         self.item_id_col = "ItemID" # TYPE: INT, FOREIGN KEY
         self.last_updated_col = "LastUpdated" # TYPE: DATETIME, ms precision.
-        self.jama_name_col = "JamaName" # TYPE: STRING
-        self.jira_name_col = "JiraName" # TYPE: STRING
+        self.name_col = "Name" # TYPE: STRING
+        self.field_service_id = "FieldServiceID" # TYPE: STRING
         self.linked_id_col = "LinkedID" # TYPE: INT
         self.table_name = "Fields"
         self.db_ops = DatabaseOperations(path)
@@ -273,10 +275,10 @@ class FieldsTableOps:
         return self.db_ops.retrieve_by_column_value(self.table_name, self.last_updated_col, last_updated)
 
     def retrieve_by_jama_name(self, jama_name):
-        return self.db_ops.retrieve_by_column_value(self.table_name, self.jama_name_col, jama_name)
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.name_col, jama_name)
 
     def retrieve_by_jira_name(self, jira_name):
-        return self.db_ops.retrieve_by_column_value(self.table_name, self.jira_name_col, jira_name)
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.field_service_id, jira_name)
 
     def retrieve_by_linked_id(self, linked_id):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.linked_id_col, str(linked_id))
@@ -293,10 +295,10 @@ class FieldsTableOps:
         self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.last_updated_col, str(unique_id), new_time_updated)
     
     def update_jama_name(self, unique_id, new_jama_name):
-        self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.jama_name_col, str(unique_id), new_jama_name)
+        self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.name_col, str(unique_id), new_jama_name)
             
     def update_jira_name(self, unique_id, new_jira_name):
-        self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.jira_name_col, str(unique_id), new_jira_name)
+        self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.field_service_id, str(unique_id), new_jira_name)
     
     def update_linked_id(self, unique_id, linked_id):
         self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.linked_id_col, str(unique_id), str(linked_id))
@@ -304,8 +306,8 @@ class FieldsTableOps:
     # # # INSERT METHODS FOR FIELDS TABLE # # #
 
     # Inserts one item into the Fields table.
-    def insert_into_fields_table(self, field_id, item_id, last_updated, jama_name, jira_name, linked_id):
-        self.db_ops.insert_into_db(self.table_name, str(field_id), str(item_id), last_updated, jama_name, jira_name, str(linked_id))
+    def insert_into_fields_table(self, field_id, item_id, last_updated, name, field_service_id, linked_id):
+        self.db_ops.insert_into_db(self.table_name, str(field_id), str(item_id), last_updated, name, field_service_id, str(linked_id))
 
     # # # DELETE METHODS FOR FIELDS TABLE # # #
     def delete_fields_in_item(self, item_id):
@@ -384,6 +386,16 @@ class FieldsTableOps:
         except: print("exception occurred, maybe no fields for this item id")
 
         return fields
+
+    def get_next_field_id(self):
+        conn = self.db_ops.connect_to_db()
+        if conn:
+            c = conn.cursor()
+            c.execute("SELECT MAX(FieldID) FROM Fields")
+            most_recent_field = c.fetchall()
+            most_recent_field_id = most_recent_field[0]
+            self.db_ops.close_connection(conn)
+        return most_recent_field_id
 
 
 
@@ -562,14 +574,41 @@ def logging_demo():
     logging.warning('warning')
     logging.error('error')
 
+def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
+    items_ops = ItemsTableOps(db_path)
+    fields_ops = FieldsTableOps(db_path)
+    print(jira_item[0])
+    print(jama_item[0])
+    items_ops.insert_into_items_table(jira_item[0], jira_item[1], jira_item[2], "Jira", jama_item[0], jira_item[3], "NULL")
+    items_ops.insert_into_items_table(jama_item[0], jama_item[1], jama_item[2], "Jama", jira_item[0], jama_item[3], "NULL")
+    field = fields_ops.get_next_field_id()
+    field_id = field[0]
+    success = 1
+    for i in range(0, num_fields):
+        try:
+            field_id += 1
+            fields_ops.insert_into_fields_table(field_id, jira_item[0], "NULL", jira_fields[i][0], jira_fields[i][1], field_id + 1)
+            field_id += 1
+            fields_ops.insert_into_fields_table(field_id, jama_item[0], "NULL", jama_fields[i][0], jama_fields[i][1], field_id - 1)
+        except:
+            logging.log("Something went wrong when linking ", jama_fields[i][0], " with ", jira_fields[i][0])
+            success = 0
+    return success
+
+
 # Main method to demo functionality. Uncomment blocks to observe how they function.
-'''if __name__ == '__main__':
+if __name__ == '__main__':
+    jira_id = 12349
+    jama_id = 12361
+    link_items([jira_id, "title", "issue", 7], [jama_id, "title2", "bug", 6], [[jira_id, "name"], [jira_id, "name2",]], [[jama_id,"name3"], [jama_id, "name4"]], 2)
+    '''
     fields_table = "Fields"
     items_table = "Items"
     fields_column = "FieldID"
     items_column = "ID"
-    item_id = 484
-    field_id = 10
+    item_id = 501
+    field_id = 29
     # Gets absolute path to root folder and appends database file. Should work on any machine.
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
     db_ops = DatabaseOperations(db_path)
@@ -584,16 +623,17 @@ def logging_demo():
     #db_ops.create_table("Items", columns, types)
 
     # Demo create Fields table. Define list of types and columns to pass in to method.
-    #columns = ["FieldID", "ItemID", "LastUpdated", "JamaName", "JiraName", "LinkedID"]
+    #columns = ["FieldID", "ItemID", "LastUpdated", "Name", "FieldServiceID", "LinkedID"]
     #types = ["INT PRIMARY KEY NOT NULL", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "STRING", "STRING", "INT"]
     #db_ops.create_table("Fields", columns, types)
 
-    '''conn = db_ops.connect_to_db()
-    c = conn.cursor()
-    c.execute("PRAGMA foreign_keys = ON;")
-    c.execute("CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')), JamaName STRING, JiraName STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));")
-    conn.commit()
-    db_ops.close_connection(conn)'''
+    # Demo create Fields table WITH FOREIGN KEY enforced.
+    #conn = db_ops.connect_to_db()
+    #c = conn.cursor()
+    #c.execute("PRAGMA foreign_keys = ON;")
+    #c.execute("CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')), JamaName STRING, JiraName STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));")
+    #conn.commit()
+    #db_ops.close_connection(conn)
 
     # Demo rename column. Takes the table name, current column name and updated column name as args.
     #db_ops.rename_column(items_table, "Project", "LastSyncTime")
@@ -610,7 +650,7 @@ def logging_demo():
     fields_table_ops.insert_into_fields_table(field_id, item_id, time, 'Issue', 'Ticket', "None")
 
     # This one should FAIL
-    fields_table_ops.insert_into_fields_table(field_id+1, -1, time, 'Issue', 'Ticket', "None")
+    fields_table_ops.insert_into_fields_table(field_id+1, -100, time, 'Issue', 'Ticket', "None")
     field_row1 = fields_table_ops.retrieve_by_field_id(field_id+1)
     print("IF RETRIEVED FOREIGN KEY NOT WORKING: ", field_row1)
 
