@@ -28,6 +28,7 @@ class connection:
         jama_connection = JamaClient(host_domain=jama_url, credentials=(username, password), oauth=False)
         try:
             jama_connection.get_projects()
+            
         except APIException as error:
             return error.status_code
         
@@ -45,7 +46,8 @@ class connection:
             jira_connection.get_all_projects()
         except:
             return 401
-        
+
+
         self.jira_connection = jira_connection
         return 200
 
@@ -76,6 +78,41 @@ class connection:
             item = {"name":item_chunk["fields"]["name"], "id":item_chunk["id"]}
             items.append(item)
         return items
+    
+    # gets a jama item and returns only the fields specified in the array
+    def get_jama_item(self, item_id, fields):
+        jama_object = self.jama_connection.get_item(item_id)
+        item = []
+        for field in fields:
+            item.append({field:jama_object["fields"][field]})
+        return item
+
+    # gets a Jira item and returns only the fields specified in the array
+    def get_jira_item(self, item_key, fields):
+        item = []
+        for field in fields:
+            jira_object = self.jira_connection.issue_field_value(item_key, field)
+            item.append({field:jira_object[field]})
+        return item
+    
+    #this function returns the id and last update time of the item last updated.
+    def most_recent_update(self,jama_item_id, jira_item_id):
+        jama_item = self.get_jama_item(jama_item_id, ["modifiedDate"])
+        jira_item = self.get_jira_item(jira_item_id, ["updated"])
+
+        jama_update = 1
+        jira_update = 2
+
+        if(jama_update > jira_update):
+            return [0, jama_item_id, jama_item["modifiedDate"]]
+        return [ 1,jira_item_id, jira_item["updated"]]
+
+    # updates the fields of the jama item specified by the item_key
+    # and fields in the form ["field":"value", "field":"value",..]
+    def set_jira_item(self, item_key, fields):
+        #jira.edit_issue("C2TB-41",{"customfield_10016":[{"set":14.0}]})
+        self.jira_connection.edit_issue(item_key, fields, False)
+        return True
 
     def get_item_by_id(self, item_id):
         response = self.jama_connection.get_item(item_id = item_id)

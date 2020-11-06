@@ -8,12 +8,11 @@ from flask_cors import CORS, cross_origin
 import json
 import os
 from set_up_log import json_log_setup
-import connections
+from server.connections import connections
 import functions
 import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
-import linking
-#from querystring_parser import parser
+import sync
 
 app = Flask(__name__)
 
@@ -22,7 +21,7 @@ app.config['JWT_SECRET_KEY']= 'Change this' #replace with a real secret?
 jwt = JWTManager(app)
 
 #create the active connection list
-cur_connections = connections.connections()
+cur_connections = connections()
 
 #set the CORS headrer to allow all access
 CORS(app, supports_credentials=True)
@@ -290,15 +289,15 @@ def get_capstone_unlink_with_id():
     return "Unlinking successful.", 200
 
 # Retrieves the length of time of the last sync from sqlite database
-@app.route('/capstone/last_sync_time')
+@app.route('/last_sync_time', methods=['GET'])
+@jwt_required
 def last_sync_time():
-    if request.method == 'GET':
-        db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
-        sync_table = SyncInformationTableOps(db_path)
-        last_sync_time = sync_table.get_last_sync_time()
-        return jsonify(last_sync_time)
+    # get the length of time of the last sync from our database 
+    time = sync.last_sync_period()
+    if time:
+        return jsonify(time)
     else:
-        return Response(401)
+        Response(401)
 
 # Retrieves fields ready to sync
 @app.route('/capstone/fields_to_sync')
@@ -314,6 +313,21 @@ def fields_to_sync():
         return jsonify(num_fields=num_fields, fields_to_sync=fields_to_sync)
     else:
         return Response(401)
+
+@app.route('/sync/single')
+@jwt_required
+def sync_one():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+
+    success = sync.sync_one_item("100", session)
+
+    if success:
+        return 200
+    else:
+        return 500
+
 
 @app.route('/demo_logs')
 def default():
