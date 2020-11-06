@@ -575,9 +575,10 @@ def logging_demo():
     logging.error('error')
 
 def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     items_ops = ItemsTableOps(db_path)
     fields_ops = FieldsTableOps(db_path)
+    print(db_path)
     print(jira_item[0])
     print(jama_item[0])
     items_ops.insert_into_items_table(jira_item[0], jira_item[1], jira_item[2], "Jira", jama_item[0], jira_item[3], "NULL")
@@ -598,11 +599,11 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
 
 
 # Main method to demo functionality. Uncomment blocks to observe how they function.
-if __name__ == '__main__':
+'''if __name__ == '__main__':
     jira_id = 12349
     jama_id = 12361
     link_items([jira_id, "title", "issue", 7], [jama_id, "title2", "bug", 6], [[jira_id, "name"], [jira_id, "name2",]], [[jama_id,"name3"], [jama_id, "name4"]], 2)
-    '''
+    
     fields_table = "Fields"
     items_table = "Items"
     fields_column = "FieldID"

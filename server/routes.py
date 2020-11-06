@@ -300,24 +300,29 @@ def get_logs():
 
 @app.route('/link_items', methods=['POST'])
 def link_items():
+    json_log_setup()
     if request.method == "POST":
-        #data = parser.parse(request.form)
-        data = dict(request.form)
-        print(data)
-        jira_item = data["jira_item"][0]
-        jama_item = data["jama_item"]
-        jira_fields = data["jira_fields"]
-        jama_fields = data["jama_fields"]
-        #vals = request.values
-        #parsed_values = json.loads(vals)
-        #jira_item = parsed_values["jira_item"]
-        #jama_item = parsed_values["jama_item"]
-        #jira_fields = parsed_values["jira_fields"]
-        #jama_fields = parsed_values["jama_fields"]
-        print(request.form)
+        jira_item = request.form.getlist("jira_item[]")
         print(jira_item)
-        print(jira_fields)
+        jama_item = request.form.getlist("jama_item[]")
         print(jama_item)
+        num_fields = request.form.get("num_fields")
+        print(num_fields)
+        jira_fields = []
+        jama_fields = []
+        num = int(num_fields)
+        for i in range(0, num):
+            val_to_get = "jira_fields[{}]".format(i)
+            print(val_to_get)
+            jira_field = request.form.getlist(val_to_get)
+            print(jira_field)
+            jira_fields.append(jira_field)
+        for i in range(0, num):
+            val_to_get = "jama_fields[{}]".format(i)
+            print(val_to_get)
+            jama_field = request.form.getlist(val_to_get)
+            jama_fields.append(jama_field)
+        print(jira_fields)
         print(jama_fields)
         num_jira_fields = len(jira_fields)
         num_jama_fields = len(jama_fields)
