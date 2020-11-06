@@ -344,5 +344,43 @@ def get_logs():
             error_list.append(error)
     return jsonify(error_list), 200
 
+@app.route('/link_items', methods=['POST'])
+def link_items():
+    json_log_setup()
+    if request.method == "POST":
+        jira_item = request.form.getlist("jira_item[]")
+        print(jira_item)
+        jama_item = request.form.getlist("jama_item[]")
+        print(jama_item)
+        num_fields = request.form.get("num_fields")
+        print(num_fields)
+        jira_fields = []
+        jama_fields = []
+        num = int(num_fields)
+        for i in range(0, num):
+            val_to_get = "jira_fields[{}]".format(i)
+            print(val_to_get)
+            jira_field = request.form.getlist(val_to_get)
+            print(jira_field)
+            jira_fields.append(jira_field)
+        for i in range(0, num):
+            val_to_get = "jama_fields[{}]".format(i)
+            print(val_to_get)
+            jama_field = request.form.getlist(val_to_get)
+            jama_fields.append(jama_field)
+        print(jira_fields)
+        print(jama_fields)
+        num_jira_fields = len(jira_fields)
+        num_jama_fields = len(jama_fields)
+        if num_jira_fields != num_jama_fields:
+            print("array len is different")
+            return {"error": "The number of Jama fields to link does not match the number of Jira fields."}, 500
+        success = database.link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields)
+        if success == 0:
+            print("something went wrong with linking")
+            return {"error": "Linking unsuccessful"}, 500
+        return {"success": "Linking was successful"}, 200
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
