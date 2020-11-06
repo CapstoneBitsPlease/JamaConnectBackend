@@ -12,6 +12,8 @@ import connections
 import functions
 import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
+import linking
+#from querystring_parser import parser
 
 app = Flask(__name__)
 
@@ -266,6 +268,39 @@ def get_logs():
             error = json.loads(json_obj)
             error_list.append(error)
     return jsonify(error_list), 200
+
+@app.route('/link_items', methods=['POST'])
+def link_items():
+    if request.method == "POST":
+        #data = parser.parse(request.form)
+        data = dict(request.form)
+        print(data)
+        jira_item = data["jira_item"][0]
+        jama_item = data["jama_item"]
+        jira_fields = data["jira_fields"]
+        jama_fields = data["jama_fields"]
+        #vals = request.values
+        #parsed_values = json.loads(vals)
+        #jira_item = parsed_values["jira_item"]
+        #jama_item = parsed_values["jama_item"]
+        #jira_fields = parsed_values["jira_fields"]
+        #jama_fields = parsed_values["jama_fields"]
+        print(request.form)
+        print(jira_item)
+        print(jira_fields)
+        print(jama_item)
+        print(jama_fields)
+        num_jira_fields = len(jira_fields)
+        num_jama_fields = len(jama_fields)
+        if num_jira_fields != num_jama_fields:
+            print("array len is different")
+            return {"error": "The number of Jama fields to link does not match the number of Jira fields."}, 500
+        success = database.link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields)
+        if success == 0:
+            print("something went wrong with linking")
+            return {"error": "Linking unsuccessful"}, 500
+        return {"success": "Linking was successful"}, 200
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
