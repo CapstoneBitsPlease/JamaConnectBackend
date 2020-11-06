@@ -89,12 +89,24 @@ class connection:
 
     # gets a Jira item and returns only the fields specified in the array
     def get_jira_item(self, item_key, fields):
-        jira_object = self.jira_connection.get_issue(item_key)
         item = []
         for field in fields:
+            jira_object = self.jira_connection.issue_field_value(item_key, field)
             item.append({field:jira_object[field]})
-        return jira_object
+        return item
     
+    #this function returns the id and last update time of the item last updated.
+    def most_recent_update(self,jama_item_id, jira_item_id):
+        jama_item = self.get_jama_item(jama_item_id, ["modifiedDate"])
+        jira_item = self.get_jira_item(jira_item_id, ["updated"])
+
+        jama_update = 1
+        jira_update = 2
+
+        if(jama_update > jira_update):
+            return [0, jama_item_id, jama_item["modifiedDate"]]
+        return [ 1,jira_item_id, jira_item["updated"]]
+
     # updates the fields of the jama item specified by the item_key
     # and fields in the form ["field":"value", "field":"value",..]
     def set_jira_item(self, item_key, fields):

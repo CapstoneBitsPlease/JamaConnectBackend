@@ -8,7 +8,7 @@ from flask_cors import CORS, cross_origin
 import json
 import os
 from set_up_log import json_log_setup
-import server.connections
+from server.connections import connections
 import functions
 import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
@@ -21,7 +21,7 @@ app.config['JWT_SECRET_KEY']= 'Change this' #replace with a real secret?
 jwt = JWTManager(app)
 
 #create the active connection list
-cur_connections = connections.connections()
+cur_connections = connections()
 
 #set the CORS headrer to allow all access
 CORS(app, supports_credentials=True)
