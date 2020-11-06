@@ -1,3 +1,4 @@
 {
-    "python.pythonPath": "/Library/Frameworks/Python.framework/Versions/3.9/bin/python3"
+    "python.pythonPath": "/usr/local/opt/python/bin/python3.7",
+
 }
