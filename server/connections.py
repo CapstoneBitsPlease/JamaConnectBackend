@@ -104,8 +104,8 @@ class connection:
         jira_update = 2
 
         if(jama_update > jira_update):
-            return [0, jama_item_id, jama_item["modifiedDate"]]
-        return [ 1,jira_item_id, jira_item["updated"]]
+            return 0, jama_item_id, jama_item["modifiedDate"]
+        return  1,jira_item_id, jira_item["updated"]
 
     # updates the fields of the jama item specified by the item_key
     # and fields in the form ["field":"value", "field":"value",..]

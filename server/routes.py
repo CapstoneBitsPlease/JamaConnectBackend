@@ -321,9 +321,14 @@ def sync_one():
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
 
-    success = sync.sync_one_item("100", session)
+    item_id = request.values["item_id"]
 
-    if success:
+    if(item_id == 10040)
+        response = sync.sync_one_item(item_id, session)
+    else:
+        return 200
+    
+    if response:
         return 200
     else:
         return 500
