@@ -323,15 +323,15 @@ def sync_one():
 
     item_id = request.values["item_id"]
 
-    if(item_id == 10040)
+    if item_id == 10040:
         response = sync.sync_one_item(item_id, session)
     else:
-        return 200
+        return Response(200)
     
     if response:
-        return 200
+        return Response(200)
     else:
-        return 500
+        return Response(500)
 
 
 @app.route('/demo_logs')
