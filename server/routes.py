@@ -296,5 +296,52 @@ def get_logs():
             error_list.append(error)
     return jsonify(error_list), 200
 
+@app.route('/get_jira_field')
+def get_jira_field():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+
+    input = request.values
+    field_result_index = 0
+    item_id=input["item_id"]
+    field_input=input["fields"]
+    fields
+    for field_id in fields:
+        field_values[field_result_index]=session.get_jira_field_value(item_id, field_id)
+        ++field_result_index
+    return jsonify(field_values)
+@app.route('/get_jama_field')
+#def get_jama_field():
+
+@app.route('/set_jira_field')
+def set_jira_field():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    input = request.values
+    key = input["Item Key"]
+    fields = input["Fields"]
+    #no longer relevant
+    #assume fields parsed into field_name, and field_value
+    #fields = '{\''+field_name+'\': \''+field_value+'\'}'
+
+    #splits the input and adds {} to the ends in order to make then individual inputs for jira's update function
+    fields_array=fields.split(',')
+    for i in fields_array:
+        if i[-1]!='}':
+            i=i+'}'
+        if i[0]!='{':
+            i='{'+i
+    session.update_jira_field(key, fields_array)
+
+@app.route('/set_jama_field')
+def set_jama_field():
+    input = request.values
+    item_id=input["item_id"]
+    op="update"
+    path="/fields/"+field_name
+    value=field_value
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

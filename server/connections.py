@@ -87,6 +87,37 @@ class connection:
         else:
             return False
 
+    def update_jira_field(self, item_key, fields):
+        for field in fields:
+            jira_connection.update_issue_field(item_key, field)
+
+    def get_jira_field_value(self, item_key, field_id):
+        field_value=jira.issue_field_value(item_key, field)
+        return field_value
+
+    def get_jama_field(self, item_key):
+        item=jama_connection.get_item(item_key)
+
+
+    def set_jama_field(self, item_key, fields):
+        jama_connection.patch_item(item_key, fields)
+        """
+        This method will patch an item.
+        Args:
+            item_id: the API ID of the item that is to be patched
+            patches: An array of dicts, that represent patch operations each dict should have the following entries
+             [
+                {
+                    "op": string,
+                    "path": string,
+                    "value": {}
+                }
+            ]
+
+        Returns: The response status code
+        """
+
+
 class connections:
     def __init__(self):
         self.all_connections=[]
