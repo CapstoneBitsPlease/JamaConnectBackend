@@ -34,6 +34,7 @@ def sync_one_item(item_id, session):
     # and compare that with internal sync log to see if
     # the item has been updated in the time since last sync
     last_sync = max([sync_item1[6],sync_item2[6]])
+    last_sync = datetime.strptime(last_sync, '%Y-%m-%d %H:%M:%f')
     pos, src_id, dst_id, most_recent_change = session.most_recent_update(sync_item1[3],sync_item1[0], sync_item2[2], sync_item2[0])
     if(most_recent_change <= last_sync):
         # the last sync time was the same or newer than the last modified time
