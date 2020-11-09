@@ -323,10 +323,7 @@ def sync_one():
 
     item_id = request.values["item_id"]
 
-    if item_id == 10040:
-        response = sync.sync_one_item(item_id, session)
-    else:
-        return Response(200)
+    response = sync.sync_one_item(item_id, session)
     
     if response:
         return Response(200)

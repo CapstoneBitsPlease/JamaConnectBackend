@@ -2,6 +2,7 @@ from server.connections import connection
 from server.database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 from atlassian import Jira
 import os
+from datetime import datetime
 
 
 def last_sync_period():
@@ -26,14 +27,14 @@ def sync_one_item(item_id, session):
 
     #look up the items to sync in the item table
     sync_item1 = items_table.retrieve_by_item_id(item_id)[0]
-    sync_item2 = items_table.retrieve_by_item_id(sync_item1[2])
+    sync_item2 = items_table.retrieve_by_item_id(sync_item1[2])[0]
 
 
     # check to see which item was updated most recently. 
     # and compare that with internal sync log to see if
     # the item has been updated in the time since last sync
     last_sync = max([sync_item1[6],sync_item2[6]])
-    pos, src_id, most_recent_change = session.most_recent_update(sync_item1[0], sync_item2[0])
+    pos, src_id, dst_id, most_recent_change = session.most_recent_update(sync_item1[3],sync_item1[0], sync_item2[2], sync_item2[0])
     if(most_recent_change <= last_sync):
         # the last sync time was the same or newer than the last modified time
         return False
@@ -49,12 +50,12 @@ def sync_one_item(item_id, session):
     src_fields = fields_table.retrieve_by_item_id(str(src_id))
     dst_fields = []
     for src_field in src_fields:
-        dst_field = fields_table.retrieve_by_field_id(str(src_field[5]))
+        dst_field = fields_table.retrieve_by_field_id(str(src_field[5]))[0]
         dst_fields.append(dst_field)
 
     #put the names of the fields into two corresponding lists
     src_field_names = []
-    for field in src_field:
+    for field in src_fields:
         src_field_names.append(field[3])
     
     dst_field_names = []
@@ -62,23 +63,26 @@ def sync_one_item(item_id, session):
         dst_field_names.append(field[3])
     
     # get the data to be passed to the other service
-    if src_item[3] == "jama":
+    if src_item[3] == "jama" or src_item[3] == "Jama":
         src_data = session.get_jama_item(src_id, src_field_names)
     else:
         src_data = session.get_jira_item(src_id, src_field_names)
 
-    dst_fields = {} #destination list with source values
+    dst_field_values = {} #destination list with source values
     for i in range(len(src_data)):
-        dst_fields[dst_field_names[i]]=src_data[i][1]
+        dst_field_values[dst_field_names[i]] = src_data[src_field_names[i]]
 
     #send the data
-    if src_item[3] == "jama":
-        session.set_jira_item(dst_field[0], dst_fields)
+    if src_item[3] == "jama" or src_item[3] == "Jama":
+        session.set_jira_item(dst_field[1], dst_field_values)
     else:
-         session.set_jama_item(dst_field[0], dst_fields)
+         session.set_jama_item(dst_field[1], dst_fields)
 
     #update the last sync time with the current time. 
-
+    sync_end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    for field in dst_fields:
+        fields_table.update_last_updated_time(field[0], sync_end_time)
+    items_table.update_last_sync_time(dst_id, sync_end_time)
     return True
 
 #function for getting the list of items to be synced and passing them off to the sync function
