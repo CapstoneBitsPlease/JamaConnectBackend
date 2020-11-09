@@ -12,6 +12,7 @@ import json
 from atlassian import Jira
 from atlassian.errors import ApiError
 from py_jama_rest_client.client import *
+from datetime import datetime
 
 
 class connection:
@@ -108,10 +109,14 @@ class connection:
             jama_item = self.get_jama_item(item_2_id, ["modifiedDate"])
             jira_item = self.get_jira_item(item_1_id, ["updated"])
 
+        #format to time object
+        jama_time = datetime.strptime(jama_item["modifiedDate"], '%Y-%m-%dT%H:%M:%S.%f%z')
+        jira_time = datetime.strptime(jira_item["updated"], '%Y-%m-%dT%H:%M:%S.%f%z')
+        
         #time comparison
-        if(jama_item["modifiedDate"] <= jira_item["updated"]):
-            return [0, item_1_id, item_2_id, jama_item["modifiedDate"]]
-        return  [1,item_2_id, item_1_id, jira_item["updated"]]
+        if(jama_time <= jira_time):
+            return [0, item_1_id, item_2_id, jama_time]
+        return  [1,item_2_id, item_1_id, jira_time]
 
     # updates the fields of the jama item specified by the item_key
     # and fields in the form {"field":"value", "field":"value",..}
@@ -121,6 +126,13 @@ class connection:
         for field in fields:
             json_fields[field] = [{"set":fields[field]}]
         self.jira_connection.edit_issue(item_key, json_fields, False)
+        return True
+
+    def set_jama_item(self, item_id, fields):
+        for field in fields:
+            path = "/field/" + field
+            patch = { "op":"replace", "path": path, "value":fields[field]}
+            self.jama_connection.patch_item(item_id, patch)
         return True
 
     def get_item_by_id(self, item_id):
