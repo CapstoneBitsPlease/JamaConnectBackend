@@ -642,6 +642,4 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
 
 
     #demo_sync_methods(db_path)
-    logging_demo()
-
-
+    logging_demo()'''
