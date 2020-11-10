@@ -1,5 +1,5 @@
-from server.connections import connection
-from server.database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
+from connections import connection
+from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 from atlassian import Jira
 import os
 from datetime import datetime
@@ -91,8 +91,8 @@ def sync_one_item(item_id, session):
 
 if __name__ == '__main__':
     session = connection()
-    session.initiate_jama("capstone2020", "sduncan", "Fuck0ffJama")
-    session.initiate_jira("capstone2020teamb", "sduncan@pdx.edu", "hgTbykR23f57YxsYYgRY84F3")
+    session.initiate_jama(os.environ["JAMA_SYNC_ORG"], os.environ["JAMA_SYNC_USERNAME"], os.environ["JAMA_SYNC_PASSWORD"])
+    session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"], os.environ["JIRA_SYNC_PASSWORD"] )
 
     sync_one_item("10040", session)
 
