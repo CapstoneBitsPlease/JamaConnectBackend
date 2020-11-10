@@ -34,7 +34,7 @@ def sync_one_item(item_id, session):
     # and compare that with internal sync log to see if
     # the item has been updated in the time since last sync
     last_sync = max([sync_item1[6],sync_item2[6]])
-    last_sync = datetime.strptime(last_sync, '%Y-%m-%d %H:%M:%f')
+    last_sync = datetime.strptime(last_sync, '%Y-%m-%d %H:%M:%f%z')
     pos, src_id, dst_id, most_recent_change = session.most_recent_update(sync_item1[3],sync_item1[0], sync_item2[2], sync_item2[0])
     if(most_recent_change <= last_sync):
         # the last sync time was the same or newer than the last modified time
@@ -80,7 +80,7 @@ def sync_one_item(item_id, session):
          session.set_jama_item(dst_field[1], dst_fields)
 
     #update the last sync time with the current time. 
-    sync_end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_end_time = datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%f%z')
     for field in dst_fields:
         fields_table.update_last_updated_time(field[0], sync_end_time)
     items_table.update_last_sync_time(dst_id, sync_end_time)
