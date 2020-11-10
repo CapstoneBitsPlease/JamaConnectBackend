@@ -99,6 +99,24 @@ class connection:
             item[field] = jira_object
         return item
     
+    # updates the fields of the jama item specified by the item_key
+    # and fields in the form {"field":"value", "field":"value",..}
+    def set_jira_item(self, item_key, fields):
+        #jira.edit_issue("C2TB-41",{"customfield_10016":[{"set":14.0}]})
+        json_fields ={}
+        for field in fields:
+            json_fields[field] = [{"set":fields[field]}]
+        self.jira_connection.edit_issue(item_key, json_fields, False)
+        return True
+
+    def set_jama_item(self, item_id, fields):
+        for field in fields:
+            path = "/field/" + field
+            patch = { "op":"replace", "path": path, "value":fields[field]}
+            self.jama_connection.patch_item(item_id, patch)
+        return True
+
+
     #this function returns the id and last update time of the item last updated.
     def most_recent_update(self,item_1_service, item_1_id, item_2_service, item_2_id):
 
@@ -118,22 +136,6 @@ class connection:
             return [0, item_1_id, item_2_id, jama_time]
         return  [1,item_2_id, item_1_id, jira_time]
 
-    # updates the fields of the jama item specified by the item_key
-    # and fields in the form {"field":"value", "field":"value",..}
-    def set_jira_item(self, item_key, fields):
-        #jira.edit_issue("C2TB-41",{"customfield_10016":[{"set":14.0}]})
-        json_fields ={}
-        for field in fields:
-            json_fields[field] = [{"set":fields[field]}]
-        self.jira_connection.edit_issue(item_key, json_fields, False)
-        return True
-
-    def set_jama_item(self, item_id, fields):
-        for field in fields:
-            path = "/field/" + field
-            patch = { "op":"replace", "path": path, "value":fields[field]}
-            self.jama_connection.patch_item(item_id, patch)
-        return True
 
     def get_item_by_id(self, item_id):
         response = self.jama_connection.get_item(item_id = item_id)
