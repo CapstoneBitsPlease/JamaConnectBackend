@@ -14,12 +14,11 @@
             "env": {
                 "FLASK_APP": "routes.py",
                 "FLASK_ENV": "development",
-                "FLASK_DEBUG": "0",
+                "FLASK_DEBUG": "1",
                 "PYTHONPATH": "server"
             },
             "args": [
                 "run",
-                "--no-debugger",
                 "--no-reload"
             ],
             "jinja": true

@@ -6,4 +6,5 @@ env/
 __pycache__/
 *.log
 *.db
-*.json
+*json
+
