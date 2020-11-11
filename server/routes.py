@@ -221,6 +221,26 @@ def get_item_of_id():
     else:
         return Response(401)
 
+
+@app.route('/jira/item_by_id', methods=['GET'])
+@jwt_required
+def get_jira_item_of_id():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+
+    args = request.values
+    item_id = args["id"]
+
+    if item_id == "":
+        return jsonify("Must specify an item ID."), 422
+
+    if session.jira_connection:
+        item = jsonify(session.get_jira_item_by_id(item_id))
+        return item
+    else:
+        return Response(401)
+
 @app.route('/Jira_item_types')
 @jwt_required
 def item_types():
@@ -288,9 +308,8 @@ def get_capstone_unlink_with_id():
         itemsTableOps.delete_item(item[0])
     return "Unlinking successful.", 200
 
-# Retrieves the length of time of the last sync from sqlite database
-@app.route('/last_sync_time', methods=['GET'])
-@jwt_required
+# Retrieves the length of time of the last sync
+@app.route('/capstone/last_sync_time', methods=['GET'])
 def last_sync_time():
     # get the length of time of the last sync from our database 
     time = sync.last_sync_period()
@@ -299,7 +318,18 @@ def last_sync_time():
     else:
         Response(401)
 
-# Retrieves fields ready to sync
+# Retrieves the length of time of the last sync from capstone database
+@app.route('/capstone/last_successful_sync_time')
+def last_successful_sync_time():
+    if request.method == 'GET':
+        db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+        sync_table = SyncInformationTableOps(db_path)
+        last_sync_time = sync_table.get_last_sync_time()
+        return jsonify(last_sync_time)
+    else:
+        Response(401)
+
+# Retrieves fields ready to sync from capstone database
 @app.route('/capstone/fields_to_sync')
 def fields_to_sync():
     if request.method == 'GET':
@@ -312,7 +342,7 @@ def fields_to_sync():
         fields_to_sync = response[1]
         return jsonify(num_fields=num_fields, fields_to_sync=fields_to_sync)
     else:
-        return Response(401)
+        Response(401)
 
 @app.route('/sync/single')
 @jwt_required

@@ -239,7 +239,9 @@ class ItemsTableOps:
             c.execute("SELECT * FROM Items WHERE LinkedID IS NOT ? AND LinkedID IS NOT ?", ("NULL","None"))
             linked_items = c.fetchall()
             self.db_ops.close_connection(conn)
-        return linked_items
+            return linked_items
+        else:
+            print("Failed to connect to database.")
 
     # Retrieves service of a given item
     def get_service_of_item_id(self, item_id):
@@ -321,20 +323,25 @@ class FieldsTableOps:
         fields_to_sync = []
         # get all linked items and their fields
         linked_items = items_table.get_linked_items()
+        print(linked_items)
         for item in linked_items:
             item_id = item[0]
             fields = self.retrieve_by_item_id(item_id)
+            print("fields in linked item:", fields)
             for field in fields:
                 if(field):
                     _, item_id, last_updated, _, _, _ = field
                     last_updated = functions.convert_to_seconds(last_updated)
+                    print("last updated:", last_updated)
                     # get last sync from syncinfo table
                     last_sync = sync_table.get_most_recent_sync()
                     _, _, end_time, _, _ = last_sync[0]
+                    print("end time:", end_time)
                     if(end_time):
                         last_sync_end_time = functions.convert_to_seconds(end_time)
                         # check if field needs to be synced, increment and append if so
                         if last_updated > last_sync_end_time:
+                            print("there is a new field to sync")
                             num_fields_to_sync += 1
                             fields_to_sync.append(field)
         return [num_fields_to_sync, fields_to_sync]
@@ -456,7 +463,9 @@ class SyncInformationTableOps:
             c.execute("SELECT * FROM " + self.table_name + " WHERE " + self.end_time_col + " = ?", (last_sync_time,))
             last_successful_sync = c.fetchall()
             self.db_ops.close_connection(conn)
-        return last_successful_sync
+            return last_successful_sync
+        else:
+            print("Failed to connect to database.")
 
 
     # Retrieves length of time of last successful sync. Returns an array containing the length of time of the last sync,
@@ -471,7 +480,7 @@ class SyncInformationTableOps:
         elif last_sync_time > 120 and last_sync_time < 3600:
             last_sync_time /= 60
             units = "minutes"
-        elif last_sync_time >= 3600:
+        else:
             last_sync_time /= 3600
             units = "hours"
         last_sync_time = format(last_sync_time, '.4f')
@@ -570,7 +579,7 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
 
 
 # Main method to demo functionality. Uncomment blocks to observe how they function.
-'''if __name__ == '__main__':
+if __name__ == '__main__':
     jira_id = 12349
     jama_id = 12361
     #link_items([jira_id, "title", "issue", 7], [jama_id, "title2", "bug", 6], [[jira_id, "name"], [jira_id, "name2",]], [[jama_id,"name3"], [jama_id, "name4"]], 2)
@@ -616,9 +625,9 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
 
     # Demo INSERT query. NOTE: field id and item id must be unique in order to be added.
     time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
-    items_table_ops.insert_into_items_table(item_id, 'bug1', '100', 'Jama', 'bug', "3", time)
+    #items_table_ops.insert_into_items_table(item_id, 'bug1', '100', 'Jama', 'bug', "3", time)
     # This one should pass
-    fields_table_ops.insert_into_fields_table(field_id, item_id, time, 'Issue', 'Ticket', "None")
+    #fields_table_ops.insert_into_fields_table(field_id, item_id, time, 'Issue', 'Ticket', "None")
 
     # This one should FAIL
     #fields_table_ops.insert_into_fields_table(field_id+1, -100, time, 'Issue', 'Ticket', "None")
@@ -646,8 +655,8 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
     # print("Deleted field id (expect none or empty): ", fields_table_ops.retrieve_by_item_id(item_id))
     # print("Deleted fields that match item id (expect none or empty): ", fields_table_ops.retrieve_by_field_id(field_id))
 
-    items_table_ops.delete_item(item_id)
-    print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(item_id))
+    #items_table_ops.delete_item(item_id)
+    #print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(item_id))
     
 
     #print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
@@ -660,10 +669,10 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
     #last_sync_data = sync_table_ops.get_most_recent_sync()
     #print("Last sync information added: ", last_sync_data)
 
-    demo_sync_methods(db_path)
+    #demo_sync_methods(db_path)
 
     print("Length of time of last sync:", sync_table_ops.get_last_sync_time()[0], sync_table_ops.get_last_sync_time()[1])
     print("Number of fields ready to sync:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[0])
     print("Field(s) ready for syncing:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[1])
 
-    logging_demo()'''
+    #logging_demo()
