@@ -337,11 +337,20 @@ def set_jira_field():
 
 @app.route('/set_jama_field')
 def set_jama_field():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
     input = request.values
     item_id=input["item_id"]
-    op="update"
-    path="/fields/"+field_name
-    value=field_value
+    fields=json.loads(input["fields"])
+    for field_name in fields:
+        field_change={
+            "op":"replace",
+            "path":"/fields/"+field_name,
+            "value":fields[field_name]
+        }
+        session.set_jama_field(self, item_id, field_change)
+        
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

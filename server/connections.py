@@ -95,12 +95,16 @@ class connection:
         field_value=jira.issue_field_value(item_key, field)
         return field_value
 
-    def get_jama_field(self, item_key):
-        item=jama_connection.get_item(item_key)
+    def get_jama_field(self, item_key, field_names):
+        item=json.loads(jama_connection.get_item(item_key))
+        value_index=0
+        for name in field_names:
+            values[value_index]=item["data"]["fields"][name]
+            ++value_index
+        return values
 
-
-    def set_jama_field(self, item_key, fields):
-        jama_connection.patch_item(item_key, fields)
+    def set_jama_field(self, item_key, field_change):
+        return jama_connection.patch_item(item_key, field_change)
         """
         This method will patch an item.
         Args:
