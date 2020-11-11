@@ -222,8 +222,8 @@ class ItemsTableOps:
     # # # INSERT METHODS FOR ITEMS TABLE # # #
     
     # Inserts one item into the Items table.
-    def insert_into_items_table(self, id_, title, type, service, linked_id, project_id, last_sync_time):
-        self.db_ops.insert_into_db(self.table_name, str(id_), title, type, service, str(linked_id), str(project_id), last_sync_time)
+    def insert_into_items_table(self, id_, title, linked_id, service, type_, project_id, last_sync_time):
+        self.db_ops.insert_into_db(self.table_name, str(id_), title, str(linked_id), service, type_, str(project_id), last_sync_time)
 
     # # # DELETE METHODS FOR ITEMS TABLE # # #
     def delete_item(self, item_id):
@@ -543,16 +543,25 @@ def logging_demo():
 # Links two items in the database by 1.) Adding both items to the table, 2.) setting jira_linked_id = jama_id (and vice versa)
 # 3.) adding each field to the database, and linking with corresponding field in opposite array (ie: jama_field[0].lin)
 def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
+    # Variables for readability
+    id_ = 0
+    title = 1
+    type_ = 2
+    id_to_link = 0
+    project_id = 3
+    field_name = 0
+    field_service_id = 1
+
+    # Get path. NOTE: due to how the flask server is set up, if you want to run this locally instead, use  os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     items_ops = ItemsTableOps(db_path)
     fields_ops = FieldsTableOps(db_path)
     # Add Jira item to the database. Jama item's ID is passed to LinkedID column.
-    items_ops.insert_into_items_table(jira_item[0], jira_item[1], jira_item[2], "Jira", jama_item[0], jira_item[3], "NULL")
+    items_ops.insert_into_items_table(jira_item[id_], jira_item[title], jama_item[id_to_link], "Jira", jira_item[type_], jira_item[project_id], "NULL")
     # Add Jama item to the database. Jira item's ID is passed to LinkedID column.
-    items_ops.insert_into_items_table(jama_item[0], jama_item[1], jama_item[2], "Jama", jira_item[0], jama_item[3], "NULL")
+    items_ops.insert_into_items_table(jama_item[id_], jama_item[title], jira_item[id_to_link], "Jama", jama_item[type_], jama_item[project_id], "NULL")
     # Get the current largest ID in the fields table. Use this to generate the next unique ID for the fields table.
-    field = fields_ops.get_next_field_id()
-    field_id = field[0]
+    field_id = fields_ops.get_next_field_id()[0]
     # Assume success initially. If something goes wrong during syncing process, set this to 0.
     success = 1
     for i in range(0, num_fields):
@@ -560,12 +569,12 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
             # Update next field ID and insert current jira field into the table, passing the corresponding jama FieldID to the LinkedID column.
             # The Jama FieldID will be field_id + 1.
             field_id += 1
-            fields_ops.insert_into_fields_table(field_id, jira_item[0], "NULL", jira_fields[i][0], jira_fields[i][1], field_id + 1)
+            fields_ops.insert_into_fields_table(field_id, jira_item[id_], "NULL", jira_fields[i][field_name], jira_fields[i][field_service_id], field_id + 1)
             # Update next field ID.
             field_id += 1
             # Update next field ID and insert current jama field into the table, passing the corresponding jira FieldID to the LinkedID column.
             # The Jira FieldID will be field_id - 1, since it was calculated above and 1 has been added to it since.
-            fields_ops.insert_into_fields_table(field_id, jama_item[0], "NULL", jama_fields[i][0], jama_fields[i][1], field_id - 1)
+            fields_ops.insert_into_fields_table(field_id, jama_item[id_], "NULL", jama_fields[i][field_name], jama_fields[i][field_service_id], field_id - 1)
         except:
             # If something goes wrong, write to the error log and indicate failure to calling routine by setting success to 0.
             logging.log("Something went wrong when linking ", jama_fields[i][0], " with ", jira_fields[i][0])
@@ -600,7 +609,7 @@ if __name__ == '__main__':
 
     # Demo create Fields table WITH FOREIGN KEY enforced.
     #curr_date = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
-    #string_to_execute = f"CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME, Name STRING, FieldServiceID STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));"
+    #string_to_execute = "CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME, Name STRING, FieldServiceID STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));"
     #conn = db_ops.connect_to_db()
     #c = conn.cursor()
     #c.execute("PRAGMA foreign_keys = ON;")
