@@ -111,43 +111,36 @@ class connection:
 
     def set_jama_item(self, item_id, fields):
         for field in fields:
-            path = "/field/" + field
+            path = "/fields/" + field
             patch = { "op":"replace", "path": path, "value":fields[field]}
             self.jama_connection.patch_item(item_id, patch)
         return True
 
-<<<<<<< HEAD
-
     #this function returns the id and last update time of the item last updated.
+    # return format (pos of src, src_id, dst_id, most recent update)
     def most_recent_update(self,item_1_service, item_1_id, item_2_service, item_2_id):
 
         if item_1_service == "jama":
-            jama_item = self.get_jama_item(item_1_id, ["modifiedDate"])
-            jira_item = self.get_jira_item(item_2_id, ["updated"])
+            item1 = self.get_jama_item(item_1_id, ["modifiedDate"])
+            item2 = self.get_jira_item(item_2_id, ["updated"])
+            item1_time = datetime.strptime(item1["modifiedDate"], '%Y-%m-%dT%H:%M:%S.%f%z')
+            item2_time = datetime.strptime(item2["updated"], '%Y-%m-%dT%H:%M:%S.%f%z')
         else:
-            jama_item = self.get_jama_item(item_2_id, ["modifiedDate"])
-            jira_item = self.get_jira_item(item_1_id, ["updated"])
-
-        #format to time object
-        jama_time = datetime.strptime(jama_item["modifiedDate"], '%Y-%m-%dT%H:%M:%S.%f%z')
-        jira_time = datetime.strptime(jira_item["updated"], '%Y-%m-%dT%H:%M:%S.%f%z')
+            item2 = self.get_jama_item(item_2_id, ["modifiedDate"])
+            item1 = self.get_jira_item(item_1_id, ["updated"])
+            item2_time = datetime.strptime(item2["modifiedDate"], '%Y-%m-%dT%H:%M:%S.%f%z')
+            item1_time = datetime.strptime(item1["updated"], '%Y-%m-%dT%H:%M:%S.%f%z')
         
         #time comparison
-        if(jama_time <= jira_time):
-            return [0, item_1_id, item_2_id, jama_time]
-        return  [1,item_2_id, item_1_id, jira_time]
+        if(item1_time >= item2_time):
+            return [0, item_1_id, item_2_id, item1_time]
+        return  [1,item_2_id, item_1_id, item2_time]
 
-
-    def get_item_by_id(self, item_id):
-        response = self.jama_connection.get_item(item_id = item_id)
-=======
     def get_jama_item_by_id(self, item_id):
         try:
             response = self.jama_connection.get_item(item_id = item_id)
         except ResourceNotFoundException:
             response = "Item ID not found."
->>>>>>> sprint3
-        return response
 
     def get_jira_item_by_id(self, key):
         try:
