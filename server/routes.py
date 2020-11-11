@@ -247,26 +247,6 @@ def get_jira_item_of_id():
     else:
         return Response(401)
 
-
-@app.route('/jira/item_by_id', methods=['GET'])
-@jwt_required
-def get_jira_item_of_id():
-    token = get_jwt_identity()
-    uuid = token.get("connection_id")
-    session = cur_connections.get_session(uuid)
-
-    args = request.values
-    item_id = args["id"]
-
-    if item_id == "":
-        return jsonify("Must specify an item ID."), 422
-
-    if session.jira_connection:
-        item = jsonify(session.get_jira_item_by_id(item_id))
-        return item
-    else:
-        return Response(401)
-
 @app.route('/Jira_item_types')
 @jwt_required
 def item_types():
