@@ -116,6 +116,7 @@ class connection:
             self.jama_connection.patch_item(item_id, patch)
         return True
 
+<<<<<<< HEAD
 
     #this function returns the id and last update time of the item last updated.
     def most_recent_update(self,item_1_service, item_1_id, item_2_service, item_2_id):
@@ -139,7 +140,21 @@ class connection:
 
     def get_item_by_id(self, item_id):
         response = self.jama_connection.get_item(item_id = item_id)
+=======
+    def get_jama_item_by_id(self, item_id):
+        try:
+            response = self.jama_connection.get_item(item_id = item_id)
+        except ResourceNotFoundException:
+            response = "Item ID not found."
+>>>>>>> sprint3
         return response
+
+    def get_jira_item_by_id(self, key):
+        try:
+            response = self.jira_connection.issue(key = key)
+        except requests.exceptions.HTTPError:
+            response = "Item key not found."
+        return response    
         
     def match_token(self, token):
         if self.id == token:

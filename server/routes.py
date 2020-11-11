@@ -13,6 +13,7 @@ import functions
 import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 import sync
+import datetime
 
 
 
@@ -70,7 +71,8 @@ def initalize_jama():
             return status
         
         #the credentials are valid, generate a JWT and return it
-        access_token = create_access_token(identity={"connection_id":session.id})
+        expires = datetime.timedelta(days=1)
+        access_token = create_access_token(identity={"connection_id":session.id}, expires_delta=expires)
         return jsonify(access_token=access_token), 200
 
 @app.route('/login/jira/basic', methods=['POST'])
@@ -101,7 +103,8 @@ def initialize_jira():
             status = Response(status=response)
             return status
         
-        access_token = create_access_token(identity={"connection_id":session.id})
+        expires = datetime.timedelta(days=1)
+        access_token = create_access_token(identity={"connection_id":session.id},expires_delta=expires)
         return jsonify(access_token=access_token), 200
 
 @app.route('/user', methods=['GET'])
@@ -208,7 +211,7 @@ def get_capstone_items_of_type():
 
 @app.route('/jama/item_by_id', methods=['GET'])
 @jwt_required
-def get_item_of_id():
+def get_jama_item_of_id():
     token = get_jwt_identity()
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
@@ -217,10 +220,29 @@ def get_item_of_id():
     item_id = int(args["item_id"])
     
     if item_id == "":
-        return jsonify("Must specify an item ID"), 422
+        return jsonify("Must specify an item ID."), 422
     
     if session.jama_connection:
-        item = jsonify(session.get_item_by_id(item_id))
+        item = jsonify(session.get_jama_item_by_id(item_id))
+        return item
+    else:
+        return Response(401)
+
+@app.route('/jira/item_by_id', methods=['GET'])
+@jwt_required
+def get_jira_item_of_id():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+
+    args = request.values
+    item_id = args["id"]
+    
+    if item_id == "":
+        return jsonify("Must specify an item ID."), 422
+    
+    if session.jira_connection:
+        item = jsonify(session.get_jira_item_by_id(item_id))
         return item
     else:
         return Response(401)
@@ -350,14 +372,19 @@ def get_logs():
             error_list.append(error)
     return jsonify(error_list), 200
 
+# Links two items. Accepts 4 arrays: jama_item, jira_item, jama_fields, and jira_fields, and 1
+# integer parameter which indicates the total number of fields in each fields array.
 @app.route('/link_items', methods=['POST'])
 def link_items():
     json_log_setup()
     if request.method == "POST":
+        # Get all items in array that correspond to jira_item[].
         jira_item = request.form.getlist("jira_item[]")
         print(jira_item)
+        # Get all items in array that correspond to jama_item[].
         jama_item = request.form.getlist("jama_item[]")
         print(jama_item)
+        # Get number of fields that will be linked.
         num_fields = request.form.get("num_fields")
         print(num_fields)
         jira_fields = []
