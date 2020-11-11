@@ -139,9 +139,10 @@ class connection:
 
     def get_jama_item_by_id(self, item_id):
         try:
-            response = self.jama_connection.get_item(item_id = item_id)
+            response = self.jama_connection.get_item(item_id=item_id)
         except ResourceNotFoundException:
             response = "Item ID not found."
+        return response
 
     def get_jira_item_by_id(self, key):
         try:
