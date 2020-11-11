@@ -222,8 +222,8 @@ class ItemsTableOps:
     # # # INSERT METHODS FOR ITEMS TABLE # # #
     
     # Inserts one item into the Items table.
-    def insert_into_items_table(self, id_, title, type, service, linked_id, project_id, last_sync_time):
-        self.db_ops.insert_into_db(self.table_name, str(id_), title, type, service, str(linked_id), str(project_id), last_sync_time)
+    def insert_into_items_table(self, id_, title, linked_id, service, type_, project_id, last_sync_time):
+        self.db_ops.insert_into_db(self.table_name, str(id_), title, str(linked_id), service, type_, str(project_id), last_sync_time)
 
     # # # DELETE METHODS FOR ITEMS TABLE # # #
     def delete_item(self, item_id):
@@ -553,9 +553,9 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
     items_ops = ItemsTableOps(db_path)
     fields_ops = FieldsTableOps(db_path)
     # Add Jira item to the database. Jama item's ID is passed to LinkedID column.
-    items_ops.insert_into_items_table(jira_item[id_], jira_item[title], jira_item[type_], "Jira", jama_item[id_to_link], jira_item[project_id], "NULL")
+    items_ops.insert_into_items_table(jira_item[id_], jira_item[title], jama_item[id_to_link], "Jira", jira_item[type_], jira_item[project_id], "NULL")
     # Add Jama item to the database. Jira item's ID is passed to LinkedID column.
-    items_ops.insert_into_items_table(jama_item[id_], jama_item[title], jama_item[type_], "Jama", jira_item[id_to_link], jama_item[project_id], "NULL")
+    items_ops.insert_into_items_table(jama_item[id_], jama_item[title], jira_item[id_to_link], "Jama", jama_item[type_], jama_item[project_id], "NULL")
     # Get the current largest ID in the fields table. Use this to generate the next unique ID for the fields table.
     field_id = fields_ops.get_next_field_id()[0]
     # Assume success initially. If something goes wrong during syncing process, set this to 0.
