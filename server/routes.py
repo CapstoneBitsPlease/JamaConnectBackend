@@ -15,6 +15,8 @@ from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 import sync
 import datetime
 
+
+
 app = Flask(__name__)
 
 # setup for the JWT
@@ -26,6 +28,8 @@ cur_connections = connections()
 
 #set the CORS headrer to allow all access
 CORS(app, supports_credentials=True)
+
+
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
@@ -336,19 +340,21 @@ def fields_to_sync():
     else:
         return Response(401)
 
-@app.route('/sync/single')
+@app.route('/sync/single', methods=['POST'])
 @jwt_required
 def sync_one():
     token = get_jwt_identity()
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
 
-    success = sync.sync_one_item("100", session)
+    item_id = request.values["item_id"]
 
-    if success:
-        return 200
+    response = sync.sync_one_item(item_id, session)
+    
+    if response:
+        return Response(200)
     else:
-        return 500
+        return Response(500)
 
 
 @app.route('/demo_logs')

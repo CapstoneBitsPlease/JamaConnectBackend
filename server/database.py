@@ -579,7 +579,7 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
 
 
 # Main method to demo functionality. Uncomment blocks to observe how they function.
-'''if __name__ == '__main__':
+if __name__ == '__main__':
     jira_id = 12349
     jama_id = 12361
     #link_items([jira_id, "title", "issue", 7], [jama_id, "title2", "bug", 6], [[jira_id, "name"], [jira_id, "name2",]], [[jama_id,"name3"], [jama_id, "name4"]], 2)
@@ -595,7 +595,7 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
     db_ops = DatabaseOperations(db_path)
     items_table_ops = ItemsTableOps(db_path)
     fields_table_ops = FieldsTableOps(db_path)
-    sync_table_ops = SyncInformationTableOps(db_path)
+    #sync_table_ops = SyncInformationTableOps(db_path)
 
 
     # Demo create Items table. Define list of types and columns to pass in to method.
@@ -605,7 +605,7 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
 
     # Demo create Fields table WITH FOREIGN KEY enforced.
     #curr_date = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
-    #string_to_execute = f"CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME, Name STRING, FieldServiceID STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));"
+    #string_to_execute = "CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME, Name STRING, FieldServiceID STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));"
     #conn = db_ops.connect_to_db()
     #c = conn.cursor()
     #c.execute("PRAGMA foreign_keys = ON;")
@@ -669,10 +669,11 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
     #last_sync_data = sync_table_ops.get_most_recent_sync()
     #print("Last sync information added: ", last_sync_data)
 
-    demo_sync_methods(db_path)
+    #demo_sync_methods(db_path)
 
-    print("Length of time of last sync:", sync_table_ops.get_last_sync_time()[0], sync_table_ops.get_last_sync_time()[1])
+    #print("Length of time of last sync:", sync_table_ops.get_last_sync_time()[0], sync_table_ops.get_last_sync_time()[1])
     print("Number of fields ready to sync:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[0])
     print("Field(s) ready for syncing:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[1])
 
-    logging_demo()'''
+    #demo_sync_methods(db_path)
+    #logging_demo()
