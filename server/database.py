@@ -323,25 +323,20 @@ class FieldsTableOps:
         fields_to_sync = []
         # get all linked items and their fields
         linked_items = items_table.get_linked_items()
-        print(linked_items)
         for item in linked_items:
             item_id = item[0]
             fields = self.retrieve_by_item_id(item_id)
-            print("fields in linked item:", fields)
             for field in fields:
                 if(field):
                     _, item_id, last_updated, _, _, _ = field
                     last_updated = functions.convert_to_seconds(last_updated)
-                    print("last updated:", last_updated)
                     # get last sync from syncinfo table
                     last_sync = sync_table.get_most_recent_sync()
                     _, _, end_time, _, _ = last_sync[0]
-                    print("end time:", end_time)
                     if(end_time):
                         last_sync_end_time = functions.convert_to_seconds(end_time)
                         # check if field needs to be synced, increment and append if so
                         if last_updated > last_sync_end_time:
-                            print("there is a new field to sync")
                             num_fields_to_sync += 1
                             fields_to_sync.append(field)
         return [num_fields_to_sync, fields_to_sync]
