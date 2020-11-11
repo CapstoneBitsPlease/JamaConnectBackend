@@ -9,7 +9,7 @@ from datetime import datetime
 
 # Convert datetime string to Unix time
 def convert_to_seconds(date):
-    if date == "NULL":
+    if date == "NULL" or  not isinstance(date, str):
         return 0
     return datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f%z').timestamp()
 

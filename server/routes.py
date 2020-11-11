@@ -333,7 +333,7 @@ def last_successful_sync_time():
         last_sync_time = sync_table.get_last_sync_time()
         return jsonify(last_sync_time)
     else:
-        Response(401)
+        return Response(500)
 
 # Retrieves fields ready to sync from capstone database
 @app.route('/capstone/fields_to_sync')
@@ -348,7 +348,7 @@ def fields_to_sync():
         fields_to_sync = response[1]
         return jsonify(num_fields=num_fields, fields_to_sync=fields_to_sync)
     else:
-        Response(401)
+        return Response(500)
 
 @app.route('/sync/single', methods=['POST'])
 @jwt_required
@@ -360,11 +360,27 @@ def sync_one():
     item_id = request.values["item_id"]
 
     response = sync.sync_one_item(item_id, session)
-    
+
     if response:
         return Response(200)
     else:
         return Response(500)
+
+
+@app.route('/sync_all', methods=['POST'])
+@jwt_required
+def sync_all():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    if session.jama_connection and session.jira_connection:
+        response = sync.sync_all(session)
+        if response:
+            return ["Synced all items successfully.", Response(200)]
+        else:
+            return Response(500)
+    else:
+        return Response(401)
 
 
 @app.route('/demo_logs')
