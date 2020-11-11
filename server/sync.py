@@ -89,6 +89,6 @@ if __name__ == '__main__':
     session.initiate_jama("capstone2020", "sduncan", "Fuck0ffJama")
     session.initiate_jira("capstone2020teamb", "sduncan@pdx.edu", "hgTbykR23f57YxsYYgRY84F3")
 
-    sync_one_item("100", session)
+    sync_one_item("10040", session)
 
 

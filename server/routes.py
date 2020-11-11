@@ -13,6 +13,7 @@ import functions
 import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 import sync
+import datetime
 
 app = Flask(__name__)
 
@@ -66,7 +67,8 @@ def initalize_jama():
             return status
         
         #the credentials are valid, generate a JWT and return it
-        access_token = create_access_token(identity={"connection_id":session.id})
+        expires = datetime.timedelta(days=1)
+        access_token = create_access_token(identity={"connection_id":session.id}, expires_delta=expires)
         return jsonify(access_token=access_token), 200
 
 @app.route('/login/jira/basic', methods=['POST'])
@@ -97,7 +99,8 @@ def initialize_jira():
             status = Response(status=response)
             return status
         
-        access_token = create_access_token(identity={"connection_id":session.id})
+        expires = datetime.timedelta(days=1)
+        access_token = create_access_token(identity={"connection_id":session.id},expires_delta=expires)
         return jsonify(access_token=access_token), 200
 
 @app.route('/user', methods=['GET'])
@@ -204,7 +207,7 @@ def get_capstone_items_of_type():
 
 @app.route('/jama/item_by_id', methods=['GET'])
 @jwt_required
-def get_item_of_id():
+def get_jama_item_of_id():
     token = get_jwt_identity()
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
@@ -213,10 +216,29 @@ def get_item_of_id():
     item_id = int(args["item_id"])
     
     if item_id == "":
-        return jsonify("Must specify an item ID"), 422
+        return jsonify("Must specify an item ID."), 422
     
     if session.jama_connection:
-        item = jsonify(session.get_item_by_id(item_id))
+        item = jsonify(session.get_jama_item_by_id(item_id))
+        return item
+    else:
+        return Response(401)
+
+@app.route('/jira/item_by_id', methods=['GET'])
+@jwt_required
+def get_jira_item_of_id():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+
+    args = request.values
+    item_id = args["id"]
+    
+    if item_id == "":
+        return jsonify("Must specify an item ID."), 422
+    
+    if session.jira_connection:
+        item = jsonify(session.get_jira_item_by_id(item_id))
         return item
     else:
         return Response(401)
