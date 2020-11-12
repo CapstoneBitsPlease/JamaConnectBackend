@@ -1,6 +1,7 @@
 from flask import g
 import sqlite3
 from sqlite3 import Error
+from datetime import timezone
 from datetime import datetime
 import os
 import logging
@@ -34,6 +35,7 @@ class DatabaseOperations:
         if conn:
             c = conn.cursor()
             c.execute("PRAGMA foreign_keys = ON;")
+            conn.commit()
             if c6 == None:
                 c.execute("INSERT INTO "+table_name+" VALUES(?, ?, ?, ?, ?)", (primary_key, c2, c3, c4, c5))
             elif c7 == None:
@@ -44,6 +46,7 @@ class DatabaseOperations:
             self.close_connection(conn)
         else:
             print("Failed to connect")
+        return 0
 
     # Updates an existing entry. Column to search should probably be some unique identifier.
     def update_existing_entry(self, table_name, column_to_search, column_to_update, value_to_search, value_to_update):
@@ -160,8 +163,6 @@ class ItemsTableOps:
         self.project_id_col = "ProjectID" # TYPE: UNIQUE INT
         self.last_sync_time_col = "LastSyncTime" # TYPE: DATETIME, ms precision
         self.table_name = "Items"
-        self.project_id_col = "ProjectID"  # TYPE: UNIQUE INT
-        self.last_sync_time_col = "LastSyncTime"  # TYPE: DATETIME, ms precision
         self.db_ops = DatabaseOperations(path)
     
     # # # RETRIEVE METHODS FOR ITEMS TABLE # # #
@@ -193,7 +194,6 @@ class ItemsTableOps:
     def get_all_jira_types(self):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.type_col, "Jira", self.service_col, True)
 
-
      # # # UPDATE METHODS FOR ITEMS TABLE # # #
 
      # Updates item title based on unique integer id.
@@ -222,8 +222,8 @@ class ItemsTableOps:
     # # # INSERT METHODS FOR ITEMS TABLE # # #
     
     # Inserts one item into the Items table.
-    def insert_into_items_table(self, id_, title, type, service, linked_id, project_id, last_sync_time):
-        self.db_ops.insert_into_db(self.table_name, str(id_), title, type, service, str(linked_id), str(project_id), last_sync_time)
+    def insert_into_items_table(self, id_, title, linked_id, service, type_, project_id, last_sync_time):
+        self.db_ops.insert_into_db(self.table_name, str(id_), title, str(linked_id), service, type_, str(project_id), last_sync_time)
 
     # # # DELETE METHODS FOR ITEMS TABLE # # #
     def delete_item(self, item_id):
@@ -241,11 +241,10 @@ class ItemsTableOps:
             self.db_ops.close_connection(conn)
         return linked_items
 
-    # Retrieves service of a given item. Queries the items table and returns the service as a string
+    # Retrieves service of a given item
     def get_service_of_item_id(self, item_id):
         _, _, _, service, _, _, _ = self.retrieve_by_item_id(item_id)[0]
         return service
-
 
 # Operations for the fields table. When columns are added or updated, make sure to update them in
 # the __init__ method.
@@ -255,8 +254,8 @@ class FieldsTableOps:
         self.field_id_col = "FieldID" # TYPE: PRIMARY KEY INT
         self.item_id_col = "ItemID" # TYPE: INT, FOREIGN KEY
         self.last_updated_col = "LastUpdated" # TYPE: DATETIME, ms precision.
-        self.jama_name_col = "JamaName" # TYPE: STRING
-        self.jira_name_col = "JiraName" # TYPE: STRING
+        self.name_col = "Name" # TYPE: STRING
+        self.field_service_id = "FieldServiceID" # TYPE: STRING
         self.linked_id_col = "LinkedID" # TYPE: INT
         self.table_name = "Fields"
         self.db_ops = DatabaseOperations(path)
@@ -272,11 +271,11 @@ class FieldsTableOps:
     def retrieve_by_last_updated(self, last_updated):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.last_updated_col, last_updated)
 
-    def retrieve_by_jama_name(self, jama_name):
-        return self.db_ops.retrieve_by_column_value(self.table_name, self.jama_name_col, jama_name)
+    def retrieve_by_name(self, name):
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.name_col, name)
 
-    def retrieve_by_jira_name(self, jira_name):
-        return self.db_ops.retrieve_by_column_value(self.table_name, self.jira_name_col, jira_name)
+    def retrieve_by_field_service_id(self, field_service_id):
+        return self.db_ops.retrieve_by_column_value(self.table_name, self.field_service_id, field_service_id)
 
     def retrieve_by_linked_id(self, linked_id):
         return self.db_ops.retrieve_by_column_value(self.table_name, self.linked_id_col, str(linked_id))
@@ -292,11 +291,11 @@ class FieldsTableOps:
     def update_last_updated_time(self, unique_id, new_time_updated):
         self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.last_updated_col, str(unique_id), new_time_updated)
     
-    def update_jama_name(self, unique_id, new_jama_name):
-        self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.jama_name_col, str(unique_id), new_jama_name)
+    def update_name(self, unique_id, new_name):
+        self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.name_col, str(unique_id), new_name)
             
-    def update_jira_name(self, unique_id, new_jira_name):
-        self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.jira_name_col, str(unique_id), new_jira_name)
+    def update_field_service_id(self, unique_id, new_field_service_id):
+        self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.field_service_id, str(unique_id), new_field_service_id)
     
     def update_linked_id(self, unique_id, linked_id):
         self.db_ops.update_existing_entry(self.table_name, self.field_id_col, self.linked_id_col, str(unique_id), str(linked_id))
@@ -304,8 +303,8 @@ class FieldsTableOps:
     # # # INSERT METHODS FOR FIELDS TABLE # # #
 
     # Inserts one item into the Fields table.
-    def insert_into_fields_table(self, field_id, item_id, last_updated, jama_name, jira_name, linked_id):
-        self.db_ops.insert_into_db(self.table_name, str(field_id), str(item_id), last_updated, jama_name, jira_name, str(linked_id))
+    def insert_into_fields_table(self, field_id, item_id, last_updated, name, field_service_id, linked_id):
+        self.db_ops.insert_into_db(self.table_name, str(field_id), str(item_id), last_updated, name, field_service_id, str(linked_id))
 
     # # # DELETE METHODS FOR FIELDS TABLE # # #
     def delete_fields_in_item(self, item_id):
@@ -316,7 +315,7 @@ class FieldsTableOps:
 
     # OTHER SPROCS #
 
-    # Retrieves all linked fields ready to be synced. Queries the items and fields tables and returns an array containing the number of fields and their content.
+    # Retrieves all linked fields ready to be synced. Returns an array containing the number of fields and their content.
     def get_fields_to_sync(self, items_table, sync_table):
         num_fields_to_sync = 0
         fields_to_sync = []
@@ -334,57 +333,23 @@ class FieldsTableOps:
                     _, _, end_time, _, _ = last_sync[0]
                     if(end_time):
                         last_sync_end_time = functions.convert_to_seconds(end_time)
-                    # check if field needs to be synced, increment and append if so
-                    if (last_updated > last_sync_end_time):
-                        num_fields_to_sync += 1
-                        fields_to_sync.append(field)
+                        # check if field needs to be synced, increment and append if so
+                        if last_updated > last_sync_end_time:
+                            num_fields_to_sync += 1
+                            fields_to_sync.append(field)
         return [num_fields_to_sync, fields_to_sync]
 
-    # Sync fields of one item - WIP (the finalized fn prob needs to go somewhere else)
-    def sync_fields_of_item(self, item_id, items_table, sync_table):
-        fields = self.retrieve_by_item_id(item_id)
-        _, _, last_sync_end_time = sync_table.get_last_sync_time()
-
-        try:
-            for field in fields:
-                _, item_id, last_updated, _, _, linked_id = field
-
-                if (not linked_id):
-                    print("error - field not linked")
-                    return
-
-                service = items_table.get_service_of_item_id(item_id)
-                last_updated = functions.convert_to_seconds(last_updated)
-
-                # check whether fields for either service were updated after last sync
-                if (service == 'Jama'):
-                    if (last_updated > last_sync_end_time):
-                        print("Jama was updated after the last sync")
-                        jira_fields = self.retrieve_by_item_id(linked_id)
-                        print("Linked Jira fields:" + str(jira_fields))
-                        # update Jama db with new value - PUT/POST Jama
-                        # update Jira db to match Jama - PUT/POST Jira
-                        # update last_updated for both fields to current time
-                    else:
-                        print("Jama was not updated since the last sync")
-
-                elif (service == 'Jira'):
-                    if (last_updated > last_sync_end_time):
-                        print("Jira was updated after the last sync")
-                        jama_fields = self.retrieve_by_item_id(linked_id)
-                        print("Linked Jama fields: " + str(jama_fields))
-                        # update Jira db with new value - PUT/POST Jira
-                        # update Jama db to match Jira - PUT/POST Jama
-                        # update last_updated for both fields to current time
-                    else:
-                        print("Jira was not updated since the last sync")
-
-                else: print("service entry not labeled as Jama or Jira")
-
-        except: print("exception occurred, maybe no fields for this item id")
-
-        return fields
-
+    # Get the most recent field ID (ie: largest ID number) from the database.
+    def get_next_field_id(self):
+        conn = self.db_ops.connect_to_db()
+        most_recent_field_id = ""
+        if conn:
+            c = conn.cursor()
+            c.execute("SELECT MAX(FieldID) FROM Fields")
+            most_recent_field = c.fetchall()
+            most_recent_field_id = most_recent_field[0]
+            self.db_ops.close_connection(conn)
+        return most_recent_field_id
 
 
 # Operations for the SyncInformation table. When columns are added or updated, make sure to update them in
@@ -453,8 +418,8 @@ class SyncInformationTableOps:
         length = len(failed_syncs)
         for i in range(0, length):
             sync_id, start_time, end_time, completion_status, description = failed_syncs[i]
-            end = datetime.strptime(end_time, '%Y-%m-%d %H:%M:%f')
-            date = datetime.strptime(recent_date, '%Y-%m-%d %H:%M:%f')
+            end = datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f%z')
+            date = datetime.strptime(recent_date, '%Y-%m-%dT%H:%M:%S.%f%z')
 
             print("#########################")
             print("CURRENT DATE", date)
@@ -464,7 +429,7 @@ class SyncInformationTableOps:
                 failed_syncs_after_date.append((sync_id, start_time, end_time, completion_status, description))
         return failed_syncs_after_date
 
-
+    # Gets the most recent sync time from the database.
     def get_most_recent_sync(self):
         conn = self.db_ops.connect_to_db()
         if conn:
@@ -477,6 +442,7 @@ class SyncInformationTableOps:
             last_sync = c.fetchall()
             self.db_ops.close_connection(conn)
         return last_sync
+
 
     # Retrieves last successful sync
     def get_last_successful_sync(self):
@@ -493,55 +459,63 @@ class SyncInformationTableOps:
         return last_successful_sync
 
 
-    # Retrieves length of time of last successful sync. Queries the SyncInformation table and returns an array containing the length of time of the last sync,
-    # the time units (currently in seconds)
+    # Retrieves length of time of last successful sync. Returns an array containing the length of time of the last sync,
+    # the time units, and the end time
     def get_last_sync_time(self):
         _, start_time, end_time, _, _ = self.get_last_successful_sync()[0]
         start_time = functions.convert_to_seconds(start_time)
         end_time = functions.convert_to_seconds(end_time)
-        last_sync_time = format(end_time - start_time, '.4f')
-        units = "seconds"
+        last_sync_time = end_time - start_time
+        if last_sync_time <= 120:
+            units = "seconds"
+        elif last_sync_time > 120 and last_sync_time < 3600:
+            last_sync_time /= 60
+            units = "minutes"
+        elif last_sync_time >= 3600:
+            last_sync_time /= 3600
+            units = "hours"
+        last_sync_time = format(last_sync_time, '.4f')
         return [last_sync_time, units, end_time]
 
 
 def demo_sync_methods(db_path):
-    sync_id = 69
+    sync_id = 107
     sync_table_ops = SyncInformationTableOps(db_path)
-    recent_date = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    recent_date = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
 
     # Demo create SyncInformation table.
-    db_ops = DatabaseOperations(db_path)
-    columns = ["SyncID", "StartTime", "EndTime", "CompletedSuccessfully", "Description"]
-    types = ["INT PRIMARY KEY NOT NULL", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "DATETIME DEFAULT NULL", "INT", "TEXT"]
-    db_ops.create_table("SyncInformation", columns, types)
+    #db_ops = DatabaseOperations(db_path)
+    #columns = ["SyncID", "StartTime", "EndTime", "CompletedSuccessfully", "Description"]
+    #types = ["INT PRIMARY KEY NOT NULL", "DATETIME", "DATETIME DEFAULT NULL", "INT", "TEXT"]
+    #db_ops.create_table("SyncInformation", columns, types)
 
-    sync_start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_start_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
     sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "0", "Sync in progress")
 
     print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
 
     sync_table_ops.update_completion_status(sync_id, "1")
-    sync_end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
     sync_table_ops.update_end_time(sync_id, sync_end_time)
     sync_table_ops.update_description(sync_id, "Sync completed successfully")
 
     sync_id += 1
-    sync_start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_start_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
     sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "0", "Sync in progress")
 
     print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
 
-    sync_end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
     sync_table_ops.update_end_time(sync_id, sync_end_time)
     sync_table_ops.update_description(sync_id, "ERROR: sync failed to complete, interrupted by manual override")
 
     sync_id += 1
-    sync_start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_start_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
     sync_table_ops.insert_into_sync_table(sync_id, sync_start_time, "NULL", "0", "Sync in progress")
 
     print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
 
-    sync_end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    sync_end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
     sync_table_ops.update_end_time(sync_id, sync_end_time)
     sync_table_ops.update_description(sync_id, "ERROR: sync failed to complete, unknown error")
 
@@ -562,57 +536,103 @@ def logging_demo():
     logging.warning('warning')
     logging.error('error')
 
+# Links two items in the database by 1.) Adding both items to the table, 2.) setting jira_linked_id = jama_id (and vice versa)
+# 3.) adding each field to the database, and linking with corresponding field in opposite array (ie: jama_field[0].lin)
+def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
+    # Variables for readability
+    id_ = 0
+    title = 1
+    type_ = 2
+    id_to_link = 0
+    project_id = 3
+    field_name = 0
+    field_service_id = 1
+
+    # Get path. NOTE: due to how the flask server is set up, if you want to run this locally instead, use  os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    items_ops = ItemsTableOps(db_path)
+    fields_ops = FieldsTableOps(db_path)
+    # Add Jira item to the database. Jama item's ID is passed to LinkedID column.
+    items_ops.insert_into_items_table(jira_item[id_], jira_item[title], jama_item[id_to_link], "Jira", jira_item[type_], jira_item[project_id], "NULL")
+    # Add Jama item to the database. Jira item's ID is passed to LinkedID column.
+    items_ops.insert_into_items_table(jama_item[id_], jama_item[title], jira_item[id_to_link], "Jama", jama_item[type_], jama_item[project_id], "NULL")
+    # Get the current largest ID in the fields table. Use this to generate the next unique ID for the fields table.
+    field_id = fields_ops.get_next_field_id()[0]
+    # Assume success initially. If something goes wrong during syncing process, set this to 0.
+    success = 1
+    for i in range(0, num_fields):
+        try:
+            # Update next field ID and insert current jira field into the table, passing the corresponding jama FieldID to the LinkedID column.
+            # The Jama FieldID will be field_id + 1.
+            field_id += 1
+            fields_ops.insert_into_fields_table(field_id, jira_item[id_], "NULL", jira_fields[i][field_name], jira_fields[i][field_service_id], field_id + 1)
+            # Update next field ID.
+            field_id += 1
+            # Update next field ID and insert current jama field into the table, passing the corresponding jira FieldID to the LinkedID column.
+            # The Jira FieldID will be field_id - 1, since it was calculated above and 1 has been added to it since.
+            fields_ops.insert_into_fields_table(field_id, jama_item[id_], "NULL", jama_fields[i][field_name], jama_fields[i][field_service_id], field_id - 1)
+        except:
+            # If something goes wrong, write to the error log and indicate failure to calling routine by setting success to 0.
+            logging.log("Something went wrong when linking ", jama_fields[i][0], " with ", jira_fields[i][0])
+            success = 0
+    return success
+
+
 # Main method to demo functionality. Uncomment blocks to observe how they function.
-'''if __name__ == '__main__':
+if __name__ == '__main__':
+    jira_id = 12349
+    jama_id = 12361
+    #link_items([jira_id, "title", "issue", 7], [jama_id, "title2", "bug", 6], [[jira_id, "name"], [jira_id, "name2",]], [[jama_id,"name3"], [jama_id, "name4"]], 2)
+    
     fields_table = "Fields"
     items_table = "Items"
     fields_column = "FieldID"
     items_column = "ID"
-    item_id = 484
-    field_id = 10
+    item_id = 527
+    field_id = 59
     # Gets absolute path to root folder and appends database file. Should work on any machine.
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
     db_ops = DatabaseOperations(db_path)
     items_table_ops = ItemsTableOps(db_path)
     fields_table_ops = FieldsTableOps(db_path)
-    sync_table_ops = SyncInformationTableOps(db_path)
+    #sync_table_ops = SyncInformationTableOps(db_path)
 
 
     # Demo create Items table. Define list of types and columns to pass in to method.
     #columns = ["ID", "Title", "LinkedID", "Service", "Type", "ProjectID", "LastSyncTime"]
-    #types = ["INT PRIMARY KEY NOT NULL", "STRING", "INT", "STRING", "STRING", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))"]
+    #types = ["INT PRIMARY KEY NOT NULL", "STRING", "INT", "STRING", "STRING", "INT", "DATETIME"]
     #db_ops.create_table("Items", columns, types)
 
-    # Demo create Fields table. Define list of types and columns to pass in to method.
-    #columns = ["FieldID", "ItemID", "LastUpdated", "JamaName", "JiraName", "LinkedID"]
-    #types = ["INT PRIMARY KEY NOT NULL", "INT", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))", "STRING", "STRING", "INT"]
-    #db_ops.create_table("Fields", columns, types)
-
-    '''conn = db_ops.connect_to_db()
-    c = conn.cursor()
-    c.execute("PRAGMA foreign_keys = ON;")
-    c.execute("CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')), JamaName STRING, JiraName STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));")
-    conn.commit()
-    db_ops.close_connection(conn)'''
+    # Demo create Fields table WITH FOREIGN KEY enforced.
+    #curr_date = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+    #string_to_execute = "CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME, Name STRING, FieldServiceID STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));"
+    #conn = db_ops.connect_to_db()
+    #c = conn.cursor()
+    #c.execute("PRAGMA foreign_keys = ON;")
+    #c.execute(string_to_execute)
+    #conn.commit()
+    #db_ops.close_connection(conn)
 
     # Demo rename column. Takes the table name, current column name and updated column name as args.
     #db_ops.rename_column(items_table, "Project", "LastSyncTime")
 
     # Demo delete table. ***USE WITH CAUTION***
-    # # # db_ops.delete_table("Fields")
+    # # # # db_ops.delete_table("Fields")
+    # # # # db_ops.delete_table("Items")
+    # # # db_ops.delete_table("SyncInformation")
     # Demo add column to existing table.
-    #db_ops.add_column(items_table, "LastSyncTime", "DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))")
+    #db_ops.add_column(items_table, "LastSyncTime", f"DATETIME {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')}")
 
     # Demo INSERT query. NOTE: field id and item id must be unique in order to be added.
-    time = datetime.now().strftime('%Y-%m-%d %H:%M:%f')
+    time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
     items_table_ops.insert_into_items_table(item_id, 'bug1', '100', 'Jama', 'bug', "3", time)
     # This one should pass
     fields_table_ops.insert_into_fields_table(field_id, item_id, time, 'Issue', 'Ticket', "None")
 
     # This one should FAIL
-    fields_table_ops.insert_into_fields_table(field_id+1, -1, time, 'Issue', 'Ticket', "None")
-    field_row1 = fields_table_ops.retrieve_by_field_id(field_id+1)
-    print("IF RETRIEVED FOREIGN KEY NOT WORKING: ", field_row1)
+    #fields_table_ops.insert_into_fields_table(field_id+1, -100, time, 'Issue', 'Ticket', "None")
+    #field_row1 = fields_table_ops.retrieve_by_field_id(field_id+1)
+    #print("IF RETRIEVED FOREIGN KEY NOT WORKING: ", field_row1)
 
     # Demo SELECT query.
     item_row = items_table_ops.retrieve_by_item_id(item_id)
@@ -625,7 +645,7 @@ def logging_demo():
     item_row = items_table_ops.retrieve_by_item_id(item_id)
     print("Updated items row: ", item_row)
 
-    fields_table_ops.update_jama_name(field_id, "FancyIssue")
+    fields_table_ops.update_name(field_id, "FancyIssue")
     field_row = fields_table_ops.retrieve_by_field_id(field_id)
     print("Updated fields row: ", field_row)
 
@@ -649,4 +669,11 @@ def logging_demo():
     #last_sync_data = sync_table_ops.get_most_recent_sync()
     #print("Last sync information added: ", last_sync_data)
 
-    #logging_demo()'''
+    #demo_sync_methods(db_path)
+
+    #print("Length of time of last sync:", sync_table_ops.get_last_sync_time()[0], sync_table_ops.get_last_sync_time()[1])
+    print("Number of fields ready to sync:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[0])
+    print("Field(s) ready for syncing:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[1])
+
+    #demo_sync_methods(db_path)
+    #logging_demo()

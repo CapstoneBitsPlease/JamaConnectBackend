@@ -8,10 +8,14 @@ from flask_cors import CORS, cross_origin
 import json
 import os
 from set_up_log import json_log_setup
-import connections
+from server.connections import connections
 import functions
 import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
+import sync
+import datetime
+
+
 
 app = Flask(__name__)
 
@@ -20,10 +24,12 @@ app.config['JWT_SECRET_KEY']= 'Change this' #replace with a real secret?
 jwt = JWTManager(app)
 
 #create the active connection list
-cur_connections = connections.connections()
+cur_connections = connections()
 
 #set the CORS headrer to allow all access
 CORS(app, supports_credentials=True)
+
+
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
@@ -65,7 +71,8 @@ def initalize_jama():
             return status
         
         #the credentials are valid, generate a JWT and return it
-        access_token = create_access_token(identity={"connection_id":session.id})
+        expires = datetime.timedelta(days=1)
+        access_token = create_access_token(identity={"connection_id":session.id}, expires_delta=expires)
         return jsonify(access_token=access_token), 200
 
 @app.route('/login/jira/basic', methods=['POST'])
@@ -96,7 +103,8 @@ def initialize_jira():
             status = Response(status=response)
             return status
         
-        access_token = create_access_token(identity={"connection_id":session.id})
+        expires = datetime.timedelta(days=1)
+        access_token = create_access_token(identity={"connection_id":session.id},expires_delta=expires)
         return jsonify(access_token=access_token), 200
 
 @app.route('/user', methods=['GET'])
@@ -203,7 +211,7 @@ def get_capstone_items_of_type():
 
 @app.route('/jama/item_by_id', methods=['GET'])
 @jwt_required
-def get_item_of_id():
+def get_jama_item_of_id():
     token = get_jwt_identity()
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
@@ -212,10 +220,29 @@ def get_item_of_id():
     item_id = int(args["item_id"])
     
     if item_id == "":
-        return jsonify("Must specify an item ID"), 422
+        return jsonify("Must specify an item ID."), 422
     
     if session.jama_connection:
-        item = jsonify(session.get_item_by_id(item_id))
+        item = jsonify(session.get_jama_item_by_id(item_id))
+        return item
+    else:
+        return Response(401)
+
+@app.route('/jira/item_by_id', methods=['GET'])
+@jwt_required
+def get_jira_item_of_id():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+
+    args = request.values
+    item_id = args["id"]
+    
+    if item_id == "":
+        return jsonify("Must specify an item ID."), 422
+    
+    if session.jira_connection:
+        item = jsonify(session.get_jira_item_by_id(item_id))
         return item
     else:
         return Response(401)
@@ -251,24 +278,56 @@ def get_capstone_item_of_id():
     items = itemsTableOps.retrieve_by_item_id(id_)
     return jsonify(items = items), 200
 
+# Unlinkes a pair of linked Jira and Jama items from the JamaJira Connect DataBase
+@app.route('/capstone/unlink_with_id')
+def get_capstone_unlink_with_id():
+    print(request)
+    id_ = request.values["id"]
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    itemsTableOps = ItemsTableOps(db_path)
+    items = itemsTableOps.retrieve_by_item_id(id_)
+    if not items:
+        return "Unlinking did not occure. This item was not found.", 200
+
+    item = items[0]
+    if str(item[2]).lower() == "none" or str(item[2]).lower() == "null":
+        return "Unlinking did not occure. This item is not linked.", 200
+
+    fieldsTableOps = FieldsTableOps(db_path)
+    fields = fieldsTableOps.retrieve_by_item_id(id_)
+    IDs_to_unlink = []
+    for field in fields:
+        IDs_to_unlink.append(field[5])
+
+    fields_to_unlink = []
+    for ID in IDs_to_unlink:
+        fields_to_unlink += fieldsTableOps.retrieve_by_linked_id(ID)
+
+    for field in fields_to_unlink:
+        fieldsTableOps.update_linked_id(field[0], "None") 
+        fieldsTableOps.delete_field(field[0])
+
+    item_ID_to_unlink = item[2]
+    items_to_unlink = itemsTableOps.retrieve_by_linked_id(item_ID_to_unlink)
+    for item in items_to_unlink:
+        itemsTableOps.update_linked_id(item[0], "None")
+        itemsTableOps.delete_item(item[0])
+    return "Unlinking successful.", 200
+
 # Retrieves the length of time of the last sync from sqlite database
-@app.route('/last_sync_time')
+@app.route('/last_sync_time', methods=['GET'])
 @jwt_required
 def last_sync_time():
     # get the length of time of the last sync from our database 
-    if request.method == 'GET':
-        db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
-        sync_table = SyncInformationTableOps(db_path)
-        last_sync_time = sync_table.get_last_sync_time()
-        return jsonify(last_sync_time)
+    time = sync.last_sync_period()
+    if time:
+        return jsonify(time)
     else:
-        return Response(401)
+        Response(401)
 
-# Retrieves the number of fields ready to be synced and their content from sqlite database
-@app.route('/fields_to_sync')
-@jwt_required
+# Retrieves fields ready to sync
+@app.route('/capstone/fields_to_sync')
 def fields_to_sync():
-    # get the number of fields and content ready to be synced
     if request.method == 'GET':
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
         fields_table = FieldsTableOps(db_path)
@@ -280,6 +339,23 @@ def fields_to_sync():
         return jsonify(num_fields=num_fields, fields_to_sync=fields_to_sync)
     else:
         return Response(401)
+
+@app.route('/sync/single', methods=['POST'])
+@jwt_required
+def sync_one():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+
+    item_id = request.values["item_id"]
+
+    response = sync.sync_one_item(item_id, session)
+    
+    if response:
+        return Response(200)
+    else:
+        return Response(500)
+
 
 @app.route('/demo_logs')
 def default():
@@ -351,6 +427,47 @@ def set_jama_field():
         }
         session.set_jama_field(self, item_id, field_change)
         
+# Links two items. Accepts 4 arrays: jama_item, jira_item, jama_fields, and jira_fields, and 1
+# integer parameter which indicates the total number of fields in each fields array.
+@app.route('/link_items', methods=['POST'])
+def link_items():
+    json_log_setup()
+    if request.method == "POST":
+        # Get all items in array that correspond to jira_item[].
+        jira_item = request.form.getlist("jira_item[]")
+        print(jira_item)
+        # Get all items in array that correspond to jama_item[].
+        jama_item = request.form.getlist("jama_item[]")
+        print(jama_item)
+        # Get number of fields that will be linked.
+        num_fields = request.form.get("num_fields")
+        print(num_fields)
+        jira_fields = []
+        jama_fields = []
+        num = int(num_fields)
+        for i in range(0, num):
+            val_to_get = "jira_fields[{}]".format(i)
+            print(val_to_get)
+            jira_field = request.form.getlist(val_to_get)
+            print(jira_field)
+            jira_fields.append(jira_field)
+        for i in range(0, num):
+            val_to_get = "jama_fields[{}]".format(i)
+            print(val_to_get)
+            jama_field = request.form.getlist(val_to_get)
+            jama_fields.append(jama_field)
+        print(jira_fields)
+        print(jama_fields)
+        num_jira_fields = len(jira_fields)
+        num_jama_fields = len(jama_fields)
+        if num_jira_fields != num_jama_fields:
+            print("array len is different")
+            return {"error": "The number of Jama fields to link does not match the number of Jira fields."}, 500
+        success = database.link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields)
+        if success == 0:
+            print("something went wrong with linking")
+            return {"error": "Linking unsuccessful"}, 500
+        return {"success": "Linking was successful"}, 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

@@ -9,14 +9,12 @@ from datetime import datetime
 
 # Convert datetime string to Unix time
 def convert_to_seconds(date):
-    if(date == "NULL"):
+    if date == "NULL":
         return 0
-    else:
-        return datetime.strptime(date, '%Y-%m-%d %H:%M:%f').timestamp()
+    return datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f%z').timestamp()
 
 # Convert Unix time to datetime string
 def convert_to_datetime(seconds):
-    if(seconds == "NULL"):
+    if seconds == "NULL":
         return 0
-    else:
-        return datetime.fromtimestamp(seconds).strftime('%Y-%m-%d %H:%M:%f')
+    return datetime.fromtimestamp(seconds).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
