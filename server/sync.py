@@ -3,6 +3,7 @@ from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 from atlassian import Jira
 import os
 from datetime import datetime, timezone
+import logging
 
 
 def last_sync_period():
@@ -91,6 +92,19 @@ def sync_one_item(item_id, session):
     return True
 
 #function for getting the list of items to be synced and passing them off to the sync function
+def sync_all(session):
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    items_table = ItemsTableOps(db_path)
+    success = True
+    linked_items = items_table.get_linked_items()
+    for item in linked_items:
+        try:
+            sync_one_item(item[0], session)
+        except:
+            logging.log("Something failed when syncing item ID:", item[0])
+            success = False
+
+    return success
 
 
 if __name__ == '__main__':
@@ -99,5 +113,6 @@ if __name__ == '__main__':
     session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"], os.environ["JIRA_SYNC_PASSWORD"])
 
     sync_one_item("10040", session)
+    sync_all(session)
 
 
