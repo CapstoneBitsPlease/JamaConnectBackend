@@ -694,9 +694,8 @@ if __name__ == '__main__':
 
     #demo_sync_methods(db_path)
 
-    #print("Length of time of last sync:", sync_table_ops.get_last_sync_time()[0], sync_table_ops.get_last_sync_time()[1])
     print("Last sync:", sync_table_ops.get_last_sync_time())
     print("Number of fields ready to sync:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[0])
     print("Field(s) ready for syncing:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[1])
 
-    #logging_demo()
+    logging_demo()
