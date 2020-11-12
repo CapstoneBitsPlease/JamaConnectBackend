@@ -14,7 +14,7 @@ import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 import sync
 import datetime
-
+import logging
 
 
 app = Flask(__name__)
@@ -47,6 +47,7 @@ def index():
 @app.route('/login/jama/basic', methods=['GET', 'POST'])
 def initalize_jama():
     if request.method == "POST":
+        json_log_setup()
         #request.values converts form items AND URLstring encoded items into a dict
         cred = request.values
         username = cred["username"]
@@ -67,6 +68,7 @@ def initalize_jama():
 
         #if it was invalid credentials respond with the error
         if(response != 200):
+            logging.error(f"Something went wrong with login, received {response} from Jama server.")
             status = Response(status=response)
             return status
         
@@ -79,6 +81,7 @@ def initalize_jama():
 @jwt_required
 def initialize_jira():
     if request.method == "POST":
+        json_log_setup()
         #request.values converts form items AND URLstring encoded items into a dict
         cred = request.values
         username = cred["username"]
@@ -100,6 +103,7 @@ def initialize_jira():
 
         #if it was invalid credentials respond with the error
         if response != 200:
+            logging.error(f"Something went wrong with login, received {response} from Jira server.")
             status = Response(status=response)
             return status
         
@@ -129,10 +133,12 @@ def user():
 @jwt_required
 def get_all_user():
     if request.method == "GET":
+        json_log_setup()
         token = get_jwt_identity()
         uuid = token.get("connection_id")
         session = cur_connections.get_session(uuid)
         if session == None:
+            logging.error("Couldn't get session in get_all_user()")
             status = Response(500)
             return status
         return {"Number of current connections": len(cur_connections.all_connections)}, 200
@@ -140,6 +146,7 @@ def get_all_user():
 @app.route('/jama/projects', methods=['GET'])
 @jwt_required
 def getprojects():
+    json_log_setup
     #This is basicaly the authenticaion chunk
     token = get_jwt_identity()
     uuid = token.get("connection_id")
@@ -149,11 +156,13 @@ def getprojects():
         projects = session.get_project_list()
         return jsonify(projects)
     else:
+        logging.error("Error: Couldn't get projects from jama")
         return Response(401)
 
 @app.route('/jama/item_types', methods=['GET'])
 @jwt_required
 def get_item_types():
+    json_log_setup()
     #This is basicaly the authenticaion chunk
     token = get_jwt_identity()
     uuid = token.get("connection_id")
@@ -163,11 +172,13 @@ def get_item_types():
         item_types = jsonify(session.get_type_list())
         return item_types
     else:
+        logging.error("Error: couldn't get item types from jama")
         return Response(401)
 
 @app.route('/jama/items_by_type', methods=['GET'])
 @jwt_required
 def get_items_of_type():
+    json_log_setup()
     token = get_jwt_identity()
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
@@ -183,30 +194,60 @@ def get_items_of_type():
         items = jsonify(session.get_items_by_type(project_id, type_id))
         return items
     else:
+        logging.error(f"Erorr: couldn't get items by type {type_id} from project {project_id} in Jama")
         return Response(401)
 
-@app.route('/capstone/item_types_jira')
+@app.route('/capstone/item_types_jira', methods=["GET"])
 def get_capstone_item_types_jira():
+    json_log_setup()
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     itemsTableOps = ItemsTableOps(db_path)
-    types = itemsTableOps.get_all_jira_types()
-    print(types)
+    types = []
+    try:
+        types = itemsTableOps.get_all_jira_types()
+    except:
+        logging.exception("Something went wrong when trying to retrieve Jira item types.")
+        return jsonify("Something went wrong when trying to retrieve jira item types. See error log for details"), 500
     return jsonify(types = types), 200
 
-@app.route('/capstone/item_types_jama')
+@app.route('/capstone/item_types_jama', methods=["GET"])
 def get_capstone_item_types_jama():
+    json_log_setup()
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     itemsTableOps = ItemsTableOps(db_path)
-    types = itemsTableOps.get_all_jama_types()
-    print(types)
+    types = []
+    try:
+        types = itemsTableOps.get_all_jama_types()
+    except:
+        logging.exception("Something went wrong when trying to retrieve Jama item types.")
+        return jsonify("Something went wrong when trying to retrieve Jama item types. See error log for details"), 500
     return jsonify(types = types), 200
+
+@app.route('/capstone/get_linked_items', methods=["GET"])
+def get_all_linked_items():
+    json_log_setup()
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    itemsTableOps = ItemsTableOps(db_path)
+    linked_items = []
+    try:
+        linked_items = itemsTableOps.get_linked_items()
+    except:
+        logging.exception("Something went wrong when trying to retrieve linked items.")
+        return jsonify("Something went wrong when trying to retrieve linked items. See error log for details"), 500
+    return jsonify(linked_items), 200
 
 @app.route('/capstone/items_of_type')
 def get_capstone_items_of_type():
+    json_log_setup()
     type_ = request.values("type")
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     itemsTableOps = ItemsTableOps(db_path)
-    items = itemsTableOps.retrieve_by_type(type_)
+    items = []
+    try:
+        items = itemsTableOps.retrieve_by_type(type_)
+    except:
+        logging.exception(f"Something went wrong when trying to retrieve items of type {type_}")
+        return jsonify(f"Something went wrong when trying to retrieve items of type {type_}"), 500
     return jsonify(items = items), 200
 
 @app.route('/jama/item_by_id', methods=['GET'])
@@ -271,27 +312,33 @@ def jama_projects():
 # Retrieves item by ID
 @app.route('/capstone/item_of_id')
 def get_capstone_item_of_id():
+    json_log_setup()
     print(request)
     id_ = request.values["id"]
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     itemsTableOps = ItemsTableOps(db_path)
-    items = itemsTableOps.retrieve_by_item_id(id_)
+    try:
+        items = itemsTableOps.retrieve_by_item_id(id_)
+    except:
+        logging.exception(f"Error when trying to retrieve item {items}")
+        return jsonify(f"Error when trying to retrieve item {items}"), 500
     return jsonify(items = items), 200
 
 # Unlinkes a pair of linked Jira and Jama items from the JamaJira Connect DataBase
 @app.route('/capstone/unlink_with_id')
 def get_capstone_unlink_with_id():
+    json_log_setup()
     print(request)
     id_ = request.values["id"]
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     itemsTableOps = ItemsTableOps(db_path)
     items = itemsTableOps.retrieve_by_item_id(id_)
     if not items:
-        return "Unlinking did not occure. This item was not found.", 200
+        return "Unlinking did not occur. This item was not found.", 200
 
     item = items[0]
     if str(item[2]).lower() == "none" or str(item[2]).lower() == "null":
-        return "Unlinking did not occure. This item is not linked.", 200
+        return "Unlinking did not occur. This item is not linked.", 200
 
     fieldsTableOps = FieldsTableOps(db_path)
     fields = fieldsTableOps.retrieve_by_item_id(id_)
@@ -309,17 +356,24 @@ def get_capstone_unlink_with_id():
 
     item_ID_to_unlink = item[2]
     items_to_unlink = itemsTableOps.retrieve_by_linked_id(item_ID_to_unlink)
-    for item in items_to_unlink:
-        itemsTableOps.update_linked_id(item[0], "None")
-        itemsTableOps.delete_item(item[0])
-    return "Unlinking successful.", 200
+    try:
+        for item in items_to_unlink:
+            itemsTableOps.update_linked_id(item[0], "None")
+            itemsTableOps.delete_item(item[0])
+    except:
+        logging.exception("Something went wrong while trying to unlink")
+    return jsonify("Unlinking successful."), 200
 
 # Retrieves the length of time of the last sync from sqlite database
 @app.route('/last_sync_time', methods=['GET'])
 @jwt_required
 def last_sync_time():
     # get the length of time of the last sync from our database 
-    time = sync.last_sync_period()
+    try:
+        json_log_setup()
+        time = sync.last_sync_period()
+    except:
+        logging.exception("Something went wrong when retrieving last sync period.")
     if time:
         return jsonify(time)
     else:
@@ -329,27 +383,37 @@ def last_sync_time():
 @app.route('/capstone/fields_to_sync')
 def fields_to_sync():
     if request.method == 'GET':
+        json_log_setup()
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
         fields_table = FieldsTableOps(db_path)
         items_table = ItemsTableOps(db_path)
         sync_table = SyncInformationTableOps(db_path)
-        response = fields_table.get_fields_to_sync(items_table, sync_table)
-        num_fields = response[0]
-        fields_to_sync = response[1]
-        return jsonify(num_fields=num_fields, fields_to_sync=fields_to_sync)
+        num_fields = 0
+        fields_to_sync = 0
+        try:
+            response = fields_table.get_fields_to_sync(items_table, sync_table)
+            num_fields = response[0]
+            fields_to_sync = response[1]
+        except:
+            logging.exception("Something went wrong when trying to get the fields to sync in routes.py/fields_to_sync()")
+        return jsonify(num_fields=num_fields, fields_to_sync=fields_to_sync), 200
     else:
         return Response(401)
 
 @app.route('/sync/single', methods=['POST'])
 @jwt_required
 def sync_one():
+    json_log_setup()
     token = get_jwt_identity()
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
 
     item_id = request.values["item_id"]
 
-    response = sync.sync_one_item(item_id, session)
+    try:
+        response = sync.sync_one_item(item_id, session)
+    except:
+        logging.exception(f"Something went wrong when trying to sync item {item_id}")
     
     if response:
         return Response(200)
@@ -377,32 +441,33 @@ def get_logs():
 @app.route('/link_items', methods=['POST'])
 def link_items():
     json_log_setup()
-    if request.method == "POST":
-        # Get all items in array that correspond to jira_item[].
-        jira_item = request.form.getlist("jira_item[]")
-        print(jira_item)
-        # Get all items in array that correspond to jama_item[].
-        jama_item = request.form.getlist("jama_item[]")
-        print(jama_item)
-        # Get number of fields that will be linked.
-        num_fields = request.form.get("num_fields")
-        print(num_fields)
-        jira_fields = []
-        jama_fields = []
-        num = int(num_fields)
-        for i in range(0, num):
-            val_to_get = "jira_fields[{}]".format(i)
-            print(val_to_get)
-            jira_field = request.form.getlist(val_to_get)
-            print(jira_field)
-            jira_fields.append(jira_field)
-        for i in range(0, num):
-            val_to_get = "jama_fields[{}]".format(i)
-            print(val_to_get)
-            jama_field = request.form.getlist(val_to_get)
-            jama_fields.append(jama_field)
-        print(jira_fields)
-        print(jama_fields)
+    try:
+        if request.method == "POST":
+            # Get all items in array that correspond to jira_item[].
+            jira_item = request.form.getlist("jira_item[]")
+            print(jira_item)
+            # Get all items in array that correspond to jama_item[].
+            jama_item = request.form.getlist("jama_item[]")
+            print(jama_item)
+            # Get number of fields that will be linked.
+            num_fields = request.form.get("num_fields")
+            print(num_fields)
+            jira_fields = []
+            jama_fields = []
+            num = int(num_fields)
+            for i in range(0, num):
+                val_to_get = "jira_fields[{}]".format(i)
+                print(val_to_get)
+                jira_field = request.form.getlist(val_to_get)
+                print(jira_field)
+                jira_fields.append(jira_field)
+            for i in range(0, num):
+                val_to_get = "jama_fields[{}]".format(i)
+                print(val_to_get)
+                jama_field = request.form.getlist(val_to_get)
+                jama_fields.append(jama_field)
+            print(jira_fields)
+            print(jama_fields)
         num_jira_fields = len(jira_fields)
         num_jama_fields = len(jama_fields)
         if num_jira_fields != num_jama_fields:
@@ -412,7 +477,10 @@ def link_items():
         if success == 0:
             print("something went wrong with linking")
             return {"error": "Linking unsuccessful"}, 500
-        return {"success": "Linking was successful"}, 200
+    except:
+        logging.exception(f"Something went wrong when trying to link items {jira_item[0]} and {jama_item[0]}")
+        return jsonify(f"Error, something went wrong when trying to link items {jira_item[1]} and {jama_item[1]}"), 500
+    return {"success": "Linking was successful"}, 200
 
 
 if __name__ == '__main__':
