@@ -14,6 +14,7 @@ import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 import sync
 import datetime
+from apscheduler.schedulers.background import BackgroundScheduler
 
 
 
@@ -29,7 +30,10 @@ cur_connections = connections()
 #set the CORS headrer to allow all access
 CORS(app, supports_credentials=True)
 
-
+# initialize, add the sync job, and start the scheduler
+#scheduler = BackgroundScheduler(daemon=True)
+#scheduler.add_job(func='sync function goes here', trigger='interval', seconds='sync_interval')
+#scheduler.start()
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
@@ -325,7 +329,7 @@ def last_sync_time():
         Response(401)
 
 # Retrieves the length of time of the last sync from capstone database
-@app.route('/capstone/last_successful_sync_time')
+@app.route('/capstone/last_successful_sync_time', methods=['GET'])
 def last_successful_sync_time():
     if request.method == 'GET':
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
@@ -336,7 +340,7 @@ def last_successful_sync_time():
         return Response(500)
 
 # Retrieves fields ready to sync from capstone database
-@app.route('/capstone/fields_to_sync')
+@app.route('/capstone/fields_to_sync', methods=['GET'])
 def fields_to_sync():
     if request.method == 'GET':
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
@@ -443,3 +447,7 @@ def link_items():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
+
+
+
+

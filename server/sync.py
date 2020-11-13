@@ -101,18 +101,21 @@ def sync_all(session):
         try:
             sync_one_item(item[0], session)
         except:
-            logging.log("Something failed when syncing item ID:", item[0])
+            logging.error("Something failed when syncing item ID:", item[0])
             success = False
+    return success
 
+# update scheduler to run at specified sync interval
+def update_scheduler():
+    success = True
     return success
 
 
 if __name__ == '__main__':
+
     session = connection()
     session.initiate_jama(os.environ["JAMA_SYNC_ORG"], os.environ["JAMA_SYNC_USERNAME"], os.environ["JAMA_SYNC_PASSWORD"])
     session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"], os.environ["JIRA_SYNC_PASSWORD"])
 
     sync_one_item("10040", session)
     sync_all(session)
-
-
