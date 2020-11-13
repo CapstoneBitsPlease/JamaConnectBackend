@@ -10,11 +10,12 @@ import os
 from set_up_log import json_log_setup
 from server.connections import connections
 import functions
-import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 import sync
 import datetime
 import logging
+from apscheduler.schedulers.background import BackgroundScheduler
+
 
 
 app = Flask(__name__)
@@ -29,7 +30,11 @@ cur_connections = connections()
 #set the CORS headrer to allow all access
 CORS(app, supports_credentials=True)
 
-
+# initialize, add the sync job, and start the scheduler
+scheduler = BackgroundScheduler()
+sync_interval = int(os.environ.get("SYNC_INTERVAL"))
+sync_job = scheduler.add_job(sync.admin_sync, "interval", seconds=sync_interval)
+scheduler.start()
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
@@ -252,17 +257,17 @@ def get_capstone_items_of_type():
 
 @app.route('/jama/item_by_id', methods=['GET'])
 @jwt_required
-def get_jama_item_of_id():
+def get_item_of_id():
     token = get_jwt_identity()
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
-    
+
     args = request.values
     item_id = int(args["item_id"])
-    
+
     if item_id == "":
-        return jsonify("Must specify an item ID."), 422
-    
+        return jsonify("Must specify an item ID"), 422
+
     if session.jama_connection:
         item = jsonify(session.get_jama_item_by_id(item_id))
         return item
@@ -364,9 +369,8 @@ def get_capstone_unlink_with_id():
         logging.exception("Something went wrong while trying to unlink")
     return jsonify("Unlinking successful."), 200
 
-# Retrieves the length of time of the last sync from sqlite database
-@app.route('/last_sync_time', methods=['GET'])
-@jwt_required
+# Retrieves the length of time of the last sync
+@app.route('/capstone/last_sync_time', methods=['GET'])
 def last_sync_time():
     # get the length of time of the last sync from our database 
     try:
@@ -379,8 +383,19 @@ def last_sync_time():
     else:
         Response(401)
 
-# Retrieves fields ready to sync
-@app.route('/capstone/fields_to_sync')
+# Retrieves the length of time of the last sync from capstone database
+@app.route('/capstone/last_successful_sync_time', methods=['GET'])
+def last_successful_sync_time():
+    if request.method == 'GET':
+        db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+        sync_table = SyncInformationTableOps(db_path)
+        last_sync_time = sync_table.get_last_sync_time()
+        return jsonify(last_sync_time)
+    else:
+        return Response(500)
+
+# Retrieves fields ready to sync from capstone database
+@app.route('/capstone/fields_to_sync', methods=['GET'])
 def fields_to_sync():
     if request.method == 'GET':
         json_log_setup()
@@ -398,7 +413,7 @@ def fields_to_sync():
             logging.exception("Something went wrong when trying to get the fields to sync in routes.py/fields_to_sync()")
         return jsonify(num_fields=num_fields, fields_to_sync=fields_to_sync), 200
     else:
-        return Response(401)
+        return Response(500)
 
 @app.route('/sync/single', methods=['POST'])
 @jwt_required
@@ -420,6 +435,28 @@ def sync_one():
     else:
         return Response(500)
 
+
+@app.route('/sync_all', methods=['POST'])
+@jwt_required
+def sync_all():
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    if session.jama_connection and session.jira_connection:
+        response = sync.sync_all(session)
+        if response:
+            return ["Synced all items successfully.", Response(200)]
+        else:
+            return Response(500)
+    else:
+        return Response(401)
+@app.route('/sync/set_interval', methods=['POST'])
+@jwt_required
+def set_interval():
+    interval = int(request.values["interval"])
+    os.environ["SYNC_INTERVAL"] = str(interval)
+    sync_job.reschedule('interval', seconds=interval)
+    return 200
 
 @app.route('/demo_logs')
 def default():
@@ -484,3 +521,7 @@ def link_items():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
+
+
+
+

@@ -120,7 +120,7 @@ class connection:
     # return format (pos of src, src_id, dst_id, most recent update)
     def most_recent_update(self,item_1_service, item_1_id, item_2_service, item_2_id):
 
-        if item_1_service == "jama":
+        if item_1_service == "jama" or item_1_service == "Jama":
             item1 = self.get_jama_item(item_1_id, ["modifiedDate"])
             item2 = self.get_jira_item(item_2_id, ["updated"])
             item1_time = datetime.strptime(item1["modifiedDate"], '%Y-%m-%dT%H:%M:%S.%f%z')
@@ -136,11 +136,13 @@ class connection:
             return [0, item_1_id, item_2_id, item1_time]
         return  [1,item_2_id, item_1_id, item2_time]
 
+
     def get_jama_item_by_id(self, item_id):
         try:
-            response = self.jama_connection.get_item(item_id = item_id)
+            response = self.jama_connection.get_item(item_id=item_id)
         except ResourceNotFoundException:
             response = "Item ID not found."
+        return response
 
     def get_jira_item_by_id(self, key):
         try:
@@ -148,7 +150,7 @@ class connection:
         except requests.exceptions.HTTPError:
             response = "Item key not found."
         return response    
-        
+
     def match_token(self, token):
         if self.id == token:
             return True
