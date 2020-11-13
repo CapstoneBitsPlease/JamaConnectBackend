@@ -4,3 +4,4 @@ flask_jwt_extended
 py-jama-rest-client
 atlassian-python-api
 python-json-logger
+apscheduler

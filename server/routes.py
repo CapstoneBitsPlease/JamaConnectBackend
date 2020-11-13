@@ -31,9 +31,10 @@ cur_connections = connections()
 CORS(app, supports_credentials=True)
 
 # initialize, add the sync job, and start the scheduler
-#scheduler = BackgroundScheduler(daemon=True)
-#scheduler.add_job(func='sync function goes here', trigger='interval', seconds='sync_interval')
-#scheduler.start()
+scheduler = BackgroundScheduler()
+sync_interval = int(os.environ.get("SYNC_INTERVAL"))
+sync_job = scheduler.add_job(sync.admin_sync, "interval", seconds=sync_interval)
+scheduler.start()
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
@@ -385,7 +386,13 @@ def sync_all():
             return Response(500)
     else:
         return Response(401)
-
+@app.route('/sync/set_interval', methods=['POST'])
+@jwt_required
+def set_interval():
+    interval = int(request.values["interval"])
+    os.environ["SYNC_INTERVAL"] = str(interval)
+    sync_job.reschedule('interval', seconds=interval)
+    return 200
 
 @app.route('/demo_logs')
 def default():

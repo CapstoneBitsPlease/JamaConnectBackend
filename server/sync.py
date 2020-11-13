@@ -16,7 +16,6 @@ def last_sync_period():
     sync_time =  {"Completed on": sync_info[2], "Total Sync Time": sync_info[0]}
     return sync_time
 
-
 #are we making our own item_id for internal tracking? or should we just
 #use the jama or jira item id and specify that?
 def sync_one_item(item_id, session):
@@ -37,6 +36,14 @@ def sync_one_item(item_id, session):
     # check to see which item was updated most recently. 
     # and compare that with internal sync log to see if
     # the item has been updated in the time since last sync
+    time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+    if sync_item1[6] == 'NULL':
+        items_table.update_last_sync_time(sync_item1[0], time)
+        sync_item1 = items_table.retrieve_by_item_id(sync_item1[0])[0]
+        
+    if sync_item2[6] == 'NULL':
+        items_table.update_last_sync_time(sync_item2[0], time)
+        sync_item2 = items_table.retrieve_by_item_id(sync_item2[0])[0]
     last_sync = max([sync_item1[6],sync_item2[6]])
     last_sync = datetime.strptime(last_sync, '%Y-%m-%dT%H:%M:%S.%f%z')
     pos, src_id, dst_id, most_recent_change = session.most_recent_update(sync_item1[3],sync_item1[0], sync_item2[3], sync_item2[0])
@@ -93,7 +100,7 @@ def sync_one_item(item_id, session):
 
 #function for getting the list of items to be synced and passing them off to the sync function
 def sync_all(session):
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "C2TB/JamaJiraConnectDataBase.db")
     items_table = ItemsTableOps(db_path)
     success = True
     linked_items = items_table.get_linked_items()
@@ -101,9 +108,28 @@ def sync_all(session):
         try:
             sync_one_item(item[0], session)
         except:
-            logging.error("Something failed when syncing item ID:", item[0])
+            logging.error("Something failed when syncing item ID:" + str(item[0]))
             success = False
     return success
+
+
+def admin_sync():
+    print("starting all item sync")
+    session = connection()
+    session.initiate_jama(os.environ["JAMA_SYNC_ORG"], os.environ["JAMA_SYNC_USERNAME"], os.environ["JAMA_SYNC_PASSWORD"])
+    session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"], os.environ["JIRA_SYNC_PASSWORD"])
+    db_path = os.path.join(os.path.dirname(os.getcwd()), "C2TB/JamaJiraConnectDataBase.db")
+    items_table = ItemsTableOps(db_path)
+    success = True
+    linked_items = items_table.get_linked_items()
+    for item in linked_items:
+        try:
+            sync_one_item(item[0], session)
+        except:
+            logging.error("Something failed when syncing item ID:" + str(item[0]))
+            success = False
+    return success
+
 
 # update scheduler to run at specified sync interval
 def update_scheduler():

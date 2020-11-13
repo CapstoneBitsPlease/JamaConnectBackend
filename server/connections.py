@@ -120,7 +120,7 @@ class connection:
     # return format (pos of src, src_id, dst_id, most recent update)
     def most_recent_update(self,item_1_service, item_1_id, item_2_service, item_2_id):
 
-        if item_1_service == "jama":
+        if item_1_service == "jama" or item_1_service == "Jama":
             item1 = self.get_jama_item(item_1_id, ["modifiedDate"])
             item2 = self.get_jira_item(item_2_id, ["updated"])
             item1_time = datetime.strptime(item1["modifiedDate"], '%Y-%m-%dT%H:%M:%S.%f%z')
