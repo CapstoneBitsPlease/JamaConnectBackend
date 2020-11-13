@@ -1,5 +1,5 @@
 from connections import connection
-from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
+from database import (SyncInformationTableOps, ItemsTableOps, FieldsTableOps)
 from atlassian import Jira
 import os
 from datetime import datetime, timezone
