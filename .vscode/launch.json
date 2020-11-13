@@ -19,7 +19,8 @@
                 "JIRA_SYNC_PASSWORD": "hgTbykR23f57YxsYYgRY84F3",
                 "JAMA_SYNC_ORG": "capstone2020",
                 "JAMA_SYNC_USERNAME": "sduncan",
-                "JAMA_SYNC_PASSWORD": "Fuck0ffJama"
+                "JAMA_SYNC_PASSWORD": "Fuck0ffJama",
+                "SYNC_INTERVAL": "30"
 
             },
             "args": [

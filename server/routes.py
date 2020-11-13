@@ -31,9 +31,10 @@ cur_connections = connections()
 CORS(app, supports_credentials=True)
 
 # initialize, add the sync job, and start the scheduler
-#scheduler = BackgroundScheduler(daemon=True)
-#scheduler.add_job(func='sync function goes here', trigger='interval', seconds='sync_interval')
-#scheduler.start()
+scheduler = BackgroundScheduler()
+sync_interval = int(os.environ.get("SYNC_INTERVAL"))
+scheduler.add_job(sync.admin_sync, "interval", seconds=sync_interval)
+scheduler.start()
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
