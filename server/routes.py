@@ -482,9 +482,5 @@ def link_items():
         return jsonify(f"Error, something went wrong when trying to link items {jira_item[1]} and {jama_item[1]}"), 500
     return {"success": "Linking was successful"}, 200
 
-@app.route('/get_logs_between_times', methods=['GET'])
-def link_items():
-
-
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
