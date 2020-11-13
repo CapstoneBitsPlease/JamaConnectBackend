@@ -581,7 +581,7 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
 
 
 # Main method to demo functionality. Uncomment blocks to observe how they function.
-if __name__ == '__main__':
+'''if __name__ == '__main__':
     jira_id = 12349
     jama_id = 12361
     #link_items([jira_id, "title", "issue", 7], [jama_id, "title2", "bug", 6], [[jira_id, "name"], [jira_id, "name2",]], [[jama_id,"name3"], [jama_id, "name4"]], 2)
@@ -679,4 +679,5 @@ if __name__ == '__main__':
 
     #demo_sync_methods(db_path)
     #logging_demo()
+    '''
     
