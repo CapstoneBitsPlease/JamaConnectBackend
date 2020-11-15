@@ -77,6 +77,9 @@ def initalize_jama():
             status = Response(status=response)
             return status
         
+        #initalize the jira connection as an admin jira user
+        session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"], os.environ["JIRA_SYNC_PASSWORD"])
+
         #the credentials are valid, generate a JWT and return it
         expires = datetime.timedelta(days=1)
         access_token = create_access_token(identity={"connection_id":session.id}, expires_delta=expires)
