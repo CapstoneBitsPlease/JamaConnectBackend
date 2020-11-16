@@ -231,17 +231,17 @@ def get_capstone_item_types_jama():
         return jsonify("Something went wrong when trying to retrieve Jama item types. See error log for details"), 500
     return jsonify(types = types), 200
 
-@app.route('/capstone/get_linked_items', methods=["GET"])
+@app.route('/capstone/get_linked_jama_items', methods=["GET"])
 def get_all_linked_items():
     json_log_setup()
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     itemsTableOps = ItemsTableOps(db_path)
     linked_items = []
     try:
-        linked_items = itemsTableOps.get_linked_items()
+        linked_items = itemsTableOps.retrieve_by_service("Jama")
     except:
-        logging.exception("Something went wrong when trying to retrieve linked items.")
-        return jsonify("Something went wrong when trying to retrieve linked items. See error log for details"), 500
+        logging.exception("Something went wrong when trying to retrieve linked Jama items.")
+        return jsonify("Something went wrong when trying to retrieve linked Jama items. See error log for details"), 500
     return jsonify(linked_items), 200
 
 @app.route('/capstone/items_of_type')
