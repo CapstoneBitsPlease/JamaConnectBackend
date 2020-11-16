@@ -112,7 +112,7 @@ class connection:
     def set_jama_item(self, item_id, fields):
         for field in fields:
             path = "/fields/" + field
-            patch = { "op":"replace", "path": path, "value":fields[field]}
+            patch = { "op":"add", "path": path, "value":fields[field]}
             self.jama_connection.patch_item(item_id, patch)
         return True
 

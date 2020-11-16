@@ -145,16 +145,18 @@ def set_linked_url(jira_id, jama_id):
     session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"], os.environ["JIRA_SYNC_PASSWORD"])
 
     jira_res = session.jira_connection.get_issue(jira_id)
-    if(jira_res):
-        jira_url = jira_res["self"]
+
+    #Build up the Jira URL
+    jira_url = "https://"+ os.environ["JIRA_SYNC_ORG"] + ".atlassian.net/browse/" + jira_res["key"]
+
 
     #build up the jama item URL because the jama API doesn't provide it
     jama_project_id = session.get_jama_item(jama_id, ["project"])
-    jama_url = "https://capstone2020.jamacloud.com/perspective.req#/items/"
+    jama_url = "https://" + os.environ["JAMA_SYNC_ORG"] +".jamacloud.com/perspective.req#/items/"
     jama_url = jama_url + str(jama_id) + "?projectId=" + str(jama_project_id["project"])
 
     #set the Jira URL field in the jama item
-    #session.set_jira_item(jira_id, {"Jira_URL$29":jira_url})
+    session.set_jama_item(jama_id, {"Jira_URL$29":jira_url})
 
     #set the jama URL field in the jama item
     session.set_jira_item(jira_id,{"customfield_10029":jama_url})
