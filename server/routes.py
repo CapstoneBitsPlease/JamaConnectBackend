@@ -518,10 +518,26 @@ def link_items():
         if success == 0:
             print("something went wrong with linking")
             return {"error": "Linking unsuccessful"}, 500
+
+        #set the URL fields in the linked items
+        sync.set_linked_url(jira_item[0], jama_item[0])
     except:
         logging.exception(f"Something went wrong when trying to link items {jira_item[0]} and {jama_item[0]}")
         return jsonify(f"Error, something went wrong when trying to link items {jira_item[1]} and {jama_item[1]}"), 500
     return {"success": "Linking was successful"}, 200
+
+@app.route('/sync/link_urls', methods=['POST'])
+@jwt_required
+def set_link_urls():
+    args = request.values
+    jira_id = args["jira_id"]
+    jama_id = args["jama_id"]
+
+    try:
+        sync.set_linked_url(jira_id, jama_id)
+    except:
+        return jsonify("Couldn't set the URL fields for these two items"), 400
+    return jsonify("Updated the URL fields"), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

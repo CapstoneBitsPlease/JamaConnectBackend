@@ -20,7 +20,7 @@
                 "JAMA_SYNC_ORG": "capstone2020",
                 "JAMA_SYNC_USERNAME": "sduncan",
                 "JAMA_SYNC_PASSWORD": "Fuck0ffJama",
-                "SYNC_INTERVAL": "30"
+                "SYNC_INTERVAL": "300"
 
             },
             "args": [
