@@ -10,6 +10,7 @@ import os
 from set_up_log import json_log_setup
 from server.connections import connections
 import functions
+import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 import sync
 import datetime
