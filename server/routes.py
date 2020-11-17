@@ -37,7 +37,11 @@ sync_interval = int(os.environ.get("SYNC_INTERVAL"))
 sync_job = scheduler.add_job(sync.admin_sync, "interval", seconds=sync_interval)
 scheduler.start()
 
+# Set up the log configurations.
 json_log_setup()
+
+# Path to database.
+path_to_db = "JamaConnectBackend/JamaJiraConnectDataBase.db"
 
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
@@ -204,7 +208,7 @@ def get_items_of_type():
 
 @app.route('/capstone/item_types_jira', methods=["GET"])
 def get_capstone_item_types_jira():
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     itemsTableOps = ItemsTableOps(db_path)
     types = []
     try:
@@ -216,7 +220,7 @@ def get_capstone_item_types_jira():
 
 @app.route('/capstone/item_types_jama', methods=["GET"])
 def get_capstone_item_types_jama():
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     itemsTableOps = ItemsTableOps(db_path)
     types = []
     try:
@@ -228,7 +232,7 @@ def get_capstone_item_types_jama():
 
 @app.route('/capstone/get_linked_jama_items', methods=["GET"])
 def get_all_linked_items():
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     itemsTableOps = ItemsTableOps(db_path)
     linked_items = []
     try:
@@ -241,7 +245,7 @@ def get_all_linked_items():
 @app.route('/capstone/items_of_type')
 def get_capstone_items_of_type():
     type_ = request.values("type")
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     itemsTableOps = ItemsTableOps(db_path)
     items = []
     try:
@@ -315,7 +319,7 @@ def jama_projects():
 def get_capstone_item_of_id():
     print(request)
     id_ = request.values["id"]
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     itemsTableOps = ItemsTableOps(db_path)
     try:
         items = itemsTableOps.retrieve_by_item_id(id_)
@@ -329,7 +333,7 @@ def get_capstone_item_of_id():
 def get_capstone_unlink_with_id():
     print(request)
     id_ = request.values["id"]
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     itemsTableOps = ItemsTableOps(db_path)
     items = itemsTableOps.retrieve_by_item_id(id_)
     if not items:
@@ -380,7 +384,7 @@ def last_sync_time():
 @app.route('/capstone/last_successful_sync_time', methods=['GET'])
 def last_successful_sync_time():
     if request.method == 'GET':
-        db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+        db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
         sync_table = SyncInformationTableOps(db_path)
         last_sync_time = sync_table.get_last_sync_time()
         return jsonify(last_sync_time)
@@ -391,7 +395,7 @@ def last_successful_sync_time():
 @app.route('/capstone/fields_to_sync', methods=['GET'])
 def fields_to_sync():
     if request.method == 'GET':
-        db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+        db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
         fields_table = FieldsTableOps(db_path)
         items_table = ItemsTableOps(db_path)
         sync_table = SyncInformationTableOps(db_path)

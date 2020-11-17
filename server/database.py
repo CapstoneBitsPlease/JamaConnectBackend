@@ -7,6 +7,8 @@ import os
 import logging
 import functions
 
+from routes import path_to_db
+
 # Utility class. Contains methods to connect to database, create table, rename column, add entry
 # to table, update an existing entry, retrieve an existing entry, and delete an existing entry.
 class DatabaseOperations:
@@ -495,6 +497,50 @@ class SyncInformationTableOps:
         else:
             return "No successful syncs yet."
 
+# Links two items in the database by 1.) Adding both items to the table, 2.) setting jira_linked_id = jama_id (and vice versa)
+# 3.) adding each field to the database, and linking with corresponding field in opposite array (ie: jama_field[0].lin)
+def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
+    # Variables for readability
+    id_ = 0
+    title = 1
+    type_ = 2
+    id_to_link = 0
+    project_id = 3
+    field_name = 0
+    field_service_id = 1
+
+    # Get path. NOTE: due to how the flask server is set up, if you want to run this locally instead, use  os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
+    items_ops = ItemsTableOps(db_path)
+    fields_ops = FieldsTableOps(db_path)
+    last_updated = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+    # Add Jira item to the database. Jama item's ID is passed to LinkedID column.
+    items_ops.insert_into_items_table(jira_item[id_], jira_item[title], jama_item[id_to_link], "Jira", jira_item[type_], jira_item[project_id], last_updated)
+    # Add Jama item to the database. Jira item's ID is passed to LinkedID column.
+    items_ops.insert_into_items_table(jama_item[id_], jama_item[title], jira_item[id_to_link], "Jama", jama_item[type_], jama_item[project_id], last_updated)
+    # Get the current largest ID in the fields table. Use this to generate the next unique ID for the fields table.
+    field_id = fields_ops.get_next_field_id()[0]
+    # Assume success initially. If something goes wrong during syncing process, set this to 0.
+    success = 1
+    for i in range(0, num_fields):
+        try:
+            # Update next field ID and insert current jira field into the table, passing the corresponding jama FieldID to the LinkedID column.
+            # The Jama FieldID will be field_id + 1.
+            field_id += 1
+            last_updated = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+            fields_ops.insert_into_fields_table(field_id, jira_item[id_], last_updated, jira_fields[i][field_name], jira_fields[i][field_service_id], field_id + 1)
+            # Update next field ID.
+            field_id += 1
+            # Update next field ID and insert current jama field into the table, passing the corresponding jira FieldID to the LinkedID column.
+            # The Jira FieldID will be field_id - 1, since it was calculated above and 1 has been added to it since.
+            fields_ops.insert_into_fields_table(field_id, jama_item[id_], last_updated, jama_fields[i][field_name], jama_fields[i][field_service_id], field_id - 1)
+        except:
+            # If something goes wrong, write to the error log and indicate failure to calling routine by setting success to 0.
+            logging.exception(f"Something went wrong when linking {jama_fields[i][0]} with {jira_fields[i][0]}")
+            success = 0
+    return success
+
+# # # # All functions below this line are for testing purposes only.
 
 def demo_sync_methods(db_path):
     sync_id = 107
@@ -553,49 +599,6 @@ def logging_demo():
     logging.info('info')
     logging.warning('warning')
     logging.error('error')
-
-# Links two items in the database by 1.) Adding both items to the table, 2.) setting jira_linked_id = jama_id (and vice versa)
-# 3.) adding each field to the database, and linking with corresponding field in opposite array (ie: jama_field[0].lin)
-def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
-    # Variables for readability
-    id_ = 0
-    title = 1
-    type_ = 2
-    id_to_link = 0
-    project_id = 3
-    field_name = 0
-    field_service_id = 1
-
-    # Get path. NOTE: due to how the flask server is set up, if you want to run this locally instead, use  os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
-    items_ops = ItemsTableOps(db_path)
-    fields_ops = FieldsTableOps(db_path)
-    last_updated = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
-    # Add Jira item to the database. Jama item's ID is passed to LinkedID column.
-    items_ops.insert_into_items_table(jira_item[id_], jira_item[title], jama_item[id_to_link], "Jira", jira_item[type_], jira_item[project_id], last_updated)
-    # Add Jama item to the database. Jira item's ID is passed to LinkedID column.
-    items_ops.insert_into_items_table(jama_item[id_], jama_item[title], jira_item[id_to_link], "Jama", jama_item[type_], jama_item[project_id], last_updated)
-    # Get the current largest ID in the fields table. Use this to generate the next unique ID for the fields table.
-    field_id = fields_ops.get_next_field_id()[0]
-    # Assume success initially. If something goes wrong during syncing process, set this to 0.
-    success = 1
-    for i in range(0, num_fields):
-        try:
-            # Update next field ID and insert current jira field into the table, passing the corresponding jama FieldID to the LinkedID column.
-            # The Jama FieldID will be field_id + 1.
-            field_id += 1
-            last_updated = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
-            fields_ops.insert_into_fields_table(field_id, jira_item[id_], last_updated, jira_fields[i][field_name], jira_fields[i][field_service_id], field_id + 1)
-            # Update next field ID.
-            field_id += 1
-            # Update next field ID and insert current jama field into the table, passing the corresponding jira FieldID to the LinkedID column.
-            # The Jira FieldID will be field_id - 1, since it was calculated above and 1 has been added to it since.
-            fields_ops.insert_into_fields_table(field_id, jama_item[id_], last_updated, jama_fields[i][field_name], jama_fields[i][field_service_id], field_id - 1)
-        except:
-            # If something goes wrong, write to the error log and indicate failure to calling routine by setting success to 0.
-            logging.exception(f"Something went wrong when linking {jama_fields[i][0]} with {jira_fields[i][0]}")
-            success = 0
-    return success
 
 
 # Main method to demo functionality. Uncomment blocks to observe how they function.

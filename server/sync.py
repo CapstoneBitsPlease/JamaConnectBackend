@@ -5,12 +5,14 @@ import os
 from datetime import datetime, timezone
 import logging
 
+from routes import path_to_db
+
 
 def last_sync_period():
     """
     returns the amount of time the last sync took and when it was completed
     """
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "C2TB/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     sync_table = SyncInformationTableOps(db_path)
     sync_info = sync_table.get_last_sync_time()
     sync_time =  {"Completed on": sync_info[2], "Total Sync Time": sync_info[0]}
@@ -25,7 +27,7 @@ def sync_one_item(item_id, session):
     #session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"], os.environ["JIRA_SYNC_PASSWORD"])
 
     #initialize the table interfaces
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "C2TB/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     items_table = ItemsTableOps(db_path)
     fields_table = FieldsTableOps(db_path)
 
@@ -100,7 +102,7 @@ def sync_one_item(item_id, session):
 
 #function for getting the list of items to be synced and passing them off to the sync function
 def sync_all(session):
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "C2TB/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     items_table = ItemsTableOps(db_path)
     success = True
     linked_items = items_table.get_linked_items()
