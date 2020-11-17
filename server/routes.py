@@ -436,9 +436,9 @@ def sync_one():
         return jsonify("Couldn't sync this item"), 400
     
     if response:
-        return Response(200)
+        return jsonify("Suscessfuly synced item:" + item_id), 200
     else:
-        return Response(500)
+        return jsonify("Item was up to date"), 200
 
 
 @app.route('/sync_all', methods=['POST'])
