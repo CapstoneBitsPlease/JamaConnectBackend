@@ -7,7 +7,8 @@ import os
 import logging
 import functions
 
-from routes import path_to_db
+# Path to database.
+path_to_db = "JamaConnectBackend/JamaJiraConnectDataBase.db"
 
 # Utility class. Contains methods to connect to database, create table, rename column, add entry
 # to table, update an existing entry, retrieve an existing entry, and delete an existing entry.

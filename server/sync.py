@@ -5,8 +5,8 @@ import os
 from datetime import datetime, timezone
 import logging
 
-from routes import path_to_db
-
+# Path to database.
+path_to_db = "JamaConnectBackend/JamaJiraConnectDataBase.db"
 
 def last_sync_period():
     """
