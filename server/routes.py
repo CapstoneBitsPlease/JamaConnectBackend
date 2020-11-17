@@ -37,6 +37,8 @@ sync_interval = int(os.environ.get("SYNC_INTERVAL"))
 sync_job = scheduler.add_job(sync.admin_sync, "interval", seconds=sync_interval)
 scheduler.start()
 
+json_log_setup()
+
 # "@server.route('...')" indicates the URL path
 # the function that follows is called when requesting 
 # the indicated URL.
@@ -53,7 +55,6 @@ def index():
 @app.route('/login/jama/basic', methods=['GET', 'POST'])
 def initalize_jama():
     if request.method == "POST":
-        json_log_setup()
         #request.values converts form items AND URLstring encoded items into a dict
         cred = request.values
         username = cred["username"]
@@ -90,7 +91,6 @@ def initalize_jama():
 @jwt_required
 def initialize_jira():
     if request.method == "POST":
-        json_log_setup()
         #request.values converts form items AND URLstring encoded items into a dict
         cred = request.values
         username = cred["username"]
@@ -142,7 +142,6 @@ def user():
 @jwt_required
 def get_all_user():
     if request.method == "GET":
-        json_log_setup()
         token = get_jwt_identity()
         uuid = token.get("connection_id")
         session = cur_connections.get_session(uuid)
@@ -155,7 +154,6 @@ def get_all_user():
 @app.route('/jama/projects', methods=['GET'])
 @jwt_required
 def getprojects():
-    json_log_setup
     #This is basicaly the authenticaion chunk
     token = get_jwt_identity()
     uuid = token.get("connection_id")
@@ -171,7 +169,6 @@ def getprojects():
 @app.route('/jama/item_types', methods=['GET'])
 @jwt_required
 def get_item_types():
-    json_log_setup()
     #This is basicaly the authenticaion chunk
     token = get_jwt_identity()
     uuid = token.get("connection_id")
@@ -187,7 +184,6 @@ def get_item_types():
 @app.route('/jama/items_by_type', methods=['GET'])
 @jwt_required
 def get_items_of_type():
-    json_log_setup()
     token = get_jwt_identity()
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
@@ -208,7 +204,6 @@ def get_items_of_type():
 
 @app.route('/capstone/item_types_jira', methods=["GET"])
 def get_capstone_item_types_jira():
-    json_log_setup()
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     itemsTableOps = ItemsTableOps(db_path)
     types = []
@@ -221,7 +216,6 @@ def get_capstone_item_types_jira():
 
 @app.route('/capstone/item_types_jama', methods=["GET"])
 def get_capstone_item_types_jama():
-    json_log_setup()
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     itemsTableOps = ItemsTableOps(db_path)
     types = []
@@ -234,7 +228,6 @@ def get_capstone_item_types_jama():
 
 @app.route('/capstone/get_linked_jama_items', methods=["GET"])
 def get_all_linked_items():
-    json_log_setup()
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     itemsTableOps = ItemsTableOps(db_path)
     linked_items = []
@@ -247,7 +240,6 @@ def get_all_linked_items():
 
 @app.route('/capstone/items_of_type')
 def get_capstone_items_of_type():
-    json_log_setup()
     type_ = request.values("type")
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
     itemsTableOps = ItemsTableOps(db_path)
@@ -321,7 +313,6 @@ def jama_projects():
 # Retrieves item by ID
 @app.route('/capstone/item_of_id')
 def get_capstone_item_of_id():
-    json_log_setup()
     print(request)
     id_ = request.values["id"]
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
@@ -336,7 +327,6 @@ def get_capstone_item_of_id():
 # Unlinkes a pair of linked Jira and Jama items from the JamaJira Connect DataBase
 @app.route('/capstone/unlink_with_id')
 def get_capstone_unlink_with_id():
-    json_log_setup()
     print(request)
     id_ = request.values["id"]
     db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
@@ -378,7 +368,6 @@ def get_capstone_unlink_with_id():
 def last_sync_time():
     # get the length of time of the last sync from our database 
     try:
-        json_log_setup()
         time = sync.last_sync_period()
     except:
         logging.exception("Something went wrong when retrieving last sync period.")
@@ -402,7 +391,6 @@ def last_successful_sync_time():
 @app.route('/capstone/fields_to_sync', methods=['GET'])
 def fields_to_sync():
     if request.method == 'GET':
-        json_log_setup()
         db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
         fields_table = FieldsTableOps(db_path)
         items_table = ItemsTableOps(db_path)
@@ -422,7 +410,6 @@ def fields_to_sync():
 @app.route('/sync/single', methods=['POST'])
 @jwt_required
 def sync_one():
-    json_log_setup()
     token = get_jwt_identity()
     uuid = token.get("connection_id")
     session = cur_connections.get_session(uuid)
@@ -464,7 +451,6 @@ def set_interval():
 
 @app.route('/demo_logs')
 def default():
-    json_log_setup()
     database.logging_demo()
     return {"logging": "lit"}, 200
 
@@ -481,7 +467,6 @@ def get_logs():
 # integer parameter which indicates the total number of fields in each fields array.
 @app.route('/link_items', methods=['POST'])
 def link_items():
-    json_log_setup()
     try:
         if request.method == "POST":
             # Get all items in array that correspond to jira_item[].
