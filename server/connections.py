@@ -4,7 +4,7 @@
 # we use the connections to authenticate a user who has logged in with 
 # either service.
 
-from py_jama_rest_client.client import JamaClient
+#from py_jama_rest_client.client import JamaClient
 import uuid
 import requests
 from requests.auth import HTTPBasicAuth
@@ -12,6 +12,7 @@ import json
 from atlassian import Jira
 from atlassian.errors import ApiError
 from py_jama_rest_client.client import *
+from datetime import datetime
 
 
 class connection:
@@ -28,6 +29,7 @@ class connection:
         jama_connection = JamaClient(host_domain=jama_url, credentials=(username, password), oauth=False)
         try:
             jama_connection.get_projects()
+            
         except APIException as error:
             return error.status_code
         
@@ -49,12 +51,14 @@ class connection:
         if projects == []:
             return 401
         
+
         self.jira_connection = jira_connection
         return 200
 
     def get_project_list(self):
         response = self.jama_connection.get_projects()
-        projects=[]
+        projects =[]
+
         for project in response:
             item = {"name":project["fields"]["name"], "id":project["id"]}
             projects.append(item)
@@ -67,6 +71,100 @@ class connection:
             item = {"name":j_type["display"], "id":j_type["id"]}
             types.append(item)
         return types
+
+    def get_items_by_type(self, project_id, type_id):
+        """
+        get a list of items and item_id's given a project and an item type
+        """
+        response = self.jama_connection.get_abstract_items(project=project_id, item_type=type_id)
+        items=[]
+        for item_chunk in response:
+            item = {"name":item_chunk["fields"]["name"], "id":item_chunk["id"]}
+            items.append(item)
+        return items
+    
+    # gets a jama item and returns only the fields specified in the array
+    def get_jama_item(self, item_id, fields):
+        try:
+            jama_object = self.jama_connection.get_item(item_id)
+        except:
+            return False
+        item={}
+        for field in fields:
+            if jama_object.get(field):
+                item[field] = jama_object[field]
+            else:
+                 item[field] = jama_object["fields"][field]
+        return item
+
+    # gets a Jira item and returns only the fields specified in the array
+    def get_jira_item(self, item_key, fields):
+        item = {}
+        for field in fields:
+            try:
+                jira_object = self.jira_connection.issue_field_value(item_key, field)
+            except:
+                return False
+            item[field] = jira_object
+        return item
+    
+    # updates the fields of the jama item specified by the item_key
+    # and fields in the form {"field":"value", "field":"value",..}
+    def set_jira_item(self, item_key, fields):
+        #jira.edit_issue("C2TB-41",{"customfield_10016":[{"set":14.0}]})
+        json_fields ={}
+        for field in fields:
+            json_fields[field] = [{"set":fields[field]}]
+        try:
+            self.jira_connection.edit_issue(item_key, json_fields, False)
+        except:
+            return False
+        return True
+
+    def set_jama_item(self, item_id, fields):
+        for field in fields:
+            path = "/fields/" + field
+            patch = { "op":"add", "path": path, "value":fields[field]}
+            try:
+                self.jama_connection.patch_item(item_id, patch)
+            except:
+                return False
+        return True
+
+    #this function returns the id and last update time of the item last updated.
+    # return format (pos of src, src_id, dst_id, most recent update)
+    def most_recent_update(self,item_1_service, item_1_id, item_2_service, item_2_id):
+
+        if item_1_service == "jama" or item_1_service == "Jama":
+            item1 = self.get_jama_item(item_1_id, ["modifiedDate"])
+            item2 = self.get_jira_item(item_2_id, ["updated"])
+            item1_time = datetime.strptime(item1["modifiedDate"], '%Y-%m-%dT%H:%M:%S.%f%z')
+            item2_time = datetime.strptime(item2["updated"], '%Y-%m-%dT%H:%M:%S.%f%z')
+        else:
+            item2 = self.get_jama_item(item_2_id, ["modifiedDate"])
+            item1 = self.get_jira_item(item_1_id, ["updated"])
+            item2_time = datetime.strptime(item2["modifiedDate"], '%Y-%m-%dT%H:%M:%S.%f%z')
+            item1_time = datetime.strptime(item1["updated"], '%Y-%m-%dT%H:%M:%S.%f%z')
+        
+        #time comparison
+        if(item1_time >= item2_time):
+            return [0, item_1_id, item_2_id, item1_time]
+        return  [1,item_2_id, item_1_id, item2_time]
+
+
+    def get_jama_item_by_id(self, item_id):
+        try:
+            response = self.jama_connection.get_item(item_id=item_id)
+        except ResourceNotFoundException:
+            response = "Item ID not found."
+        return response
+
+    def get_jira_item_by_id(self, key):
+        try:
+            response = self.jira_connection.issue(key = key)
+        except requests.exceptions.HTTPError:
+            response = "Item key not found."
+        return response    
 
     def match_token(self, token):
         if self.id == token:

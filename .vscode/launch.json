@@ -4,7 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
         {
             "name": "Python: Flask",
             "type": "python",
@@ -13,12 +12,19 @@
             "env": {
                 "FLASK_APP": "routes.py",
                 "FLASK_ENV": "development",
-                "FLASK_DEBUG": "0",
-                "PYTHONPATH": "server"
+                "FLASK_DEBUG": "1",
+                "PYTHONPATH": "server",
+                "JIRA_SYNC_ORG": "capstone2020teamb",
+                "JIRA_SYNC_USERNAME": "sduncan@pdx.edu",
+                "JIRA_SYNC_PASSWORD": "hgTbykR23f57YxsYYgRY84F3",
+                "JAMA_SYNC_ORG": "capstone2020",
+                "JAMA_SYNC_USERNAME": "sduncan",
+                "JAMA_SYNC_PASSWORD": "Fuck0ffJama",
+                "SYNC_INTERVAL": "300"
+
             },
             "args": [
                 "run",
-                "--no-debugger",
                 "--no-reload"
             ],
             "jinja": true
