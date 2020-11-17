@@ -97,10 +97,8 @@ def sync_one_item(item_id, session):
 
     #send the data
     if src_item[3] == "jama" or src_item[3] == "Jama":
-        print(dst_field)
         session.set_jira_item(dst_field[1], dst_field_values)
     else:
-        print(dst_field)
         session.set_jama_item(dst_field[1], dst_field_values)
 
     #update the last sync time with the current time. 
