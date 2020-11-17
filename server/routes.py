@@ -433,6 +433,7 @@ def sync_one():
         response = sync.sync_one_item(item_id, session)
     except:
         logging.exception(f"Something went wrong when trying to sync item {item_id}")
+        return jsonify("Couldn't sync this item"), 400
     
     if response:
         return Response(200)
