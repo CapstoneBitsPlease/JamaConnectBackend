@@ -80,8 +80,7 @@ def initalize_jama():
         #if it was invalid credentials respond with the error
         if(response != 200):
             logging.error(f"Something went wrong with login, received {response} from Jama server.")
-            status = Response(status=response)
-            return status
+            return jsonify("Login failed"), 500
         
         #initalize the jira connection as an admin jira user
         session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"], os.environ["JIRA_SYNC_PASSWORD"])
@@ -117,8 +116,7 @@ def initialize_jira():
         #if it was invalid credentials respond with the error
         if response != 200:
             logging.error(f"Something went wrong with login, received {response} from Jira server.")
-            status = Response(status=response)
-            return status
+            return jsonify("Error, could not initiate jira"), response
         
         expires = datetime.timedelta(days=1)
         access_token = create_access_token(identity={"connection_id":session.id},expires_delta=expires)
@@ -151,8 +149,7 @@ def get_all_user():
         session = cur_connections.get_session(uuid)
         if session == None:
             logging.error("Couldn't get session in get_all_user()")
-            status = Response(500)
-            return status
+            return jsonify("Couldn't get session in get_all_user"), 500
         return {"Number of current connections": len(cur_connections.all_connections)}, 200
 
 @app.route('/jama/projects', methods=['GET'])
@@ -168,7 +165,7 @@ def getprojects():
         return jsonify(projects)
     else:
         logging.error("Error: Couldn't get projects from jama")
-        return Response(401)
+        return jsonify("Error, couldn't get projects from jama"), 401
 
 @app.route('/jama/item_types', methods=['GET'])
 @jwt_required
@@ -183,7 +180,7 @@ def get_item_types():
         return item_types
     else:
         logging.error("Error: couldn't get item types from jama")
-        return Response(401)
+        return jsonify("Couldn't get item types from jama"), 401
 
 @app.route('/jama/items_by_type', methods=['GET'])
 @jwt_required
@@ -204,7 +201,7 @@ def get_items_of_type():
         return items
     else:
         logging.error(f"Erorr: couldn't get items by type {type_id} from project {project_id} in Jama")
-        return Response(401)
+        return jsonify("Couldn't get items by type in Jama"), 401
 
 @app.route('/capstone/item_types_jira', methods=["GET"])
 def get_capstone_item_types_jira():
@@ -272,7 +269,7 @@ def get_item_of_id():
         item = jsonify(session.get_jama_item_by_id(item_id))
         return item
     else:
-        return Response(401)
+        return jsonify(f"Error, could not get item of ID {item_id}"), 401
 
 @app.route('/jira/item_by_id', methods=['GET'])
 @jwt_required
@@ -291,7 +288,7 @@ def get_jira_item_of_id():
         item = jsonify(session.get_jira_item_by_id(item_id))
         return item
     else:
-        return Response(401)
+        return jsonify("Error, no connection"), 401
 
 @app.route('/Jira_item_types')
 @jwt_required
@@ -312,7 +309,7 @@ def jama_projects():
         projects = session.get_project_list()
         return jsonify(projects)
     else:
-        return Response(401)
+        return jsonify("Error, no connection"), 401
 
 # Retrieves item by ID
 @app.route('/capstone/item_of_id')
@@ -378,7 +375,7 @@ def last_sync_time():
     if time:
         return jsonify(time)
     else:
-        Response(401)
+        return jsonify("Error, something went wrong when retrieving last sync period. See log for details"), 401
 
 # Retrieves the length of time of the last sync from capstone database
 @app.route('/capstone/last_successful_sync_time', methods=['GET'])
@@ -389,7 +386,7 @@ def last_successful_sync_time():
         last_sync_time = sync_table.get_last_sync_time()
         return jsonify(last_sync_time)
     else:
-        return Response(500)
+        return jsonify("Error, requested method was not GET"), 500
 
 # Retrieves fields ready to sync from capstone database
 @app.route('/capstone/fields_to_sync', methods=['GET'])
@@ -409,7 +406,7 @@ def fields_to_sync():
             logging.exception("Something went wrong when trying to get the fields to sync in routes.py/fields_to_sync()")
         return jsonify(num_fields=num_fields, fields_to_sync=fields_to_sync), 200
     else:
-        return Response(500)
+        return jsonify("Error, requested method was not GET"), 500
 
 @app.route('/sync/single', methods=['POST'])
 @jwt_required
@@ -427,7 +424,7 @@ def sync_one():
         return jsonify("Couldn't sync this item"), 400
     
     if response:
-        return jsonify("Suscessfuly synced item:" + item_id), 200
+        return jsonify("Successfully synced item:" + item_id), 200
     else:
         return jsonify("Item was up to date"), 200
 
@@ -441,11 +438,12 @@ def sync_all():
     if session.jama_connection and session.jira_connection:
         response = sync.sync_all(session)
         if response:
-            return ["Synced all items successfully.", Response(200)]
+            return jsonify("Synced all items successfully."), 200
         else:
-            return Response(500)
+            return jsonify("Error, something went wrong when syncing all items"), 500
     else:
-        return Response(401)
+        return jsonify("Error, no connection"), 500
+
 @app.route('/sync/set_interval', methods=['POST'])
 @jwt_required
 def set_interval():
@@ -457,7 +455,7 @@ def set_interval():
 @app.route('/demo_logs')
 def default():
     database.logging_demo()
-    return {"logging": "lit"}, 200
+    return jsonify("logging successful"), 200
 
 @app.route('/get_logs')
 def get_logs():
@@ -476,45 +474,35 @@ def link_items():
         if request.method == "POST":
             # Get all items in array that correspond to jira_item[].
             jira_item = request.form.getlist("jira_item[]")
-            print(jira_item)
             # Get all items in array that correspond to jama_item[].
             jama_item = request.form.getlist("jama_item[]")
-            print(jama_item)
             # Get number of fields that will be linked.
             num_fields = request.form.get("num_fields")
-            print(num_fields)
             jira_fields = []
             jama_fields = []
             num = int(num_fields)
             for i in range(0, num):
                 val_to_get = "jira_fields[{}]".format(i)
-                print(val_to_get)
                 jira_field = request.form.getlist(val_to_get)
-                print(jira_field)
                 jira_fields.append(jira_field)
             for i in range(0, num):
                 val_to_get = "jama_fields[{}]".format(i)
-                print(val_to_get)
                 jama_field = request.form.getlist(val_to_get)
                 jama_fields.append(jama_field)
-            print(jira_fields)
-            print(jama_fields)
         num_jira_fields = len(jira_fields)
         num_jama_fields = len(jama_fields)
         if num_jira_fields != num_jama_fields:
-            print("array len is different")
-            return {"error": "The number of Jama fields to link does not match the number of Jira fields."}, 500
+            return jsonify("The number of Jama fields to link does not match the number of Jira fields."), 500
         success = database.link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields)
         if success == 0:
-            print("something went wrong with linking")
-            return {"error": "Linking unsuccessful"}, 500
+            return jsonify("Linking unsuccessful"), 500
 
         #set the URL fields in the linked items
         sync.set_linked_url(jira_item[0], jama_item[0])
     except:
         logging.exception(f"Something went wrong when trying to link items {jira_item[0]} and {jama_item[0]}")
         return jsonify(f"Error, something went wrong when trying to link items {jira_item[1]} and {jama_item[1]}"), 500
-    return {"success": "Linking was successful"}, 200
+    return jsonify("Linking was successful"), 200
 
 @app.route('/sync/link_urls', methods=['POST'])
 @jwt_required
