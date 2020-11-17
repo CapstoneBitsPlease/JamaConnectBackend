@@ -91,6 +91,8 @@ def sync_one_item(item_id, session):
         dst_data_i = dst_data[dst_field_names[i]]
         if(type(dst_data_i) == int):
             src_data_i = int(src_data_i)
+        if(type(dst_data_i) == str):
+            src_data_i = str(src_data_i)
         dst_field_values[dst_field_names[i]] = src_data_i
 
     #send the data
