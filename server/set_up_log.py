@@ -1,7 +1,7 @@
 import logging
 from pythonjsonlogger import jsonlogger
 
-def log_setup(level = logging.DEBUG):
+def log_setup(level = logging.INFO):
     root_logger= logging.getLogger()
     root_logger.setLevel(level)
     handler = logging.FileHandler('error.log', 'a', 'utf-8')
