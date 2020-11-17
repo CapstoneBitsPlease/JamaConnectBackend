@@ -78,18 +78,28 @@ def sync_one_item(item_id, session):
     # get the data to be passed to the other service
     if src_item[3] == "jama" or src_item[3] == "Jama":
         src_data = session.get_jama_item(src_id, src_field_names)
+        dst_data = session.get_jira_item(dst_id, dst_field_names)
     else:
         src_data = session.get_jira_item(src_id, src_field_names)
+        dst_data = session.get_jama_item(dst_id, dst_field_names)
+
+    #convert src data to same type as dst data
 
     dst_field_values = {} #destination list with source values
     for i in range(len(src_data)):
-        dst_field_values[dst_field_names[i]] = src_data[src_field_names[i]]
+        src_data_i = src_data[src_field_names[i]]
+        dst_data_i = dst_data[dst_field_names[i]]
+        if(type(dst_data_i) == int):
+            src_data_i = int(src_data_i)
+        dst_field_values[dst_field_names[i]] = src_data_i
 
     #send the data
     if src_item[3] == "jama" or src_item[3] == "Jama":
+        print(dst_field)
         session.set_jira_item(dst_field[1], dst_field_values)
     else:
-         session.set_jama_item(dst_field[1], dst_field_values)
+        print(dst_field)
+        session.set_jama_item(dst_field[1], dst_field_values)
 
     #update the last sync time with the current time. 
     sync_end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
