@@ -433,11 +433,12 @@ def sync_one():
         response = sync.sync_one_item(item_id, session)
     except:
         logging.exception(f"Something went wrong when trying to sync item {item_id}")
+        return jsonify("Couldn't sync this item"), 400
     
     if response:
-        return Response(200)
+        return jsonify("Suscessfuly synced item:" + item_id), 200
     else:
-        return Response(500)
+        return jsonify("Item was up to date"), 200
 
 
 @app.route('/sync_all', methods=['POST'])

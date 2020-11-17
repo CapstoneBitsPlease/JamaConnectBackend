@@ -82,7 +82,10 @@ class connection:
     
     # gets a jama item and returns only the fields specified in the array
     def get_jama_item(self, item_id, fields):
-        jama_object = self.jama_connection.get_item(item_id)
+        try:
+            jama_object = self.jama_connection.get_item(item_id)
+        except:
+            return False
         item={}
         for field in fields:
             if jama_object.get(field):
@@ -95,7 +98,10 @@ class connection:
     def get_jira_item(self, item_key, fields):
         item = {}
         for field in fields:
-            jira_object = self.jira_connection.issue_field_value(item_key, field)
+            try:
+                jira_object = self.jira_connection.issue_field_value(item_key, field)
+            except:
+                return False
             item[field] = jira_object
         return item
     
@@ -106,14 +112,20 @@ class connection:
         json_fields ={}
         for field in fields:
             json_fields[field] = [{"set":fields[field]}]
-        self.jira_connection.edit_issue(item_key, json_fields, False)
+        try:
+            self.jira_connection.edit_issue(item_key, json_fields, False)
+        except:
+            return False
         return True
 
     def set_jama_item(self, item_id, fields):
         for field in fields:
             path = "/fields/" + field
             patch = { "op":"add", "path": path, "value":fields[field]}
-            self.jama_connection.patch_item(item_id, patch)
+            try:
+                self.jama_connection.patch_item(item_id, patch)
+            except:
+                return False
         return True
 
     #this function returns the id and last update time of the item last updated.
