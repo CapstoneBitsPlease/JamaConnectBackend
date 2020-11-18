@@ -492,17 +492,17 @@ def link_items():
         num_jira_fields = len(jira_fields)
         num_jama_fields = len(jama_fields)
         if num_jira_fields != num_jama_fields:
-            return jsonify("The number of Jama fields to link does not match the number of Jira fields."), 500
+            return {"error": "The number of Jama fields to link does not match the number of Jira fields."}, 500
         success = database.link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields)
         if success == 0:
-            return jsonify("Linking unsuccessful"), 500
+            return {"error": "Linking unsuccessful"}, 500
 
         #set the URL fields in the linked items
         sync.set_linked_url(jira_item[0], jama_item[0])
     except:
         logging.exception(f"Something went wrong when trying to link items {jira_item[0]} and {jama_item[0]}")
         return jsonify(f"Error, something went wrong when trying to link items {jira_item[1]} and {jama_item[1]}"), 500
-    return jsonify("Linking was successful"), 200
+    return {"success": "Linking was successful"}, 200
 
 @app.route('/sync/link_urls', methods=['POST'])
 @jwt_required
