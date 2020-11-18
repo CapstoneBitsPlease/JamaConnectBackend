@@ -18,10 +18,9 @@
                 "JIRA_SYNC_USERNAME": "sduncan@pdx.edu",
                 "JIRA_SYNC_PASSWORD": "hgTbykR23f57YxsYYgRY84F3",
                 "JAMA_SYNC_ORG": "capstone2020",
-                "JAMA_SYNC_USERNAME": "sduncan",
-                "JAMA_SYNC_PASSWORD": "Fuck0ffJama",
+                "JAMA_SYNC_USERNAME": "sync_user",
+                "JAMA_SYNC_PASSWORD": "This15Apassw0rd4me<3",
                 "SYNC_INTERVAL": "300"
-
             },
             "args": [
                 "run",

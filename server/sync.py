@@ -5,12 +5,14 @@ import os
 from datetime import datetime, timezone
 import logging
 
+# Path to database.
+path_to_db = "JamaConnectBackend/JamaJiraConnectDataBase.db"
 
 def last_sync_period():
     """
     returns the amount of time the last sync took and when it was completed
     """
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "C2TB/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     sync_table = SyncInformationTableOps(db_path)
     sync_info = sync_table.get_last_sync_time()
     sync_time =  {"Completed on": sync_info[2], "Total Sync Time": sync_info[0]}
@@ -25,7 +27,7 @@ def sync_one_item(item_id, session):
     #session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"], os.environ["JIRA_SYNC_PASSWORD"])
 
     #initialize the table interfaces
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "C2TB/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     items_table = ItemsTableOps(db_path)
     fields_table = FieldsTableOps(db_path)
 
@@ -78,18 +80,28 @@ def sync_one_item(item_id, session):
     # get the data to be passed to the other service
     if src_item[3] == "jama" or src_item[3] == "Jama":
         src_data = session.get_jama_item(src_id, src_field_names)
+        dst_data = session.get_jira_item(dst_id, dst_field_names)
     else:
         src_data = session.get_jira_item(src_id, src_field_names)
+        dst_data = session.get_jama_item(dst_id, dst_field_names)
+
+    #convert src data to same type as dst data
 
     dst_field_values = {} #destination list with source values
     for i in range(len(src_data)):
-        dst_field_values[dst_field_names[i]] = src_data[src_field_names[i]]
+        src_data_i = src_data[src_field_names[i]]
+        dst_data_i = dst_data[dst_field_names[i]]
+        if(type(dst_data_i) == int):
+            src_data_i = int(src_data_i)
+        if(type(dst_data_i) == str):
+            src_data_i = str(src_data_i)
+        dst_field_values[dst_field_names[i]] = src_data_i
 
     #send the data
     if src_item[3] == "jama" or src_item[3] == "Jama":
         session.set_jira_item(dst_field[1], dst_field_values)
     else:
-         session.set_jama_item(dst_field[1], dst_field_values)
+        session.set_jama_item(dst_field[1], dst_field_values)
 
     #update the last sync time with the current time. 
     sync_end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
@@ -100,7 +112,7 @@ def sync_one_item(item_id, session):
 
 #function for getting the list of items to be synced and passing them off to the sync function
 def sync_all(session):
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "C2TB/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     items_table = ItemsTableOps(db_path)
     success = True
     linked_items = items_table.get_linked_items()
