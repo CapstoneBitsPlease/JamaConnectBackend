@@ -471,6 +471,9 @@ def get_logs():
 @app.route('/link_items', methods=['POST'])
 def link_items():
     try:
+        token = get_jwt_identity()
+        uuid = token.get("connection_id")
+        session = cur_connections.get_session(uuid)
         if request.method == "POST":
             # Get all items in array that correspond to jira_item[].
             jira_item = request.form.getlist("jira_item[]")
@@ -493,7 +496,7 @@ def link_items():
         num_jama_fields = len(jama_fields)
         if num_jira_fields != num_jama_fields:
             return {"error": "The number of Jama fields to link does not match the number of Jira fields."}, 500
-        success = database.link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields)
+        success = database.link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields, session)
         if success == 0:
             return {"error": "Linking unsuccessful"}, 500
 

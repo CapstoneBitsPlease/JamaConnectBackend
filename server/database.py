@@ -3,6 +3,7 @@ import sqlite3
 from sqlite3 import Error
 from datetime import timezone
 from datetime import datetime
+import sync
 import os
 import logging
 import functions
@@ -500,7 +501,7 @@ class SyncInformationTableOps:
 
 # Links two items in the database by 1.) Adding both items to the table, 2.) setting jira_linked_id = jama_id (and vice versa)
 # 3.) adding each field to the database, and linking with corresponding field in opposite array (ie: jama_field[0].lin)
-def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
+def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, session):
     # Variables for readability
     id_ = 0
     title = 1
@@ -515,12 +516,20 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
     items_ops = ItemsTableOps(db_path)
     fields_ops = FieldsTableOps(db_path)
     last_updated = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+
     # Add Jira item to the database. Jama item's ID is passed to LinkedID column.
     items_ops.insert_into_items_table(jira_item[id_], jira_item[title], jama_item[id_to_link], "Jira", jira_item[type_], jira_item[project_id], last_updated)
     # Add Jama item to the database. Jira item's ID is passed to LinkedID column.
     items_ops.insert_into_items_table(jama_item[id_], jama_item[title], jira_item[id_to_link], "Jama", jama_item[type_], jama_item[project_id], last_updated)
+    try:
+        sync.sync_one_item(session, jira_item[id_])
+    except:
+        logging.exception(f"Something went wrong when trying to do initial sync on items {jira_item[id_]}, {jama_item[id_]}")
+        items_ops.delete_item(jira_item[id_])
+        items_ops.delete_item(jama_item[id_])
+        return 0
     # Get the current largest ID in the fields table. Use this to generate the next unique ID for the fields table.
-    field_id = fields_ops.get_next_field_id()[0]
+    field_id = fields_ops.get_next_field_id()[id_]
     # Assume success initially. If something goes wrong during syncing process, set this to 0.
     success = 1
     for i in range(0, num_fields):
