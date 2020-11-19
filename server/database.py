@@ -521,13 +521,6 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, sessi
     items_ops.insert_into_items_table(jira_item[id_], jira_item[title], jama_item[id_to_link], "Jira", jira_item[type_], jira_item[project_id], last_updated)
     # Add Jama item to the database. Jira item's ID is passed to LinkedID column.
     items_ops.insert_into_items_table(jama_item[id_], jama_item[title], jira_item[id_to_link], "Jama", jama_item[type_], jama_item[project_id], last_updated)
-    try:
-        sync.sync_one_item(session, jira_item[id_])
-    except:
-        logging.exception(f"Something went wrong when trying to do initial sync on items {jira_item[id_]}, {jama_item[id_]}")
-        items_ops.delete_item(jira_item[id_])
-        items_ops.delete_item(jama_item[id_])
-        return 0
     # Get the current largest ID in the fields table. Use this to generate the next unique ID for the fields table.
     field_id = fields_ops.get_next_field_id()[id_]
     # Assume success initially. If something goes wrong during syncing process, set this to 0.
@@ -548,6 +541,25 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, sessi
             # If something goes wrong, write to the error log and indicate failure to calling routine by setting success to 0.
             logging.exception(f"Something went wrong when linking {jama_fields[i][0]} with {jira_fields[i][0]}")
             success = 0
+    # Perform first sync of items. If sync succeeds, items and fields will now be synced. If it fails,
+    # remove the linked items and the fields from database.
+    sync_success = True
+    try:
+        sync_success = sync.sync_one_item(session, jira_item[id_])
+    except:
+        logging.exception(f"Something went wrong when trying to do initial sync on items {jira_item[id_]}, {jama_item[id_]}")
+        sync_success = False
+    if sync_success == False:
+        items_ops.delete_item(jira_item[id_])
+        items_ops.delete_item(jama_item[id_])
+        # Get current largest field id (corresponds to most recently added field.)
+        field_id = fields_ops.get_next_field_id()[id_]
+        for i in range(0, num_fields):
+            fields_ops.delete_field(field_id)
+            field_id -=1
+            fields_ops.delete_field(field_id)
+            field_id -= 1
+        return 0
     return success
 
 # # # # All functions below this line are for testing purposes only.
