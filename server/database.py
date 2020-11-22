@@ -525,15 +525,19 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, sessi
     field_id = fields_ops.get_next_field_id()[id_]
     # Assume success initially. If something goes wrong during syncing process, set this to 0.
     success = 1
+    # Array of field ids that were added in case something goes wrong and they need to be removed from table.
+    field_ids = []
     for i in range(0, num_fields):
         try:
             # Update next field ID and insert current jira field into the table, passing the corresponding jama FieldID to the LinkedID column.
             # The Jama FieldID will be field_id + 1.
             field_id += 1
+            field_ids.append(field_id)
             last_updated = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
             fields_ops.insert_into_fields_table(field_id, jira_item[id_], last_updated, jira_fields[i][field_name], jira_fields[i][field_service_id], field_id + 1)
             # Update next field ID.
             field_id += 1
+            field_ids.append(field_id)
             # Update next field ID and insert current jama field into the table, passing the corresponding jira FieldID to the LinkedID column.
             # The Jira FieldID will be field_id - 1, since it was calculated above and 1 has been added to it since.
             fields_ops.insert_into_fields_table(field_id, jama_item[id_], last_updated, jama_fields[i][field_name], jama_fields[i][field_service_id], field_id - 1)
@@ -554,11 +558,8 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, sessi
         items_ops.delete_item(jama_item[id_])
         # Get current largest field id (corresponds to most recently added field.)
         field_id = fields_ops.get_next_field_id()[id_]
-        for i in range(0, num_fields):
-            fields_ops.delete_field(field_id)
-            field_id -=1
-            fields_ops.delete_field(field_id)
-            field_id -= 1
+        for i in range(0, len(field_ids)):
+            fields_ops.delete_field(field_ids[i])
         return 0
     return success
 
