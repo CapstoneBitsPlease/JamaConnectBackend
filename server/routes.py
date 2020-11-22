@@ -478,8 +478,9 @@ def get_logs_range():
     with open('error_json.log') as logs:
         for json_obj in logs:
             error = json.loads(json_obj)
-            log_time=datetime.datetime.strptime(json_obj["asctime"], form)
-            if log_time>=start_time & log_time<=end_time:
+            print(error["asctime"])
+            log_time=datetime.datetime.strptime(error["asctime"], form)
+            if log_time>=start_time and log_time<=end_time:
                 error_list.append(error)
     return jsonify(error_list), 200
 
