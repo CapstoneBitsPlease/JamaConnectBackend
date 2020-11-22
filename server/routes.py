@@ -13,7 +13,7 @@ import functions
 import database
 from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 import sync
-import datetime
+from datetime import datetime
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -470,7 +470,7 @@ def get_logs():
 def get_logs_range():
     input = request.values
     start_date = input["start_date"]+"  12:00:00 AM"
-    end_date = input["end_date"]+"  11:59:59 AM"
+    end_date = input["end_date"]+"  11:59:59 PM"
     form = '%m/%d/%Y %I:%M:%S %p'
     start_time=datetime.strptime(start_date, form)
     end_time=datetime.strptime(end_date, form)
@@ -478,7 +478,7 @@ def get_logs_range():
     with open('error_json.log') as logs:
         for json_obj in logs:
             error = json.loads(json_obj)
-            log_time=datetime.strptime(json_obj[asctime], form)
+            log_time=datetime.strptime(json_obj["asctime"], form)
             if log_time>=start_time & log_time<=end_time:
                 error_list.append(error)
     return jsonify(error_list), 200
