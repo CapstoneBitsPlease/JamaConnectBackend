@@ -3,6 +3,7 @@ import sqlite3
 from sqlite3 import Error
 from datetime import timezone
 from datetime import datetime
+import sync
 import os
 import logging
 import functions
@@ -500,7 +501,7 @@ class SyncInformationTableOps:
 
 # Links two items in the database by 1.) Adding both items to the table, 2.) setting jira_linked_id = jama_id (and vice versa)
 # 3.) adding each field to the database, and linking with corresponding field in opposite array (ie: jama_field[0].lin)
-def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
+def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, session):
     # Variables for readability
     id_ = 0
     title = 1
@@ -515,23 +516,28 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
     items_ops = ItemsTableOps(db_path)
     fields_ops = FieldsTableOps(db_path)
     last_updated = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+
     # Add Jira item to the database. Jama item's ID is passed to LinkedID column.
     items_ops.insert_into_items_table(jira_item[id_], jira_item[title], jama_item[id_to_link], "Jira", jira_item[type_], jira_item[project_id], last_updated)
     # Add Jama item to the database. Jira item's ID is passed to LinkedID column.
     items_ops.insert_into_items_table(jama_item[id_], jama_item[title], jira_item[id_to_link], "Jama", jama_item[type_], jama_item[project_id], last_updated)
     # Get the current largest ID in the fields table. Use this to generate the next unique ID for the fields table.
-    field_id = fields_ops.get_next_field_id()[0]
+    field_id = fields_ops.get_next_field_id()[id_]
     # Assume success initially. If something goes wrong during syncing process, set this to 0.
     success = 1
+    # Array of field ids that were added in case something goes wrong and they need to be removed from table.
+    field_ids = []
     for i in range(0, num_fields):
         try:
             # Update next field ID and insert current jira field into the table, passing the corresponding jama FieldID to the LinkedID column.
             # The Jama FieldID will be field_id + 1.
             field_id += 1
+            field_ids.append(field_id)
             last_updated = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
             fields_ops.insert_into_fields_table(field_id, jira_item[id_], last_updated, jira_fields[i][field_name], jira_fields[i][field_service_id], field_id + 1)
             # Update next field ID.
             field_id += 1
+            field_ids.append(field_id)
             # Update next field ID and insert current jama field into the table, passing the corresponding jira FieldID to the LinkedID column.
             # The Jira FieldID will be field_id - 1, since it was calculated above and 1 has been added to it since.
             fields_ops.insert_into_fields_table(field_id, jama_item[id_], last_updated, jama_fields[i][field_name], jama_fields[i][field_service_id], field_id - 1)
@@ -539,6 +545,22 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
             # If something goes wrong, write to the error log and indicate failure to calling routine by setting success to 0.
             logging.exception(f"Something went wrong when linking {jama_fields[i][0]} with {jira_fields[i][0]}")
             success = 0
+    # Perform first sync of items. If sync succeeds, items and fields will now be synced. If it fails,
+    # remove the linked items and the fields from database.
+    sync_success = True
+    try:
+        sync_success = sync.sync_one_item(session, jira_item[id_])
+    except:
+        logging.exception(f"Something went wrong when trying to do initial sync on items {jira_item[id_]}, {jama_item[id_]}")
+        sync_success = False
+    if sync_success == False:
+        items_ops.delete_item(jira_item[id_])
+        items_ops.delete_item(jama_item[id_])
+        # Get current largest field id (corresponds to most recently added field.)
+        field_id = fields_ops.get_next_field_id()[id_]
+        for i in range(0, len(field_ids)):
+            fields_ops.delete_field(field_ids[i])
+        return 0
     return success
 
 # # # # All functions below this line are for testing purposes only.
@@ -707,4 +729,3 @@ def logging_demo():
     #demo_sync_methods(db_path)
     #logging_demo()
     '''
-    
