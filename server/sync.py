@@ -1,5 +1,6 @@
 from connections import connection
-from database import (SyncInformationTableOps, ItemsTableOps, FieldsTableOps)
+import database
+#from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 from atlassian import Jira
 import os
 from datetime import datetime, timezone
@@ -13,7 +14,7 @@ def last_sync_period():
     returns the amount of time the last sync took and when it was completed
     """
     db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
-    sync_table = SyncInformationTableOps(db_path)
+    sync_table = database.SyncInformationTableOps(db_path)
     sync_info = sync_table.get_last_sync_time()
     sync_time =  {"Completed on": sync_info[2], "Total Sync Time": sync_info[0]}
     return sync_time
@@ -28,8 +29,8 @@ def sync_one_item(item_id, session):
 
     #initialize the table interfaces
     db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
-    items_table = ItemsTableOps(db_path)
-    fields_table = FieldsTableOps(db_path)
+    items_table = database.ItemsTableOps(db_path)
+    fields_table = database.FieldsTableOps(db_path)
 
     #look up the items to sync in the item table
     sync_item1 = items_table.retrieve_by_item_id(item_id)[0]
@@ -113,7 +114,7 @@ def sync_one_item(item_id, session):
 #function for getting the list of items to be synced and passing them off to the sync function
 def sync_all(session):
     db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
-    items_table = ItemsTableOps(db_path)
+    items_table = database.ItemsTableOps(db_path)
     success = True
     linked_items = items_table.get_linked_items()
     for item in linked_items:
@@ -131,7 +132,7 @@ def admin_sync():
     session.initiate_jama(os.environ["JAMA_SYNC_ORG"], os.environ["JAMA_SYNC_USERNAME"], os.environ["JAMA_SYNC_PASSWORD"])
     session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"], os.environ["JIRA_SYNC_PASSWORD"])
     db_path = os.path.join(os.path.dirname(os.getcwd()), "C2TB/JamaJiraConnectDataBase.db")
-    items_table = ItemsTableOps(db_path)
+    items_table = database.ItemsTableOps(db_path)
     success = True
     linked_items = items_table.get_linked_items()
     for item in linked_items:
