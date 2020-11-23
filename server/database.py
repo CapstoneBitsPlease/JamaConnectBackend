@@ -549,7 +549,7 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, sessi
     # remove the linked items and the fields from database.
     sync_success = True
     try:
-        sync_success = sync.sync_one_item(session, jira_item[id_])
+        sync_success = sync.sync_one_item(jira_item[id_], session)
     except:
         logging.exception(f"Something went wrong when trying to do initial sync on items {jira_item[id_]}, {jama_item[id_]}")
         sync_success = False
