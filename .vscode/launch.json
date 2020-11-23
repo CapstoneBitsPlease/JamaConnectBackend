@@ -15,11 +15,11 @@
                 "FLASK_DEBUG": "1",
                 "PYTHONPATH": "server",
                 "JIRA_SYNC_ORG": "capstone2020teamb",
-                "JIRA_SYNC_USERNAME": "sduncan@pdx.edu",
-                "JIRA_SYNC_PASSWORD": "hgTbykR23f57YxsYYgRY84F3",
+                "JIRA_SYNC_USERNAME": "",
+                "JIRA_SYNC_PASSWORD": "",
                 "JAMA_SYNC_ORG": "capstone2020",
-                "JAMA_SYNC_USERNAME": "sync_user",
-                "JAMA_SYNC_PASSWORD": "This15Apassw0rd4me<3",
+                "JAMA_SYNC_USERNAME": "",
+                "JAMA_SYNC_PASSWORD": "",
                 "SYNC_INTERVAL": "300"
             },
             "args": [
