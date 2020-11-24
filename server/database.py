@@ -3,7 +3,7 @@ import sqlite3
 from sqlite3 import Error
 from datetime import timezone
 from datetime import datetime
-from sync import sync_one_item
+import sync
 import os
 import logging
 import functions
@@ -549,7 +549,7 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, sessi
     # remove the linked items and the fields from database.
     sync_success = True
     try:
-        sync_success = sync.sync_one_item(jira_item[id_], session)
+        sync_success = sync.sync_one_item(jira_item[id_], session, linking=True)
     except:
         logging.exception(f"Something went wrong when trying to do initial sync on items {jira_item[id_]}, {jama_item[id_]}")
         sync_success = False
@@ -669,8 +669,8 @@ def logging_demo():
     #db_ops.rename_column(items_table, "Project", "LastSyncTime")
 
     # Demo delete table. ***USE WITH CAUTION***
-    # # # # db_ops.delete_table("Fields")
-    # # # # db_ops.delete_table("Items")
+    # db_ops.delete_table("Fields")
+    # db_ops.delete_table("Items")
     # # # db_ops.delete_table("SyncInformation")
     # Demo add column to existing table.
     #db_ops.add_column(items_table, "LastSyncTime", f"DATETIME {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')}")
@@ -728,5 +728,4 @@ def logging_demo():
     print("Field(s) ready for syncing:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[1])
 
     #demo_sync_methods(db_path)
-    #logging_demo()
-    '''
+    #logging_demo()'''
