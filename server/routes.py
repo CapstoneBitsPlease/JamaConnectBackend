@@ -468,6 +468,7 @@ def get_logs():
 # Links two items. Accepts 4 arrays: jama_item, jira_item, jama_fields, and jira_fields, and 1
 # integer parameter which indicates the total number of fields in each fields array.
 @app.route('/link_items', methods=['POST'])
+@jwt_required
 def link_item():
     try:
         token = get_jwt_identity()
@@ -497,7 +498,7 @@ def link_item():
         num_jama_fields = len(jama_fields)
         if num_jira_fields != num_jama_fields:
             return {"error": "The number of Jama fields to link does not match the number of Jira fields."}, 500
-        success = database.link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields, session)
+        success = link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields, session)
         if success == False:
             return {"error": "Linking unsuccessful"}, 500
 
