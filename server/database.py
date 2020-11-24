@@ -3,9 +3,14 @@ import sqlite3
 from sqlite3 import Error
 from datetime import timezone
 from datetime import datetime
+import sync
+#from sync import sync_one_item
 import os
 import logging
 import functions
+
+# Path to database.
+path_to_db = "JamaConnectBackend/JamaJiraConnectDataBase.db"
 
 # Utility class. Contains methods to connect to database, create table, rename column, add entry
 # to table, update an existing entry, retrieve an existing entry, and delete an existing entry.
@@ -556,50 +561,73 @@ def logging_demo():
 
 # Links two items in the database by 1.) Adding both items to the table, 2.) setting jira_linked_id = jama_id (and vice versa)
 # 3.) adding each field to the database, and linking with corresponding field in opposite array (ie: jama_field[0].lin)
-def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
+def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, session):
     # Variables for readability
     id_ = 0
     title = 1
     type_ = 2
     id_to_link = 0
     project_id = 3
-    field_name = 0
-    field_service_id = 1
+    field_name = 1
+    field_service_id = 0
 
     # Get path. NOTE: due to how the flask server is set up, if you want to run this locally instead, use  os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "JamaConnectBackend/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     items_ops = ItemsTableOps(db_path)
     fields_ops = FieldsTableOps(db_path)
     last_updated = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+
     # Add Jira item to the database. Jama item's ID is passed to LinkedID column.
     items_ops.insert_into_items_table(jira_item[id_], jira_item[title], jama_item[id_to_link], "Jira", jira_item[type_], jira_item[project_id], last_updated)
     # Add Jama item to the database. Jira item's ID is passed to LinkedID column.
     items_ops.insert_into_items_table(jama_item[id_], jama_item[title], jira_item[id_to_link], "Jama", jama_item[type_], jama_item[project_id], last_updated)
     # Get the current largest ID in the fields table. Use this to generate the next unique ID for the fields table.
-    field_id = fields_ops.get_next_field_id()[0]
+    field_id = fields_ops.get_next_field_id()[id_]
     # Assume success initially. If something goes wrong during syncing process, set this to 0.
-    success = 1
+    success = True
+    # Array of field ids that were added in case something goes wrong and they need to be removed from table.
+    field_ids = []
     for i in range(0, num_fields):
         try:
             # Update next field ID and insert current jira field into the table, passing the corresponding jama FieldID to the LinkedID column.
             # The Jama FieldID will be field_id + 1.
             field_id += 1
+            field_ids.append(field_id)
             last_updated = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
             fields_ops.insert_into_fields_table(field_id, jira_item[id_], last_updated, jira_fields[i][field_name], jira_fields[i][field_service_id], field_id + 1)
             # Update next field ID.
             field_id += 1
+            field_ids.append(field_id)
             # Update next field ID and insert current jama field into the table, passing the corresponding jira FieldID to the LinkedID column.
             # The Jira FieldID will be field_id - 1, since it was calculated above and 1 has been added to it since.
             fields_ops.insert_into_fields_table(field_id, jama_item[id_], last_updated, jama_fields[i][field_name], jama_fields[i][field_service_id], field_id - 1)
         except:
             # If something goes wrong, write to the error log and indicate failure to calling routine by setting success to 0.
             logging.exception(f"Something went wrong when linking {jama_fields[i][0]} with {jira_fields[i][0]}")
-            success = 0
+            success = False
+    # Perform first sync of items. If sync succeeds, items and fields will now be synced. If it fails,
+    # remove the linked items and the fields from database.
+    """sync_success = True
+    try:
+        sync_success = sync.sync_one_item(jira_item[id_], session, linking=True)
+    except:
+        logging.exception(f"Something went wrong when trying to do initial sync on items {jira_item[id_]}, {jama_item[id_]}")
+        sync_success = False
+    if sync_success == False:
+        logging.error(
+            "One or more of the fields were unable to be synced. Read only fields cannot be synced, so this item cannot be linked. Please only select fields that can be edited")
+        items_ops.delete_item(jira_item[id_])
+        items_ops.delete_item(jama_item[id_])
+        # Get current largest field id (corresponds to most recently added field.)
+        field_id = fields_ops.get_next_field_id()[id_]
+        for i in range(0, len(field_ids)):
+            fields_ops.delete_field(field_ids[i])
+        return False"""
     return success
 
 
 # Main method to demo functionality. Uncomment blocks to observe how they function.
-"""if __name__ == '__main__':
+if __name__ == '__main__':
     jira_id = 12349
     jama_id = 12361
     #link_items([jira_id, "title", "issue", 7], [jama_id, "title2", "bug", 6], [[jira_id, "name"], [jira_id, "name2",]], [[jama_id,"name3"], [jama_id, "name4"]], 2)
@@ -650,9 +678,10 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
 
     # Demo INSERT query. NOTE: field id and item id must be unique in order to be added.
     time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
-    #items_table_ops.insert_into_items_table(item_id, 'bug1', '100', 'Jama', 'bug', "3", time)
+    #items_table_ops.insert_into_items_table(10000, 'bug1', '100', 'Jama', 'bug', "3", time)
+    #items_table_ops.insert_into_items_table(11111, 'bug1', '100', 'Jama', 'bug', "3", time)
     # This one should pass
-    #fields_table_ops.insert_into_fields_table(field_id, item_id, time, 'Issue', 'Ticket', "None")
+    #fields_table_ops.insert_into_fields_table(1, 11111, time, 'Issue', 'Ticket', 10000)
 
     # This one should FAIL
     #fields_table_ops.insert_into_fields_table(field_id+1, -100, time, 'Issue', 'Ticket', "None")
@@ -666,23 +695,26 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
     print("Retrieved from fields table: ", field_row)
 
     # Demo UPDATE query.
-    items_table_ops.update_linked_id(item_id, "1002")
-    item_row = items_table_ops.retrieve_by_item_id(item_id)
-    print("Updated items row: ", item_row)
+    #items_table_ops.update_linked_id(item_id, "1002")
+    #item_row = items_table_ops.retrieve_by_item_id(item_id)
+    #print("Updated items row: ", item_row)
 
-    fields_table_ops.update_name(field_id, "FancyIssue")
-    field_row = fields_table_ops.retrieve_by_field_id(field_id)
-    print("Updated fields row: ", field_row)
+    #fields_table_ops.update_name(field_id, "FancyIssue")
+    #field_row = fields_table_ops.retrieve_by_field_id(field_id)
+    #print("Updated fields row: ", field_row)
 
     # # Demo DELETE query.
-    # fields_table_ops.delete_fields_in_item(item_id)
+    #fields_table_ops.delete_fields_in_item(10042)
+    #fields_table_ops.delete_fields_in_item(10061)
     # fields_table_ops.delete_field(field_id)
     # print("Deleted field id (expect none or empty): ", fields_table_ops.retrieve_by_item_id(item_id))
     # print("Deleted fields that match item id (expect none or empty): ", fields_table_ops.retrieve_by_field_id(field_id))
 
-    #items_table_ops.delete_item(item_id)
-    #print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(item_id))
-    
+    #items_table_ops.delete_item(10070)
+    #print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(10070))
+    #items_table_ops.delete_item(7870)
+    #print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(7870))
+
 
     #print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
 
@@ -701,5 +733,5 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields):
     print("Field(s) ready for syncing:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[1])
 
     #demo_sync_methods(db_path)
-    #logging_demo()"""
+    #logging_demo()
     
