@@ -3,7 +3,7 @@ import sqlite3
 from sqlite3 import Error
 from datetime import timezone
 from datetime import datetime
-import sync
+from sync import sync_one_item
 import os
 import logging
 import functions
@@ -524,7 +524,7 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, sessi
     # Get the current largest ID in the fields table. Use this to generate the next unique ID for the fields table.
     field_id = fields_ops.get_next_field_id()[id_]
     # Assume success initially. If something goes wrong during syncing process, set this to 0.
-    success = 1
+    success = True
     # Array of field ids that were added in case something goes wrong and they need to be removed from table.
     field_ids = []
     for i in range(0, num_fields):
@@ -544,7 +544,7 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, sessi
         except:
             # If something goes wrong, write to the error log and indicate failure to calling routine by setting success to 0.
             logging.exception(f"Something went wrong when linking {jama_fields[i][0]} with {jira_fields[i][0]}")
-            success = 0
+            success = False
     # Perform first sync of items. If sync succeeds, items and fields will now be synced. If it fails,
     # remove the linked items and the fields from database.
     sync_success = True
@@ -554,13 +554,14 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, sessi
         logging.exception(f"Something went wrong when trying to do initial sync on items {jira_item[id_]}, {jama_item[id_]}")
         sync_success = False
     if sync_success == False:
+        logging.error("One or more of the fields were unable to be synced. Read only fields cannot be synced, so this item cannot be linked. Please only select fields that can be edited")
         items_ops.delete_item(jira_item[id_])
         items_ops.delete_item(jama_item[id_])
         # Get current largest field id (corresponds to most recently added field.)
         field_id = fields_ops.get_next_field_id()[id_]
         for i in range(0, len(field_ids)):
             fields_ops.delete_field(field_ids[i])
-        return 0
+        return False
     return success
 
 # # # # All functions below this line are for testing purposes only.

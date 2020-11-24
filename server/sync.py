@@ -97,19 +97,23 @@ def sync_one_item(item_id, session):
         if(type(dst_data_i) == str):
             src_data_i = str(src_data_i)
         dst_field_values[dst_field_names[i]] = src_data_i
-
+    success = True
     #send the data
     if src_item[3] == "jama" or src_item[3] == "Jama":
-        session.set_jira_item(dst_field[1], dst_field_values)
+        curr_success = session.set_jira_item(dst_field[1], dst_field_values)
+        if curr_success == False:
+            success = False
     else:
-        session.set_jama_item(dst_field[1], dst_field_values)
+        curr_success = session.set_jama_item(dst_field[1], dst_field_values)
+        if curr_success == False:
+            success = False
 
     #update the last sync time with the current time. 
     sync_end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
     for field in dst_fields:
         fields_table.update_last_updated_time(field[0], sync_end_time)
     items_table.update_last_sync_time(dst_id, sync_end_time)
-    return True
+    return success
 
 #function for getting the list of items to be synced and passing them off to the sync function
 def sync_all(session):

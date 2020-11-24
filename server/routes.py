@@ -10,8 +10,7 @@ import os
 from set_up_log import json_log_setup
 from server.connections import connections
 import functions
-import database
-from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
+from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps, link_items, logging_demo)
 import sync
 import datetime
 import logging
@@ -454,7 +453,7 @@ def set_interval():
 
 @app.route('/demo_logs')
 def default():
-    database.logging_demo()
+    logging_demo()
     return jsonify("logging successful"), 200
 
 @app.route('/get_logs')
@@ -469,11 +468,13 @@ def get_logs():
 # Links two items. Accepts 4 arrays: jama_item, jira_item, jama_fields, and jira_fields, and 1
 # integer parameter which indicates the total number of fields in each fields array.
 @app.route('/link_items', methods=['POST'])
-def link_items():
+def link_item():
     try:
         token = get_jwt_identity()
         uuid = token.get("connection_id")
         session = cur_connections.get_session(uuid)
+        if session == None:
+            return jsonify("Error: the token provided was not valid, or no token was provided"), 500
         if request.method == "POST":
             # Get all items in array that correspond to jira_item[].
             jira_item = request.form.getlist("jira_item[]")
@@ -497,7 +498,7 @@ def link_items():
         if num_jira_fields != num_jama_fields:
             return {"error": "The number of Jama fields to link does not match the number of Jira fields."}, 500
         success = database.link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields, session)
-        if success == 0:
+        if success == False:
             return {"error": "Linking unsuccessful"}, 500
 
         #set the URL fields in the linked items
