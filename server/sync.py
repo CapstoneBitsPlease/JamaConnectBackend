@@ -123,19 +123,33 @@ def sync_one_item(item_id, session, linking=False):
 #function for getting the list of items to be synced and passing them off to the sync function
 def admin_sync():
     print("starting all item sync")
+    start_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+
     session = connection()
-    session.initiate_jama(os.environ["JAMA_SYNC_ORG"], os.environ["JAMA_SYNC_USERNAME"], os.environ["JAMA_SYNC_PASSWORD"])
-    session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"], os.environ["JIRA_SYNC_PASSWORD"])
+    session.initiate_jama(os.environ["JAMA_SYNC_ORG"], os.environ["JAMA_SYNC_USERNAME"],
+                          os.environ["JAMA_SYNC_PASSWORD"])
+    session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"],
+                          os.environ["JIRA_SYNC_PASSWORD"])
     db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     items_table = database.ItemsTableOps(db_path)
     success = True
     linked_items = items_table.get_linked_items()
+    count = 0
     for item in linked_items:
+        count += 1
         try:
             sync_one_item(item[0], session)
         except:
             logging.error("Something failed when syncing item ID:" + str(item[0]))
+            end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+            sync_table = database.SyncInformationTableOps(db_path)
+            sync_table.insert_new_sync(start_time, end_time, 0,
+                                       "Something failed when syncing item ID:" + str(item[0]))
             success = False
+
+    end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+    sync_table = database.SyncInformationTableOps(db_path)
+    sync_table.insert_new_sync(start_time, end_time, 1, "Synced " + str(count) + " items")
     return success
 
 

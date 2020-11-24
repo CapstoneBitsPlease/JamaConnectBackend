@@ -412,6 +412,15 @@ class SyncInformationTableOps:
 
     # # # INSERT METHODS # # #
 
+    def insert_new_sync(self, start_time, end_time, completed_successfully, description):
+        sync_id = self.get_next_sync_id()[0]
+        if sync_id == None:
+            sync_id = 0
+        sync_id += 1
+
+        self.db_ops.insert_into_db(self.table_name, str(sync_id), start_time, end_time, str(completed_successfully),
+                                   description)
+
     def insert_into_sync_table(self, sync_id, start_time, end_time, completed_successfully, description):
         self.db_ops.insert_into_db(self.table_name, str(sync_id), start_time, end_time, str(completed_successfully), description)
 
@@ -499,6 +508,17 @@ class SyncInformationTableOps:
             return [last_sync_time, units, end_time]
         else:
             return "No successful syncs yet."
+
+    def get_next_sync_id(self):
+        conn = self.db_ops.connect_to_db()
+        most_recent_field_id = ""
+        if conn:
+            c = conn.cursor()
+            c.execute("SELECT MAX(SyncID) FROM SyncInformation")
+            most_recent_field = c.fetchall()
+            most_recent_field_id = most_recent_field[0]
+            self.db_ops.close_connection(conn)
+        return most_recent_field_id
 
 
 def demo_sync_methods(db_path):
