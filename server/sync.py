@@ -1,6 +1,5 @@
 from connections import connection
 import database
-#from database import (SyncInformationTableOps, ItemsTableOps, FieldsTableOps)
 from atlassian import Jira
 import os
 from datetime import datetime, timezone
@@ -130,18 +129,20 @@ def admin_sync():
                           os.environ["JAMA_SYNC_PASSWORD"])
     session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"],
                           os.environ["JIRA_SYNC_PASSWORD"])
+
     db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     items_table = database.ItemsTableOps(db_path)
     success = True
     linked_items = items_table.get_linked_items()
     count = 0
     for item in linked_items:
-        count += 1
+        count +=1
         try:
             sync_one_item(item[0], session)
         except:
             logging.error("Something failed when syncing item ID:" + str(item[0]))
             end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+
             sync_table = database.SyncInformationTableOps(db_path)
             sync_table.insert_new_sync(start_time, end_time, 0,
                                        "Something failed when syncing item ID:" + str(item[0]))
