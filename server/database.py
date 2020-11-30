@@ -252,6 +252,26 @@ class ItemsTableOps:
         _, _, _, service, _, _, _ = self.retrieve_by_item_id(item_id)[0]
         return service
 
+    # Check to see if Items table exists. If it doesn't, create it and return false to indicate that it didn't exist previously.
+    def verify_items_table_exists(self):
+        conn = self.db_ops.connect_to_db()
+        if conn:
+            c = conn.cursor()
+            count = c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Items'")
+            table_exists = len(count.fetchall())
+            # If the table doesn't exist in the database for some reason, create it.
+            if table_exists == 0:
+                columns = ["ID", "Title", "LinkedID", "Service", "Type", "ProjectID", "LastSyncTime"]
+                types = ["INT PRIMARY KEY NOT NULL", "STRING", "INT", "STRING", "STRING", "INT", "DATETIME"]
+                self.db_ops.create_table("Items", columns, types)
+                conn.commit()
+                self.db_ops.close_connection(conn)
+                return False
+            else:
+                self.db_ops.close_connection(conn)
+                return True
+        return False
+
 # Operations for the fields table. When columns are added or updated, make sure to update them in
 # the __init__ method.
 class FieldsTableOps:
@@ -360,7 +380,27 @@ class FieldsTableOps:
             most_recent_field_id = most_recent_field[0]
             self.db_ops.close_connection(conn)
         return most_recent_field_id
-
+    
+    # Check to see if Fields table exists. If it doesn't, create it and return false to indicate that it didn't exist previously.
+    def verify_field_table_exists(self):
+        conn = self.db_ops.connect_to_db()
+        if conn:
+            c = conn.cursor()
+            count = c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Fields'")
+            table_exists = len(count.fetchall())
+            # If the table doesn't exist in the database for some reason, create it.
+            if table_exists == 0:
+                string_to_execute = "CREATE TABLE Fields ( FieldID INTEGER PRIMARY KEY, ItemID INT NOT NULL, LastUpdated DATETIME, Name STRING, FieldServiceID STRING, LinkedID INT, FOREIGN KEY (ItemID) REFERENCES Items (ID));"
+                # Enforce foreign keys so that fields can't be paired with items that don't exist.
+                c.execute("PRAGMA foreign_keys = ON;")
+                c.execute(string_to_execute)
+                conn.commit()
+                self.db_ops.close_connection(conn)
+                return False
+            else:
+                self.db_ops.close_connection(conn)
+                return True
+        return False
 
 # Operations for the SyncInformation table. When columns are added or updated, make sure to update them in
 # the __init__ method.
@@ -508,22 +548,32 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, sessi
     type_ = 2
     id_to_link = 0
     project_id = 3
-    field_name = 0
-    field_service_id = 1
+    field_name = 1
+    field_service_id = 0
 
     # Get path. NOTE: due to how the flask server is set up, if you want to run this locally instead, use  os.path.join(os.path.dirname(os.getcwd()), "JamaJiraConnectDataBase.db")
     db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     items_ops = ItemsTableOps(db_path)
     fields_ops = FieldsTableOps(db_path)
     last_updated = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
-
+    # Verify Items table exists before inserting. If it doesn't exist, create it.
+    existed = items_ops.verify_items_table_exists()
+    if existed == False:
+        logging.info("Created a new Items table when linking two new items.")
     # Add Jira item to the database. Jama item's ID is passed to LinkedID column.
     items_ops.insert_into_items_table(jira_item[id_], jira_item[title], jama_item[id_to_link], "Jira", jira_item[type_], jira_item[project_id], last_updated)
     # Add Jama item to the database. Jira item's ID is passed to LinkedID column.
     items_ops.insert_into_items_table(jama_item[id_], jama_item[title], jira_item[id_to_link], "Jama", jama_item[type_], jama_item[project_id], last_updated)
-    # Get the current largest ID in the fields table. Use this to generate the next unique ID for the fields table.
-    field_id = fields_ops.get_next_field_id()[id_]
-    # Assume success initially. If something goes wrong during syncing process, set this to 0.
+    field_table_exists = fields_ops.verify_field_table_exists()
+    field_id = 0
+    # Check to see if field table already existed. If not, starting field id is 1
+    if field_table_exists == False:
+        logging.info("Created a new Fields table when linking two new fields.")
+        field_id = 1
+    else:
+        # Get the current largest ID in the fields table. Use this to generate the next unique ID for the fields table.
+        field_id = fields_ops.get_next_field_id()[id_]
+    # Assume success initially. If something goes wrong during syncing process, set this to False.
     success = True
     # Array of field ids that were added in case something goes wrong and they need to be removed from table.
     field_ids = []
