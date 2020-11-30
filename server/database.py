@@ -398,7 +398,11 @@ class FieldsTableOps:
                 self.db_ops.close_connection(conn)
                 return False
             else:
+                count = c.execute("SELECT * FROM Fields")
+                total = len(count.fetchall())
                 self.db_ops.close_connection(conn)
+                if total == 0:
+                    return False
                 return True
         return False
 
