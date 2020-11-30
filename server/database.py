@@ -9,7 +9,7 @@ import logging
 import functions
 
 # Path to database.
-path_to_db = "JamaConnectBackend/JamaJiraConnectDataBase.db"
+path_to_db = "C2TB/JamaJiraConnectDataBase.db"
 
 # Utility class. Contains methods to connect to database, create table, rename column, add entry
 # to table, update an existing entry, retrieve an existing entry, and delete an existing entry.
@@ -413,6 +413,14 @@ class SyncInformationTableOps:
 
     def insert_into_sync_table(self, sync_id, start_time, end_time, completed_successfully, description):
         self.db_ops.insert_into_db(self.table_name, str(sync_id), start_time, end_time, str(completed_successfully), description)
+    
+    def insert_new_sync(self, start_time, end_time, completed_successfully, description):
+        sync_id = self.get_next_sync_id()[0]
+        if sync_id == None:
+            sync_id = 0
+        sync_id +=1
+
+        self.db_ops.insert_into_db(self.table_name, str(sync_id), start_time, end_time, str(completed_successfully), description)
 
     # # # DELETE METHODS # # #
 
@@ -498,6 +506,18 @@ class SyncInformationTableOps:
             return [last_sync_time, units, end_time]
         else:
             return "No successful syncs yet."
+        # Get the most recent field ID (ie: largest ID number) from the database.
+    
+    def get_next_sync_id(self):
+        conn = self.db_ops.connect_to_db()
+        most_recent_field_id = ""
+        if conn:
+            c = conn.cursor()
+            c.execute("SELECT MAX(SyncID) FROM SyncInformation")
+            most_recent_field = c.fetchall()
+            most_recent_field_id = most_recent_field[0]
+            self.db_ops.close_connection(conn)
+        return most_recent_field_id
 
 # Links two items in the database by 1.) Adding both items to the table, 2.) setting jira_linked_id = jama_id (and vice versa)
 # 3.) adding each field to the database, and linking with corresponding field in opposite array (ie: jama_field[0].lin)

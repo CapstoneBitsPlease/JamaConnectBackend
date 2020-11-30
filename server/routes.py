@@ -466,6 +466,24 @@ def get_logs():
             error_list.append(error)
     return jsonify(error_list), 200
 
+@app.route('/get_logs_range')
+def get_logs_range():
+    input = request.values
+    start_date = input["start_date"]+"  12:00:00 AM"
+    end_date = input["end_date"]+"  11:59:59 PM"
+    form = '%m/%d/%Y %I:%M:%S %p'
+    start_time=datetime.datetime.strptime(start_date, form)
+    end_time=datetime.datetime.strptime(end_date, form)
+    error_list = []
+    with open('error_json.log') as logs:
+        for json_obj in logs:
+            error = json.loads(json_obj)
+            print(error["asctime"])
+            log_time=datetime.datetime.strptime(error["asctime"], form)
+            if log_time>=start_time and log_time<=end_time:
+                error_list.append(error)
+    return jsonify(error_list), 200
+
 # Links two items. Accepts 4 arrays: jama_item, jira_item, jama_fields, and jira_fields, and 1
 # integer parameter which indicates the total number of fields in each fields array.
 @app.route('/link_items', methods=['POST'])

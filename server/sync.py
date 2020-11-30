@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import logging
 
 # Path to database.
-path_to_db = "JamaConnectBackend/JamaJiraConnectDataBase.db"
+path_to_db = "C2TB/JamaJiraConnectDataBase.db"
 
 def last_sync_period():
     """
@@ -128,6 +128,8 @@ def sync_all(session):
 
 def admin_sync():
     print("starting all item sync")
+    start_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+    
     session = connection()
     session.initiate_jama(os.environ["JAMA_SYNC_ORG"], os.environ["JAMA_SYNC_USERNAME"], os.environ["JAMA_SYNC_PASSWORD"])
     session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"], os.environ["JIRA_SYNC_PASSWORD"])
@@ -135,12 +137,21 @@ def admin_sync():
     items_table = database.ItemsTableOps(db_path)
     success = True
     linked_items = items_table.get_linked_items()
+    count = 0
     for item in linked_items:
+        count +=1
         try:
             sync_one_item(item[0], session)
         except:
             logging.error("Something failed when syncing item ID:" + str(item[0]))
+            end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+            sync_table = SyncInformationTableOps(db_path)
+            sync_table.insert_new_sync(start_time, end_time, "Incomeplete", "Something failed when syncing item ID:" + str(item[0]))
             success = False
+
+    end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+    sync_table = SyncInformationTableOps(db_path)
+    sync_table.insert_new_sync(start_time, end_time, "Comeplete", "Synced " + str(count) + " items")
     return success
 
 
