@@ -10,7 +10,8 @@ import os
 from set_up_log import json_log_setup
 from server.connections import connections
 import functions
-from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps, link_items, logging_demo)
+import database
+from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 import sync
 import datetime
 import logging
@@ -446,10 +447,16 @@ def sync_all():
 @app.route('/sync/set_interval', methods=['POST'])
 @jwt_required
 def set_interval():
-    interval = int(request.values["interval"])
-    os.environ["SYNC_INTERVAL"] = str(interval)
-    sync_job.reschedule('interval', seconds=interval)
-    return 200
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    if session.jama_connection and session.jira_connection:
+        interval = int(request.values["interval"])
+        os.environ["SYNC_INTERVAL"] = str(interval)
+        sync_job.reschedule('interval', seconds=interval)
+        return jsonify("Success"), 200
+    else:
+        return jsonify("Error, no connection"), 500
 
 @app.route('/demo_logs')
 def default():
@@ -477,7 +484,7 @@ def get_logs_range():
     with open('error_json.log') as logs:
         for json_obj in logs:
             error = json.loads(json_obj)
-            print(error["asctime"])
+            #print(error["asctime"])
             log_time=datetime.datetime.strptime(error["asctime"], form)
             if log_time>=start_time and log_time<=end_time:
                 error_list.append(error)
@@ -487,7 +494,7 @@ def get_logs_range():
 # integer parameter which indicates the total number of fields in each fields array.
 @app.route('/link_items', methods=['POST'])
 @jwt_required
-def link_item():
+def link():
     try:
         token = get_jwt_identity()
         uuid = token.get("connection_id")
@@ -512,16 +519,16 @@ def link_item():
                 val_to_get = "jama_fields[{}]".format(i)
                 jama_field = request.form.getlist(val_to_get)
                 jama_fields.append(jama_field)
-        num_jira_fields = len(jira_fields)
-        num_jama_fields = len(jama_fields)
-        if num_jira_fields != num_jama_fields:
-            return {"error": "The number of Jama fields to link does not match the number of Jira fields."}, 500
-        success = link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields, session)
-        if success == False:
-            return {"error": "Linking unsuccessful"}, 500
+            num_jira_fields = len(jira_fields)
+            num_jama_fields = len(jama_fields)
+            if num_jira_fields != num_jama_fields:
+                return {"error": "The number of Jama fields to link does not match the number of Jira fields."}, 500
+            success = link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields, session)
+            if success == 0:
+                return {"error": "Linking unsuccessful"}, 500
 
-        #set the URL fields in the linked items
-        sync.set_linked_url(jira_item[0], jama_item[0])
+            #set the URL fields in the linked items
+            sync.set_linked_url(jira_item[0], jama_item[0])
     except:
         logging.exception(f"Something went wrong when trying to link items {jira_item[0]} and {jama_item[0]}")
         return jsonify(f"Error, something went wrong when trying to link items {jira_item[1]} and {jama_item[1]}"), 500

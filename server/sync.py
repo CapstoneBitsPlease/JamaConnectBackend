@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import logging
 
 # Path to database.
-path_to_db = "C2TB/JamaJiraConnectDataBase.db"
+path_to_db = "JamaConnectBackend/JamaJiraConnectDataBase.db"
 
 def last_sync_period():
     """
@@ -149,19 +149,15 @@ def admin_sync():
         except:
             logging.error("Something failed when syncing item ID:" + str(item[0]))
             end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
-            sync_table = SyncInformationTableOps(db_path)
-            sync_table.insert_new_sync(start_time, end_time, "Incomeplete", "Something failed when syncing item ID:" + str(item[0]))
+
+            sync_table = database.SyncInformationTableOps(db_path)
+            sync_table.insert_new_sync(start_time, end_time, 0,
+                                       "Something failed when syncing item ID:" + str(item[0]))
             success = False
 
     end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
-    sync_table = SyncInformationTableOps(db_path)
-    sync_table.insert_new_sync(start_time, end_time, "Comeplete", "Synced " + str(count) + " items")
-    return success
-
-
-# update scheduler to run at specified sync interval
-def update_scheduler():
-    success = True
+    sync_table = database.SyncInformationTableOps(db_path)
+    sync_table.insert_new_sync(start_time, end_time, 1, "Synced " + str(count) + " items")
     return success
 
 
