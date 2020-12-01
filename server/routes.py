@@ -447,14 +447,20 @@ def sync_all():
 @app.route('/sync/set_interval', methods=['POST'])
 @jwt_required
 def set_interval():
-    interval = int(request.values["interval"])
-    os.environ["SYNC_INTERVAL"] = str(interval)
-    sync_job.reschedule('interval', seconds=interval)
-    return 200
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    if session.jama_connection and session.jira_connection:
+        interval = int(request.values["interval"])
+        os.environ["SYNC_INTERVAL"] = str(interval)
+        sync_job.reschedule('interval', seconds=interval)
+        return jsonify("Success"), 200
+    else:
+        return jsonify("Error, no connection"), 500
 
 @app.route('/demo_logs')
 def default():
-    database.logging_demo()
+    logging_demo()
     return jsonify("logging successful"), 200
 
 @app.route('/get_logs')
@@ -466,14 +472,35 @@ def get_logs():
             error_list.append(error)
     return jsonify(error_list), 200
 
+@app.route('/get_logs_range')
+def get_logs_range():
+    input = request.values
+    start_date = input["start_date"]+"  12:00:00 AM"
+    end_date = input["end_date"]+"  11:59:59 PM"
+    form = '%m/%d/%Y %I:%M:%S %p'
+    start_time=datetime.datetime.strptime(start_date, form)
+    end_time=datetime.datetime.strptime(end_date, form)
+    error_list = []
+    with open('error_json.log') as logs:
+        for json_obj in logs:
+            error = json.loads(json_obj)
+            #print(error["asctime"])
+            log_time=datetime.datetime.strptime(error["asctime"], form)
+            if log_time>=start_time and log_time<=end_time:
+                error_list.append(error)
+    return jsonify(error_list), 200
+
 # Links two items. Accepts 4 arrays: jama_item, jira_item, jama_fields, and jira_fields, and 1
 # integer parameter which indicates the total number of fields in each fields array.
 @app.route('/link_items', methods=['POST'])
-def link_items():
+@jwt_required
+def link():
     try:
         token = get_jwt_identity()
         uuid = token.get("connection_id")
         session = cur_connections.get_session(uuid)
+        if session == None:
+            return jsonify("Error: the token provided was not valid, or no token was provided"), 500
         if request.method == "POST":
             # Get all items in array that correspond to jira_item[].
             jira_item = request.form.getlist("jira_item[]")
@@ -492,16 +519,16 @@ def link_items():
                 val_to_get = "jama_fields[{}]".format(i)
                 jama_field = request.form.getlist(val_to_get)
                 jama_fields.append(jama_field)
-        num_jira_fields = len(jira_fields)
-        num_jama_fields = len(jama_fields)
-        if num_jira_fields != num_jama_fields:
-            return {"error": "The number of Jama fields to link does not match the number of Jira fields."}, 500
-        success = database.link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields, session)
-        if success == 0:
-            return {"error": "Linking unsuccessful"}, 500
+            num_jira_fields = len(jira_fields)
+            num_jama_fields = len(jama_fields)
+            if num_jira_fields != num_jama_fields:
+                return {"error": "The number of Jama fields to link does not match the number of Jira fields."}, 500
+            success = link_items(jira_item, jama_item, jira_fields, jama_fields, num_jama_fields, session)
+            if success == 0:
+                return {"error": "Linking unsuccessful"}, 500
 
-        #set the URL fields in the linked items
-        sync.set_linked_url(jira_item[0], jama_item[0])
+            #set the URL fields in the linked items
+            sync.set_linked_url(jira_item[0], jama_item[0])
     except:
         logging.exception(f"Something went wrong when trying to link items {jira_item[0]} and {jama_item[0]}")
         return jsonify(f"Error, something went wrong when trying to link items {jira_item[1]} and {jama_item[1]}"), 500
