@@ -445,10 +445,16 @@ def sync_all():
 @app.route('/sync/set_interval', methods=['POST'])
 @jwt_required
 def set_interval():
-    interval = int(request.values["interval"])
-    os.environ["SYNC_INTERVAL"] = str(interval)
-    sync_job.reschedule('interval', seconds=interval)
-    return jsonify("Success"), 200
+    token = get_jwt_identity()
+    uuid = token.get("connection_id")
+    session = cur_connections.get_session(uuid)
+    if session.jama_connection and session.jira_connection:
+        interval = int(request.values["interval"])
+        os.environ["SYNC_INTERVAL"] = str(interval)
+        sync_job.reschedule('interval', seconds=interval)
+        return jsonify("Success"), 200
+    else:
+        return jsonify("Error, no connection"), 500
 
 @app.route('/demo_logs')
 def default():
@@ -476,7 +482,7 @@ def get_logs_range():
     with open('error_json.log') as logs:
         for json_obj in logs:
             error = json.loads(json_obj)
-            print(error["asctime"])
+            #print(error["asctime"])
             log_time=datetime.datetime.strptime(error["asctime"], form)
             if log_time>=start_time and log_time<=end_time:
                 error_list.append(error)

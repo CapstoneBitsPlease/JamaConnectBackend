@@ -629,7 +629,7 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, sessi
             success = False
     # Perform first sync of items. If sync succeeds, items and fields will now be synced. If it fails,
     # remove the linked items and the fields from database.
-    """sync_success = True
+    sync_success = True
     try:
         sync_success = sync.sync_one_item(jira_item[id_], session, linking=True)
     except:
@@ -644,12 +644,12 @@ def link_items(jira_item, jama_item, jira_fields, jama_fields, num_fields, sessi
         field_id = fields_ops.get_next_field_id()[id_]
         for i in range(0, len(field_ids)):
             fields_ops.delete_field(field_ids[i])
-        return False"""
+        return False
     return success
 
 
 # Main method to demo functionality. Uncomment blocks to observe how they function.
-if __name__ == '__main__':
+"""if __name__ == '__main__':
     jira_id = 12349
     jama_id = 12361
     #link_items([jira_id, "title", "issue", 7], [jama_id, "title2", "bug", 6], [[jira_id, "name"], [jira_id, "name2",]], [[jama_id,"name3"], [jama_id, "name4"]], 2)
@@ -722,21 +722,23 @@ if __name__ == '__main__':
     #print("Updated items row: ", item_row)
 
     #fields_table_ops.update_name(field_id, "FancyIssue")
-    #field_row = fields_table_ops.retrieve_by_field_id(field_id)
-    #print("Updated fields row: ", field_row)
+    field_row = fields_table_ops.retrieve_by_field_id(1)
+    print("field id 1: ", field_row)
 
     # # Demo DELETE query.
-    #fields_table_ops.delete_fields_in_item(10042)
-    #fields_table_ops.delete_fields_in_item(10061)
+    fields_table_ops.delete_fields_in_item(10070)
+    #fields_table_ops.delete_fields_in_item(10065)
+    fields_table_ops.delete_fields_in_item(10061)
+
+    #fields_table_ops.delete_fields_in_item(7870)
     # fields_table_ops.delete_field(field_id)
     # print("Deleted field id (expect none or empty): ", fields_table_ops.retrieve_by_item_id(item_id))
     # print("Deleted fields that match item id (expect none or empty): ", fields_table_ops.retrieve_by_field_id(field_id))
 
     #items_table_ops.delete_item(10070)
-    #print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(10070))
-    #items_table_ops.delete_item(7870)
-    #print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(7870))
+    #items_table_ops.delete_item(item_id)
 
+    #print("Deleted item (expect none or empty): ", items_table_ops.retrieve_by_item_id(item_id))
 
     #print("Retrieved sync entry: ", sync_table_ops.retrieve_by_sync_id(sync_id))
 
@@ -750,10 +752,10 @@ if __name__ == '__main__':
 
     #demo_sync_methods(db_path)
 
-    print("Last sync:", sync_table_ops.get_last_sync_time())
-    print("Number of fields ready to sync:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[0])
-    print("Field(s) ready for syncing:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[1])
+    #print("Last sync:", sync_table_ops.get_last_sync_time())
+    #print("Number of fields ready to sync:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[0])
+    #print("Field(s) ready for syncing:", fields_table_ops.get_fields_to_sync(items_table_ops, sync_table_ops)[1])
 
     #demo_sync_methods(db_path)
-    #logging_demo()
+    #logging_demo()"""
     
