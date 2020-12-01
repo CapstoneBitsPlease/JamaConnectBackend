@@ -21,7 +21,7 @@ def last_sync_period():
 
 #are we making our own item_id for internal tracking? or should we just
 #use the jama or jira item id and specify that?
-def sync_one_item(item_id, session):
+def sync_one_item(item_id, session, linking = False):
 
     #session = connection()
     #session.initiate_jama(os.environ["JAMA_SYNC_ORG"], os.environ["JAMA_SYNC_USERNAME"], os.environ["JAMA_SYNC_PASSWORD"])
@@ -51,7 +51,7 @@ def sync_one_item(item_id, session):
     last_sync = datetime.strptime(last_sync, '%Y-%m-%dT%H:%M:%S.%f%z')
     pos, src_id, dst_id, most_recent_change = session.most_recent_update(sync_item1[3],sync_item1[0], sync_item2[3], sync_item2[0])
     
-    if most_recent_change <= last_sync:
+    if most_recent_change <= last_sync and linking == False:
         # the last sync time was the same or newer than the last modified time
         return False
 
@@ -97,19 +97,23 @@ def sync_one_item(item_id, session):
         if(type(dst_data_i) == str):
             src_data_i = str(src_data_i)
         dst_field_values[dst_field_names[i]] = src_data_i
-
+    success = True
     #send the data
     if src_item[3] == "jama" or src_item[3] == "Jama":
-        session.set_jira_item(dst_field[1], dst_field_values)
+        curr_success = session.set_jira_item(dst_field[1], dst_field_values)
+        if curr_success == False:
+            success = False
     else:
-        session.set_jama_item(dst_field[1], dst_field_values)
+        curr_success = session.set_jama_item(dst_field[1], dst_field_values)
+        if curr_success == False:
+            success = False
 
     #update the last sync time with the current time. 
     sync_end_time = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
     for field in dst_fields:
         fields_table.update_last_updated_time(field[0], sync_end_time)
     items_table.update_last_sync_time(dst_id, sync_end_time)
-    return True
+    return success
 
 #function for getting the list of items to be synced and passing them off to the sync function
 def sync_all(session):
@@ -133,7 +137,7 @@ def admin_sync():
     session = connection()
     session.initiate_jama(os.environ["JAMA_SYNC_ORG"], os.environ["JAMA_SYNC_USERNAME"], os.environ["JAMA_SYNC_PASSWORD"])
     session.initiate_jira(os.environ["JIRA_SYNC_ORG"], os.environ["JIRA_SYNC_USERNAME"], os.environ["JIRA_SYNC_PASSWORD"])
-    db_path = os.path.join(os.path.dirname(os.getcwd()), "C2TB/JamaJiraConnectDataBase.db")
+    db_path = os.path.join(os.path.dirname(os.getcwd()), path_to_db)
     items_table = database.ItemsTableOps(db_path)
     success = True
     linked_items = items_table.get_linked_items()
