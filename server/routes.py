@@ -9,7 +9,9 @@ import json
 import os
 from set_up_log import json_log_setup
 from server.connections import connections
-from server.database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps, link_items, logging_demo)
+import functions
+import database
+from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
 import sync
 import datetime
 import logging

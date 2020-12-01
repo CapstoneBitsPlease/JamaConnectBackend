@@ -10,6 +10,8 @@ def log_setup(level = logging.INFO):
 
 def json_log_setup(level = logging.DEBUG):
     logger = logging.getLogger()
+    if logger.hasHandlers():
+        logger.handlers.clear()
     logger.setLevel(level)
     logHandler = logging.FileHandler('error_json.log', 'a', 'utf-8')
     formatter = jsonlogger.JsonFormatter('%(asctime)s %(levelname)s %(name)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
