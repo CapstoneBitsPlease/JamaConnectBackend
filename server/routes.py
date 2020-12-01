@@ -11,7 +11,7 @@ from set_up_log import json_log_setup
 from server.connections import connections
 import functions
 import database
-from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps)
+from database import (ItemsTableOps, FieldsTableOps, SyncInformationTableOps, link_items, logging_demo)
 import sync
 import datetime
 import logging
