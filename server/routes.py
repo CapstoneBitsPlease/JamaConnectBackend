@@ -337,6 +337,7 @@ def get_capstone_unlink_with_id():
         return "Unlinking did not occur. This item was not found.", 200
 
     item = items[0]
+    print(item)
     if str(item[2]).lower() == "none" or str(item[2]).lower() == "null":
         return "Unlinking did not occur. This item is not linked.", 200
 
@@ -354,12 +355,19 @@ def get_capstone_unlink_with_id():
         fieldsTableOps.update_linked_id(field[0], "None") 
         fieldsTableOps.delete_field(field[0])
 
+    itemsTableOps.update_linked_id(item[0], "None")
+    itemsTableOps.delete_item(item[0])
+
     item_ID_to_unlink = item[2]
-    items_to_unlink = itemsTableOps.retrieve_by_linked_id(item_ID_to_unlink)
+    items_to_unlink = itemsTableOps.retrieve_by_item_id(item_ID_to_unlink)
+    fields_to_unlink = fieldsTableOps.retrieve_by_item_id(item_ID_to_unlink)
     try:
         for item in items_to_unlink:
             itemsTableOps.update_linked_id(item[0], "None")
             itemsTableOps.delete_item(item[0])
+        for field in fields_to_unlink:
+            fieldsTableOps.update_linked_id(field[0], "None") 
+            fieldsTableOps.delete_field(field[0])
     except:
         logging.exception("Something went wrong while trying to unlink")
     return jsonify("Unlinking successful."), 200
